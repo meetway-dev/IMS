@@ -3,11 +3,10 @@ export const API_ENDPOINTS = {
   // Auth
   AUTH: {
     LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
+    REGISTER: '/auth/signup',
     REFRESH: '/auth/refresh',
     LOGOUT: '/auth/logout',
-    FORGOT_PASSWORD: '/auth/forgot-password',
-    RESET_PASSWORD: '/auth/reset-password',
+    ME: '/auth/me',
   },
   // Products
   PRODUCTS: {
@@ -59,6 +58,14 @@ export const API_ENDPOINTS = {
     CREATE: '/companies',
     UPDATE: (id: string) => `/companies/${id}`,
     DELETE: (id: string) => `/companies/${id}`,
+  },
+  // Suppliers
+  SUPPLIERS: {
+    LIST: '/suppliers',
+    DETAIL: (id: string) => `/suppliers/${id}`,
+    CREATE: '/suppliers',
+    UPDATE: (id: string) => `/suppliers/${id}`,
+    DELETE: (id: string) => `/suppliers/${id}`,
   },
   // Audit
   AUDIT: {

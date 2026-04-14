@@ -16,6 +16,7 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { RbacGuard } from './modules/rbac/rbac.guard';
+import { SuppliersModule } from './modules/suppliers/suppliers.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { RbacGuard } from './modules/rbac/rbac.guard';
     ProductsModule,
     InventoryModule,
     OrdersModule,
+    SuppliersModule,
   ],
   controllers: [AppController],
   providers: [

@@ -69,7 +69,12 @@ export const orderService = {
     pendingOrders: number;
     completedOrders: number;
   }> {
-    const response = await apiClient.get('/orders/stats');
+    const response = await apiClient.get<{
+      totalOrders: number;
+      totalRevenue: number;
+      pendingOrders: number;
+      completedOrders: number;
+    }>('/orders/stats');
     return response.data;
   },
 };

@@ -11,13 +11,16 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: authService.login,
-    onSuccess: (data) => {
-      setAuth(data.user, data.tokens);
+    onSuccess: async (data) => {
+      setAuth(data);
       // Store tokens in localStorage
       if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.tokens.accessToken);
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.tokens.refreshToken);
+        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken);
       }
+      // Fetch user profile after login
+      const user = await authService.getProfile();
+      useAuthStore.getState().setUser(user);
       router.push('/dashboard');
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },
@@ -25,32 +28,30 @@ export function useLogin() {
 }
 
 export function useRegister() {
-  const { setAuth } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: authService.register,
     onSuccess: (data) => {
-      setAuth(data.user, data.tokens);
-      // Store tokens in localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.tokens.accessToken);
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.tokens.refreshToken);
-      }
-      router.push('/dashboard');
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      // Registration successful, redirect to login
+      router.push('/auth/login?registered=true');
     },
   });
 }
 
 export function useLogout() {
-  const { logout } = useAuthStore();
+  const { logout, tokens } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: authService.logout,
+    mutationFn: () => {
+      if (!tokens?.refreshToken) {
+        return Promise.resolve({ ok: true });
+      }
+      return authService.logout(tokens.refreshToken);
+    },
     onSuccess: () => {
       logout();
       // Clear tokens from localStorage
@@ -65,32 +66,20 @@ export function useLogout() {
   });
 }
 
-export function useForgotPassword() {
-  return useMutation({
-    mutationFn: authService.forgotPassword,
-  });
-}
-
-export function useResetPassword() {
-  const router = useRouter();
-
-  return useMutation({
-    mutationFn: authService.resetPassword,
-    onSuccess: () => {
-      router.push('/auth/login');
-    },
-  });
-}
-
 export function useProfile() {
   const { setUser } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['user', 'profile'],
     queryFn: authService.getProfile,
-    enabled: typeof window !== 'undefined',
-    onSuccess: (user) => {
-      setUser(user);
-    },
+    enabled: isAuthenticated && typeof window !== 'undefined',
   });
+
+  // Update store when profile data changes
+  if (query.data) {
+    setUser(query.data);
+  }
+
+  return query;
 }

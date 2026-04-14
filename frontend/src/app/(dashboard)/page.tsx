@@ -4,8 +4,11 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, ShoppingCart, Users, TrendingUp, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function DashboardPage() {
+  const { user } = useAuthStore();
+
   // Mock data - replace with actual API calls
   const stats = [
     {
@@ -55,7 +58,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome back! Here's what's happening with your store today.
+          Welcome back, {user?.name || 'User'}! Here's what's happening with your store today.
         </p>
       </div>
 

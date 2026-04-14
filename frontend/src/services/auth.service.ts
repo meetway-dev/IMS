@@ -1,6 +1,6 @@
-import apiClient from '@/lib/api-client';
+import axiosInstance from '@/lib/axios';
 import { API_ENDPOINTS } from '@/lib/constants';
-import { AuthResponse, User } from '@/types';
+import { User, TokenResponse } from '@/types';
 
 interface LoginCredentials {
   email: string;
@@ -10,26 +10,15 @@ interface LoginCredentials {
 interface RegisterData {
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
-  companyId?: string;
-}
-
-interface ForgotPasswordData {
-  email: string;
-}
-
-interface ResetPasswordData {
-  token: string;
-  password: string;
+  name?: string;
 }
 
 export const authService = {
   /**
    * Login user
    */
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>(
+  async login(credentials: LoginCredentials): Promise<TokenResponse> {
+    const response = await axiosInstance.post<TokenResponse>(
       API_ENDPOINTS.AUTH.LOGIN,
       credentials
     );
@@ -39,8 +28,8 @@ export const authService = {
   /**
    * Register new user
    */
-  async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>(
+  async register(data: RegisterData): Promise<User> {
+    const response = await axiosInstance.post<User>(
       API_ENDPOINTS.AUTH.REGISTER,
       data
     );
@@ -50,8 +39,8 @@ export const authService = {
   /**
    * Refresh access token
    */
-  async refreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken?: string }> {
-    const response = await apiClient.post<{ accessToken: string; refreshToken?: string }>(
+  async refreshToken(refreshToken: string): Promise<TokenResponse> {
+    const response = await axiosInstance.post<TokenResponse>(
       API_ENDPOINTS.AUTH.REFRESH,
       { refreshToken }
     );
@@ -61,29 +50,19 @@ export const authService = {
   /**
    * Logout user
    */
-  async logout(): Promise<void> {
-    await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT);
-  },
-
-  /**
-   * Request password reset
-   */
-  async forgotPassword(data: ForgotPasswordData): Promise<void> {
-    await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, data);
-  },
-
-  /**
-   * Reset password with token
-   */
-  async resetPassword(data: ResetPasswordData): Promise<void> {
-    await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, data);
+  async logout(refreshToken: string): Promise<{ ok: boolean }> {
+    const response = await axiosInstance.post<{ ok: boolean }>(
+      API_ENDPOINTS.AUTH.LOGOUT,
+      { refreshToken }
+    );
+    return response.data;
   },
 
   /**
    * Get current user profile
    */
   async getProfile(): Promise<User> {
-    const response = await apiClient.get<User>('/auth/profile');
+    const response = await axiosInstance.get<User>(API_ENDPOINTS.AUTH.ME);
     return response.data;
   },
 };

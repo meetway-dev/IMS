@@ -3,12 +3,16 @@
 import * as React from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
+import { useProfile } from '@/hooks/use-auth';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Fetch user profile when in dashboard
+  useProfile();
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />

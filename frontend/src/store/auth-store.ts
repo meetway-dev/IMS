@@ -1,16 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, AuthTokens } from '@/types';
+import { User, TokenResponse } from '@/types';
 import { STORAGE_KEYS } from '@/lib/constants';
 
 interface AuthState {
   user: User | null;
-  tokens: AuthTokens | null;
+  tokens: TokenResponse | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  setAuth: (user: User, tokens: AuthTokens) => void;
+  setAuth: (tokens: TokenResponse) => void;
   setUser: (user: User) => void;
-  setTokens: (tokens: AuthTokens) => void;
+  setTokens: (tokens: TokenResponse) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
 }
@@ -22,9 +22,8 @@ export const useAuthStore = create<AuthState>()(
       tokens: null,
       isAuthenticated: false,
       isLoading: false,
-      setAuth: (user, tokens) =>
+      setAuth: (tokens) =>
         set({
-          user,
           tokens,
           isAuthenticated: true,
           isLoading: false,

@@ -1,15 +1,44 @@
 'use client';
 
 import * as React from 'react';
-import { Search, Bell, Menu } from 'lucide-react';
+import { Search, Bell, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
+import { useLogout } from '@/hooks/use-auth';
+import { useToast } from '@/components/ui/use-toast';
+import { getInitials } from '@/lib/utils';
 
 export function Topbar() {
   const { setMobileMenuOpen } = useUIStore();
   const { user } = useAuthStore();
+  const logout = useLogout();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await logout.mutateAsync();
+      toast({
+        title: 'Logged out',
+        description: 'You have been logged out successfully.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to logout. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-6">
@@ -45,19 +74,35 @@ export function Topbar() {
 
         {/* User menu */}
         {user && (
-          <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium">
-                {user.firstName} {user.lastName}
-              </p>
-              <p className="text-xs text-muted-foreground">{user.role}</p>
-            </div>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
-              <span className="text-sm font-medium text-primary-foreground">
-                {user.firstName[0]}{user.lastName[0]}
-              </span>
-            </div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
+                  <span className="text-sm font-medium text-primary-foreground">
+                    {getInitials(user.name)}
+                  </span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user.name}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.email}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.roles.join(', ')}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} disabled={logout.isPending}>
+                <LogOut className="mr-2 h-4 w-4" />
+                {logout.isPending ? 'Logging out...' : 'Log out'}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
     </header>

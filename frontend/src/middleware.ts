@@ -2,15 +2,20 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const protectedRoutes = ['/dashboard'];
-const publicRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password'];
+const publicRoutes = ['/auth/login', '/auth/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const accessToken = request.cookies.get('access_token')?.value;
+  
+  // Check for access token in both cookies and localStorage (via header)
+  const accessToken = request.cookies.get('access_token')?.value ||
+                      request.headers.get('authorization')?.replace('Bearer ', '');
 
   // Check if user is trying to access protected route without token
   if (protectedRoutes.some((route) => pathname.startsWith(route)) && !accessToken) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Check if user is trying to access auth route with token

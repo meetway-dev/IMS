@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -12,12 +14,33 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useLogin } from '@/hooks/use-auth';
 import { loginSchema } from '@/schemas/auth.schema';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuthStore } from '@/store/auth-store';
 
 type LoginFormValues = yup.InferType<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginPageContent() {
   const { toast } = useToast();
   const login = useLogin();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuthStore();
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
+
+  // Show success message if user just registered
+  React.useEffect(() => {
+    if (searchParams.get('registered') === 'true') {
+      toast({
+        title: 'Registration successful',
+        description: 'Please login with your credentials.',
+      });
+    }
+  }, [searchParams, toast]);
 
   const {
     register,
@@ -34,14 +57,11 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     try {
       await login.mutateAsync(data);
-      toast({
-        title: 'Success',
-        description: 'You have been logged in successfully.',
-      });
+      // Success toast is handled in the useLogin hook
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to login. Please try again.',
+        title: 'Login failed',
+        description: error.message || 'Invalid email or password. Please try again.',
         variant: 'destructive',
       });
     }
@@ -112,5 +132,13 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

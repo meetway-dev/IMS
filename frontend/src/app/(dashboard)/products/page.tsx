@@ -273,7 +273,6 @@ export default function ProductsPage() {
         data={productsData?.data || []}
         searchKey="name"
         searchPlaceholder="Search products..."
-        isLoading={isLoading}
       />
     </div>
   );

@@ -7,9 +7,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Package,
-  ShoppingCart,
-  Users,
-  Settings,
+  Truck,
   LogOut,
   Menu,
   X,
@@ -20,13 +18,13 @@ import { useAuthStore } from '@/store/auth-store';
 import { useLogout } from '@/hooks/use-auth';
 import { useUIStore } from '@/store/ui-store';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import { getInitials } from '@/lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Products', href: '/dashboard/products', icon: Package },
-  { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
-  { name: 'Users', href: '/dashboard/users', icon: Users },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { name: 'Suppliers', href: '/dashboard/suppliers', icon: Truck },
 ];
 
 export function Sidebar() {
@@ -34,9 +32,22 @@ export function Sidebar() {
   const { user } = useAuthStore();
   const logout = useLogout();
   const { sidebarOpen, toggleSidebar, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
+  const { toast } = useToast();
 
-  const handleLogout = () => {
-    logout.mutate();
+  const handleLogout = async () => {
+    try {
+      await logout.mutateAsync();
+      toast({
+        title: 'Logged out',
+        description: 'You have been logged out successfully.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to logout. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -105,16 +116,16 @@ export function Sidebar() {
             <div className="flex items-center space-x-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
                 <span className="text-sm font-medium text-primary-foreground">
-                  {user.firstName[0]}{user.lastName[0]}
+                  {getInitials(user.name)}
                 </span>
               </div>
               {sidebarOpen && (
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-sm font-medium">
-                    {user.firstName} {user.lastName}
+                    {user.name}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {user.role}
+                    {user.roles.join(', ')}
                   </p>
                 </div>
               )}

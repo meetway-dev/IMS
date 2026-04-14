@@ -5,9 +5,7 @@ import { User, PaginatedResponse, PaginationParams } from '@/types';
 interface CreateUserData {
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
-  role: 'ADMIN' | 'MANAGER' | 'STAFF';
+  name: string;
 }
 
 interface UpdateUserData extends Partial<CreateUserData> {

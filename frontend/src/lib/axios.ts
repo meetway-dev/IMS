@@ -81,7 +81,7 @@ axiosInstance.interceptors.response.use(
     }
 
     // Handle other errors
-    const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+    const errorMessage = (error.response?.data as any)?.message || (error as any).message || 'An error occurred';
     return Promise.reject({
       ...error,
       message: errorMessage,

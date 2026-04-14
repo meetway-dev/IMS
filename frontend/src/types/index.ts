@@ -2,10 +2,9 @@
 export interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  companyId: string;
+  name: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  roles: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -17,9 +16,43 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-export interface AuthResponse {
-  user: User;
-  tokens: AuthTokens;
+export interface TokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+  refreshTokenId: string;
+  sessionId: string;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+}
+
+export interface ApiError {
+  message: string;
+  statusCode: number;
+  error?: string;
+}
+
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  search?: string;
+  lowStock?: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 // Product Types
@@ -53,6 +86,19 @@ export interface Category {
   updatedAt: string;
   children?: Category[];
   parent?: Category;
+}
+
+// Supplier Types
+export interface Supplier {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  contactPerson?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Inventory Types
@@ -120,12 +166,6 @@ export interface Company {
   address?: string;
   createdAt: string;
   updatedAt: string;
-}
-
-// API Response Types
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
 }
 
 export interface PaginatedResponse<T> {
