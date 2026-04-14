@@ -34,6 +34,13 @@ export interface ApiError {
   message: string;
   statusCode: number;
   error?: string;
+  code?: string;
+  errors?: ValidationError[];
+}
+
+export interface ValidationError {
+  field: string;
+  message: string;
 }
 
 export interface PaginationParams {

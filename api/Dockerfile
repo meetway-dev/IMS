@@ -12,6 +12,7 @@ COPY src ./src
 
 RUN npx prisma generate --schema=./prisma/schema.prisma
 RUN npm run build
+RUN ls -la /app/dist || echo "dist folder not found"
 
 # Production
 FROM node:20-alpine AS production
@@ -26,8 +27,5 @@ COPY --from=build /app/dist ./dist
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
-
 EXPOSE 3000
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
