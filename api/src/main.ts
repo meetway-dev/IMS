@@ -53,7 +53,7 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  const port = Number(process.env.PORT ?? 3000);
+  const port = Number(process.env.PORT ?? 8080);
   await app.listen(port, '0.0.0.0');
 
   const baseUrl = await app.getUrl();

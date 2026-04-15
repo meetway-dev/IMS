@@ -33,11 +33,17 @@ export class AuthService {
     return user;
   }
 
-  async login(input: { email: string; password: string; userAgent?: string; ip?: string }) {
+  async login(input: {
+    email: string;
+    password: string;
+    userAgent?: string;
+    ip?: string;
+  }) {
     const user = await this.prisma.user.findFirst({
       where: { email: input.email.toLowerCase(), deletedAt: null },
     });
-    if (!user?.passwordHash) throw new UnauthorizedException('Invalid credentials');
+    if (!user?.passwordHash)
+      throw new UnauthorizedException('Invalid credentials');
 
     const ok = await argon2.verify(user.passwordHash, input.password);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
@@ -55,14 +61,19 @@ export class AuthService {
     });
   }
 
-  async refresh(input: { refreshToken: string; userAgent?: string; ip?: string }) {
+  async refresh(input: {
+    refreshToken: string;
+    userAgent?: string;
+    ip?: string;
+  }) {
     const decoded = await this.verifyRefreshToken(input.refreshToken);
 
     const tokenRow = await this.prisma.refreshToken.findUnique({
       where: { id: decoded.jti },
       include: { user: true },
     });
-    if (!tokenRow || tokenRow.revokedAt) throw new UnauthorizedException('Refresh token revoked');
+    if (!tokenRow || tokenRow.revokedAt)
+      throw new UnauthorizedException('Refresh token revoked');
     if (tokenRow.expiresAt.getTime() <= Date.now())
       throw new UnauthorizedException('Refresh token expired');
 
@@ -70,7 +81,11 @@ export class AuthService {
     if (!isValid) {
       // Token reuse / theft: revoke the entire session
       await this.prisma.refreshToken.updateMany({
-        where: { userId: tokenRow.userId, sessionId: tokenRow.sessionId, revokedAt: null },
+        where: {
+          userId: tokenRow.userId,
+          sessionId: tokenRow.sessionId,
+          revokedAt: null,
+        },
         data: { revokedAt: new Date() },
       });
       throw new UnauthorizedException('Refresh token reuse detected');
@@ -127,7 +142,9 @@ export class AuthService {
 
   async logout(input: { refreshToken: string }) {
     const decoded = await this.verifyRefreshToken(input.refreshToken);
-    const tokenRow = await this.prisma.refreshToken.findUnique({ where: { id: decoded.jti } });
+    const tokenRow = await this.prisma.refreshToken.findUnique({
+      where: { id: decoded.jti },
+    });
     if (!tokenRow) return;
     await this.prisma.refreshToken.update({
       where: { id: tokenRow.id },
@@ -161,14 +178,20 @@ export class AuthService {
   }) {
     const sessionId = input.sessionId ?? crypto.randomUUID();
 
-    const accessPayload: JwtAccessPayload = { sub: input.userId, email: input.email };
+    const accessPayload: JwtAccessPayload = {
+      sub: input.userId,
+      email: input.email,
+    };
     const accessToken = await this.jwt.signAsync(accessPayload, {
       secret: this.accessSecret(),
       expiresIn: this.accessTtlSeconds(),
     });
 
     const refreshTokenId = crypto.randomUUID();
-    const refreshPayload: JwtRefreshPayload = { sub: input.userId, sid: sessionId };
+    const refreshPayload: JwtRefreshPayload = {
+      sub: input.userId,
+      sid: sessionId,
+    };
     const refreshToken = await this.jwt.signAsync(refreshPayload, {
       secret: this.refreshSecret(),
       expiresIn: `${this.refreshTtlDays()}d`,
@@ -176,7 +199,9 @@ export class AuthService {
     });
 
     const tokenHash = await argon2.hash(refreshToken);
-    const expiresAt = new Date(Date.now() + this.refreshTtlDays() * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + this.refreshTtlDays() * 24 * 60 * 60 * 1000,
+    );
 
     await this.prisma.refreshToken.create({
       data: {
@@ -201,16 +226,20 @@ export class AuthService {
     };
   }
 
-  private async verifyRefreshToken(token: string): Promise<{ sub: string; sid: string; jti: string }> {
+  private async verifyRefreshToken(
+    token: string,
+  ): Promise<{ sub: string; sid: string; jti: string }> {
     try {
-      const payload = await this.jwt.verifyAsync<JwtRefreshPayload & { jti: string }>(token, {
+      const payload = await this.jwt.verifyAsync<
+        JwtRefreshPayload & { jti: string }
+      >(token, {
         secret: this.refreshSecret(),
       });
-      if (!payload?.sub || !payload?.sid || !payload?.jti) throw new Error('Invalid payload');
+      if (!payload?.sub || !payload?.sid || !payload?.jti)
+        throw new Error('Invalid payload');
       return { sub: payload.sub, sid: payload.sid, jti: payload.jti };
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
 }
-

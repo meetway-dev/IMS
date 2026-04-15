@@ -1,7 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { InventoryTransactionType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 
 export class AdjustStockDto {
@@ -9,12 +16,18 @@ export class AdjustStockDto {
   @IsUUID()
   inventoryItemId!: string;
 
-  @ApiProperty({ example: -2, description: 'Negative reduces stock; positive increases' })
+  @ApiProperty({
+    example: -2,
+    description: 'Negative reduces stock; positive increases',
+  })
   @Type(() => Number)
   @IsInt()
   quantityDelta!: number;
 
-  @ApiPropertyOptional({ enum: InventoryTransactionType, default: InventoryTransactionType.ADJUSTMENT })
+  @ApiPropertyOptional({
+    enum: InventoryTransactionType,
+    default: InventoryTransactionType.ADJUSTMENT,
+  })
   @IsOptional()
   @IsEnum(InventoryTransactionType)
   type?: InventoryTransactionType;

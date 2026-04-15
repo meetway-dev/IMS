@@ -1,11 +1,20 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { slugify } from '../../common/utils/slug';
 import { buildPaginatedResult } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type { AuthUser } from '../../types/express';
-import type { CategoryListQueryDto, CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
+import type {
+  CategoryListQueryDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from './dto/category.dto';
 
 @Injectable()
 export class CategoriesService {
@@ -14,7 +23,12 @@ export class CategoriesService {
     private readonly audit: AuditService,
   ) {}
 
-  async create(dto: CreateCategoryDto, user: AuthUser, ip?: string, userAgent?: string) {
+  async create(
+    dto: CreateCategoryDto,
+    user: AuthUser,
+    ip?: string,
+    userAgent?: string,
+  ) {
     const slug = (dto.slug?.trim() || slugify(dto.name)).toLowerCase();
     const parentId = dto.parentId ?? null;
 
@@ -42,7 +56,10 @@ export class CategoriesService {
 
       return row;
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
         throw new ConflictException('Slug already exists for this parent');
       }
       throw e;
@@ -116,11 +133,18 @@ export class CategoriesService {
     return row;
   }
 
-  async update(id: string, dto: UpdateCategoryDto, user: AuthUser, ip?: string, userAgent?: string) {
+  async update(
+    id: string,
+    dto: UpdateCategoryDto,
+    user: AuthUser,
+    ip?: string,
+    userAgent?: string,
+  ) {
     await this.ensureExists(id);
 
     if (dto.parentId) {
-      if (dto.parentId === id) throw new BadRequestException('Category cannot be its own parent');
+      if (dto.parentId === id)
+        throw new BadRequestException('Category cannot be its own parent');
       const parent = await this.prisma.category.findFirst({
         where: { id: dto.parentId, deletedAt: null },
       });
@@ -154,7 +178,10 @@ export class CategoriesService {
 
       return updated;
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
         throw new ConflictException('Slug already exists for this parent');
       }
       throw e;
@@ -166,7 +193,8 @@ export class CategoriesService {
     const childCount = await this.prisma.category.count({
       where: { parentId: id, deletedAt: null },
     });
-    if (childCount > 0) throw new BadRequestException('Category has child categories');
+    if (childCount > 0)
+      throw new BadRequestException('Category has child categories');
 
     const updated = await this.prisma.category.update({
       where: { id },
@@ -186,21 +214,27 @@ export class CategoriesService {
   }
 
   private async ensureExists(id: string) {
-    const row = await this.prisma.category.findFirst({ where: { id, deletedAt: null } });
+    const row = await this.prisma.category.findFirst({
+      where: { id, deletedAt: null },
+    });
     if (!row) throw new NotFoundException('Category not found');
   }
 
-  private async isDescendant(maybeDescendantId: string, ancestorId: string): Promise<boolean> {
+  private async isDescendant(
+    maybeDescendantId: string,
+    ancestorId: string,
+  ): Promise<boolean> {
     let current: string | null = maybeDescendantId;
     const seen = new Set<string>();
     while (current) {
       if (current === ancestorId) return true;
       if (seen.has(current)) break;
       seen.add(current);
-      const parentRow: { parentId: string | null } | null = await this.prisma.category.findUnique({
-        where: { id: current },
-        select: { parentId: true },
-      });
+      const parentRow: { parentId: string | null } | null =
+        await this.prisma.category.findUnique({
+          where: { id: current },
+          select: { parentId: true },
+        });
       current = parentRow?.parentId ?? null;
     }
     return false;

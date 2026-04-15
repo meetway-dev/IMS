@@ -26,12 +26,21 @@ export type PaginatedMeta = {
   totalPages: number;
 };
 
-export function paginationMeta(total: number, page: number, limit: number): PaginatedMeta {
+export function paginationMeta(
+  total: number,
+  page: number,
+  limit: number,
+): PaginatedMeta {
   const totalPages = Math.max(1, Math.ceil(total / limit));
   return { page, limit, total, totalPages };
 }
 
-export function buildPaginatedResult<T>(data: T[], total: number, page: number, limit: number) {
+export function buildPaginatedResult<T>(
+  data: T[],
+  total: number,
+  page: number,
+  limit: number,
+) {
   return {
     data,
     meta: paginationMeta(total, page, limit),

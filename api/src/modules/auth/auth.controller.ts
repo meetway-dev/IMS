@@ -1,5 +1,10 @@
 import { Body, Controller, Get, Ip, Post, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -56,9 +61,17 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @ApiOperation({ summary: 'Rotate refresh token and get new token pair' })
-  async refresh(@Body() dto: RefreshDto, @Req() req: Request, @Ip() ip: string) {
+  async refresh(
+    @Body() dto: RefreshDto,
+    @Req() req: Request,
+    @Ip() ip: string,
+  ) {
     const userAgent = req.headers['user-agent'];
-    return await this.auth.refresh({ refreshToken: dto.refreshToken, userAgent, ip });
+    return await this.auth.refresh({
+      refreshToken: dto.refreshToken,
+      userAgent,
+      ip,
+    });
   }
 
   @Public()

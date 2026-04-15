@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Permissions } from '../../common/decorators/permissions.decorator';
@@ -15,7 +25,9 @@ export class ProductsController {
 
   @Post()
   @Permissions('products.write')
-  @ApiOperation({ summary: 'Create product (optional variants); creates inventory rows' })
+  @ApiOperation({
+    summary: 'Create product (optional variants); creates inventory rows',
+  })
   @ApiBody({
     type: CreateProductDto,
     examples: {
@@ -79,7 +91,10 @@ export class ProductsController {
   @Delete(':id')
   @Permissions('products.write')
   @ApiOperation({ summary: 'Soft-delete product' })
-  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthUser) {
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
     return this.products.remove(id, user.id);
   }
 }

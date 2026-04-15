@@ -1,10 +1,18 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { buildPaginatedResult } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type { AuthUser } from '../../types/express';
-import type { CreateSupplierDto, SupplierListQueryDto, UpdateSupplierDto } from './dto/supplier.dto';
+import type {
+  CreateSupplierDto,
+  SupplierListQueryDto,
+  UpdateSupplierDto,
+} from './dto/supplier.dto';
 
 @Injectable()
 export class SuppliersService {
@@ -13,7 +21,12 @@ export class SuppliersService {
     private readonly audit: AuditService,
   ) {}
 
-  async create(dto: CreateSupplierDto, user: AuthUser, ip?: string, userAgent?: string) {
+  async create(
+    dto: CreateSupplierDto,
+    user: AuthUser,
+    ip?: string,
+    userAgent?: string,
+  ) {
     try {
       const row = await this.prisma.supplier.create({
         data: {
@@ -38,7 +51,10 @@ export class SuppliersService {
 
       return row;
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
         throw new ConflictException('Email already exists');
       }
       throw e;
@@ -86,7 +102,13 @@ export class SuppliersService {
     return row;
   }
 
-  async update(id: string, dto: UpdateSupplierDto, user: AuthUser, ip?: string, userAgent?: string) {
+  async update(
+    id: string,
+    dto: UpdateSupplierDto,
+    user: AuthUser,
+    ip?: string,
+    userAgent?: string,
+  ) {
     await this.findOne(id);
 
     try {
@@ -97,7 +119,9 @@ export class SuppliersService {
           ...(dto.email !== undefined && { email: dto.email.trim() }),
           ...(dto.phone !== undefined && { phone: dto.phone.trim() }),
           ...(dto.address !== undefined && { address: dto.address.trim() }),
-          ...(dto.contactPerson !== undefined && { contactPerson: dto.contactPerson.trim() }),
+          ...(dto.contactPerson !== undefined && {
+            contactPerson: dto.contactPerson.trim(),
+          }),
           ...(dto.notes !== undefined && { notes: dto.notes.trim() }),
         },
       });
@@ -114,7 +138,10 @@ export class SuppliersService {
 
       return row;
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
         throw new ConflictException('Email already exists');
       }
       throw e;

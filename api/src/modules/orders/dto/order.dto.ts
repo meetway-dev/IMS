@@ -14,7 +14,9 @@ import {
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 
 export class OrderLineInputDto {
-  @ApiPropertyOptional({ description: 'Exactly one of productId or variantId required' })
+  @ApiPropertyOptional({
+    description: 'Exactly one of productId or variantId required',
+  })
   @IsOptional()
   @IsUUID()
   productId?: string;
@@ -29,14 +31,19 @@ export class OrderLineInputDto {
   @Min(1)
   quantity!: number;
 
-  @ApiPropertyOptional({ description: 'Defaults to product/variant sale price' })
+  @ApiPropertyOptional({
+    description: 'Defaults to product/variant sale price',
+  })
   @IsOptional()
   @IsString()
   unitPrice?: string;
 }
 
 export class CreateOrderDto {
-  @ApiPropertyOptional({ enum: OrderStatus, description: 'DRAFT (default) or CONFIRMED (stock moves immediately)' })
+  @ApiPropertyOptional({
+    enum: OrderStatus,
+    description: 'DRAFT (default) or CONFIRMED (stock moves immediately)',
+  })
   @IsOptional()
   @IsEnum(OrderStatus)
   status?: OrderStatus;

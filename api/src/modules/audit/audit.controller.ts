@@ -1,7 +1,15 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
-import { PaginationQueryDto, buildPaginatedResult } from '../../common/dto/pagination.dto';
+import {
+  PaginationQueryDto,
+  buildPaginatedResult,
+} from '../../common/dto/pagination.dto';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 
@@ -44,7 +52,8 @@ export class AuditController {
 
     const where: Prisma.AuditLogWhereInput = {};
     if (action) where.action = { contains: action, mode: 'insensitive' };
-    if (entityType) where.entityType = { equals: entityType, mode: 'insensitive' };
+    if (entityType)
+      where.entityType = { equals: entityType, mode: 'insensitive' };
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.auditLog.findMany({

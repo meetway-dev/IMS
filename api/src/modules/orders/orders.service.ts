@@ -22,10 +22,17 @@ export class OrdersService {
     private readonly audit: AuditService,
   ) {}
 
-  async create(dto: CreateOrderDto, user: AuthUser, ip?: string, userAgent?: string) {
+  async create(
+    dto: CreateOrderDto,
+    user: AuthUser,
+    ip?: string,
+    userAgent?: string,
+  ) {
     const status = dto.status ?? OrderStatus.DRAFT;
     if (status !== OrderStatus.DRAFT && status !== OrderStatus.CONFIRMED) {
-      throw new BadRequestException('New orders must start as DRAFT or CONFIRMED');
+      throw new BadRequestException(
+        'New orders must start as DRAFT or CONFIRMED',
+      );
     }
 
     const orderNumber = `ORD-${Date.now().toString(36)}-${crypto.randomBytes(3).toString('hex')}`;
@@ -33,10 +40,14 @@ export class OrdersService {
     const lines = await Promise.all(
       dto.items.map(async (item) => {
         if (!item.productId && !item.variantId) {
-          throw new BadRequestException('Each line needs productId or variantId');
+          throw new BadRequestException(
+            'Each line needs productId or variantId',
+          );
         }
         if (item.productId && item.variantId) {
-          throw new BadRequestException('Line cannot include both productId and variantId');
+          throw new BadRequestException(
+            'Line cannot include both productId and variantId',
+          );
         }
 
         let unitPrice: Prisma.Decimal;
@@ -44,7 +55,8 @@ export class OrdersService {
           const p = await this.prisma.product.findFirst({
             where: { id: item.productId, deletedAt: null },
           });
-          if (!p) throw new NotFoundException(`Product ${item.productId} not found`);
+          if (!p)
+            throw new NotFoundException(`Product ${item.productId} not found`);
           unitPrice = item.unitPrice ? d(item.unitPrice) : d(p.salePrice);
         } else {
           const v = await this.prisma.productVariant.findFirst({
@@ -54,7 +66,9 @@ export class OrdersService {
           if (!v?.product || v.product.deletedAt) {
             throw new NotFoundException(`Variant ${item.variantId} not found`);
           }
-          unitPrice = item.unitPrice ? d(item.unitPrice) : d(v.product.salePrice);
+          unitPrice = item.unitPrice
+            ? d(item.unitPrice)
+            : d(v.product.salePrice);
         }
 
         const lineTotal = unitPrice.mul(item.quantity);
@@ -160,12 +174,7 @@ export class OrdersService {
     return order;
   }
 
-  async confirm(
-    id: string,
-    user: AuthUser,
-    ip?: string,
-    userAgent?: string,
-  ) {
+  async confirm(id: string, user: AuthUser, ip?: string, userAgent?: string) {
     const order = await this.prisma.order.findFirst({
       where: { id, deletedAt: null },
       include: { items: true },
@@ -226,12 +235,16 @@ export class OrdersService {
       include: { items: true },
     });
     if (!order) throw new NotFoundException('Order not found');
-    if (order.status === OrderStatus.CANCELLED || order.status === OrderStatus.REFUNDED) {
+    if (
+      order.status === OrderStatus.CANCELLED ||
+      order.status === OrderStatus.REFUNDED
+    ) {
       throw new BadRequestException('Order already closed');
     }
 
     const shouldRestore =
-      order.status === OrderStatus.CONFIRMED || order.status === OrderStatus.PAID;
+      order.status === OrderStatus.CONFIRMED ||
+      order.status === OrderStatus.PAID;
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const o = await tx.order.update({
@@ -259,7 +272,9 @@ export class OrdersService {
   }
 
   private async ensureOrder(id: string) {
-    const order = await this.prisma.order.findFirst({ where: { id, deletedAt: null } });
+    const order = await this.prisma.order.findFirst({
+      where: { id, deletedAt: null },
+    });
     if (!order) throw new NotFoundException('Order not found');
     return order;
   }
@@ -291,12 +306,16 @@ export class OrdersService {
       const delta = mode === 'SALE' ? -line.quantity : line.quantity;
 
       if (mode === 'SALE' && inv.stockQuantity < line.quantity) {
-        throw new BadRequestException(`Insufficient stock for inventory ${inv.id}`);
+        throw new BadRequestException(
+          `Insufficient stock for inventory ${inv.id}`,
+        );
       }
 
       const next = inv.stockQuantity + delta;
       if (next < 0) {
-        throw new BadRequestException(`Stock would go negative for inventory ${inv.id}`);
+        throw new BadRequestException(
+          `Stock would go negative for inventory ${inv.id}`,
+        );
       }
 
       await tx.inventoryItem.update({

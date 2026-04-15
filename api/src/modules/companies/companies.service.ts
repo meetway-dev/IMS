@@ -1,10 +1,18 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { buildPaginatedResult } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type { AuthUser } from '../../types/express';
-import type { CompanyListQueryDto, CreateCompanyDto, UpdateCompanyDto } from './dto/company.dto';
+import type {
+  CompanyListQueryDto,
+  CreateCompanyDto,
+  UpdateCompanyDto,
+} from './dto/company.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -13,7 +21,12 @@ export class CompaniesService {
     private readonly audit: AuditService,
   ) {}
 
-  async create(dto: CreateCompanyDto, user: AuthUser, ip?: string, userAgent?: string) {
+  async create(
+    dto: CreateCompanyDto,
+    user: AuthUser,
+    ip?: string,
+    userAgent?: string,
+  ) {
     try {
       const row = await this.prisma.company.create({
         data: {
@@ -34,7 +47,10 @@ export class CompaniesService {
 
       return row;
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
         throw new ConflictException('Name or code already exists');
       }
       throw e;
@@ -75,7 +91,13 @@ export class CompaniesService {
     return row;
   }
 
-  async update(id: string, dto: UpdateCompanyDto, user: AuthUser, ip?: string, userAgent?: string) {
+  async update(
+    id: string,
+    dto: UpdateCompanyDto,
+    user: AuthUser,
+    ip?: string,
+    userAgent?: string,
+  ) {
     await this.ensureExists(id);
     try {
       const updated = await this.prisma.company.update({
@@ -98,7 +120,10 @@ export class CompaniesService {
 
       return updated;
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
         throw new ConflictException('Name or code already exists');
       }
       throw e;
@@ -125,7 +150,9 @@ export class CompaniesService {
   }
 
   private async ensureExists(id: string) {
-    const row = await this.prisma.company.findFirst({ where: { id, deletedAt: null } });
+    const row = await this.prisma.company.findFirst({
+      where: { id, deletedAt: null },
+    });
     if (!row) throw new NotFoundException('Company not found');
   }
 }

@@ -1,11 +1,32 @@
-import { Body, Controller, Delete, Get, Ip, Param, Patch, Post, Query, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Ip,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../types/express';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { CategoriesService } from './categories.service';
-import { CategoryListQueryDto, CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
+import {
+  CategoryListQueryDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from './dto/category.dto';
 
 @ApiTags('Categories')
 @ApiBearerAuth('access-token')
@@ -25,7 +46,10 @@ export class CategoriesController {
       },
       child: {
         summary: 'Child category',
-        value: { name: 'Pipes', parentId: 'b2c3d4e5-f6a7-8901-bcde-f12345678901' },
+        value: {
+          name: 'Pipes',
+          parentId: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+        },
       },
     },
   })
@@ -70,7 +94,15 @@ export class CategoriesController {
           name: 'Sanitary',
           slug: 'sanitary',
           parentId: null,
-          children: [{ id: 'c2', name: 'Pipes', slug: 'pipes', parentId: 'c1', children: [] }],
+          children: [
+            {
+              id: 'c2',
+              name: 'Pipes',
+              slug: 'pipes',
+              parentId: 'c1',
+              children: [],
+            },
+          ],
         },
       ],
     },

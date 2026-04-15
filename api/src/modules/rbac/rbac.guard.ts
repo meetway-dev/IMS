@@ -27,10 +27,10 @@ export class RbacGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    const requiredPermissions = this.reflector.getAllAndMerge<string[]>(PERMISSIONS_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredPermissions = this.reflector.getAllAndMerge<string[]>(
+      PERMISSIONS_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!requiredRoles.length && !requiredPermissions.length) {
       return true;

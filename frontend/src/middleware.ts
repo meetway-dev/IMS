@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const protectedRoutes = ['/dashboard'];
-const publicRoutes = ['/auth/login', '/auth/register'];
+const publicRoutes = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
 
   // Check if user is trying to access protected route without token
   if (protectedRoutes.some((route) => pathname.startsWith(route)) && !accessToken) {
-    const loginUrl = new URL('/auth/login', request.url);
+    const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }

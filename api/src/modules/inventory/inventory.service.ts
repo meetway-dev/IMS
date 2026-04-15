@@ -8,7 +8,10 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type { AuthUser } from '../../types/express';
 import { buildPaginatedResult } from '../../common/dto/pagination.dto';
-import type { AdjustStockDto, TransactionListQueryDto } from './dto/inventory.dto';
+import type {
+  AdjustStockDto,
+  TransactionListQueryDto,
+} from './dto/inventory.dto';
 
 @Injectable()
 export class InventoryService {
@@ -23,7 +26,8 @@ export class InventoryService {
     ip?: string,
     userAgent?: string,
   ) {
-    if (dto.quantityDelta === 0) throw new BadRequestException('quantityDelta cannot be 0');
+    if (dto.quantityDelta === 0)
+      throw new BadRequestException('quantityDelta cannot be 0');
 
     const type = dto.type ?? InventoryTransactionType.ADJUSTMENT;
 
@@ -128,9 +132,7 @@ export class InventoryService {
       if (row.variant?.deletedAt) continue;
 
       const min =
-        row.product?.minStockAlert ??
-        row.variant?.product?.minStockAlert ??
-        0;
+        row.product?.minStockAlert ?? row.variant?.product?.minStockAlert ?? 0;
       if (row.stockQuantity < min) {
         alerts.push({
           inventoryItemId: row.id,
@@ -138,7 +140,11 @@ export class InventoryService {
           minStockAlert: min,
           productId: row.productId,
           variantId: row.variantId,
-          sku: row.product?.sku ?? row.variant?.sku ?? row.variant?.product?.sku ?? null,
+          sku:
+            row.product?.sku ??
+            row.variant?.sku ??
+            row.variant?.product?.sku ??
+            null,
           name: row.product?.name ?? row.variant?.product?.name ?? null,
         });
       }

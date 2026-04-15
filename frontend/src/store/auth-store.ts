@@ -13,11 +13,12 @@ interface AuthState {
   setTokens: (tokens: TokenResponse) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  initializeAuth: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       tokens: null,
       isAuthenticated: false,
@@ -38,6 +39,34 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
         }),
       setLoading: (isLoading) => set({ isLoading }),
+      initializeAuth: () => {
+        // Check if tokens exist in localStorage and restore auth state
+        if (typeof window !== 'undefined') {
+          const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+          const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+          const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
+          
+          if (accessToken && refreshToken) {
+            const tokens: TokenResponse = {
+              accessToken,
+              refreshToken,
+              tokenType: 'Bearer',
+              expiresIn: 900,
+              refreshTokenId: '',
+              sessionId: '',
+            };
+            
+            const user = storedUser ? JSON.parse(storedUser) : null;
+            
+            set({
+              tokens,
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+          }
+        }
+      },
     }),
     {
       name: STORAGE_KEYS.USER,

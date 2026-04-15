@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 
 export class CreateSupplierDto {
@@ -77,7 +83,9 @@ export class UpdateSupplierDto {
 }
 
 export class SupplierListQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({ description: 'Search by name, email, phone, or contact person' })
+  @ApiPropertyOptional({
+    description: 'Search by name, email, phone, or contact person',
+  })
   @IsString()
   @IsOptional()
   q?: string;

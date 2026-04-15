@@ -3,7 +3,7 @@ import { STORAGE_KEYS } from './constants';
 
 // Create axios instance
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3000/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ axiosInstance.interceptors.response.use(
           localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
           localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
           localStorage.removeItem(STORAGE_KEYS.USER);
-          window.location.href = '/auth/login';
+          window.location.href = '/login';
         }
         return Promise.reject(refreshError);
       }

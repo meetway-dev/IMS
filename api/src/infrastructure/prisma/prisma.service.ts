@@ -14,15 +14,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
 
-  async enableShutdownHooks(app: INestApplication) {
+  enableShutdownHooks(app: INestApplication) {
     // Prisma v7+ types no longer include beforeExit typing by default.
     // We still want graceful Nest shutdown on Prisma termination events.
-    (this as unknown as { $on: (event: string, cb: () => Promise<void>) => void }).$on(
-      'beforeExit',
-      async () => {
-        await app.close();
-      },
-    );
+    (
+      this as unknown as {
+        $on: (event: string, cb: () => Promise<void>) => void;
+      }
+    ).$on('beforeExit', async () => {
+      await app.close();
+    });
   }
 }
-

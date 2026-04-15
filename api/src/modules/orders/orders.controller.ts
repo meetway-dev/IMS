@@ -1,5 +1,21 @@
-import { Body, Controller, Get, Ip, Param, Patch, Post, Query, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Ip,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../types/express';
@@ -15,7 +31,10 @@ export class OrdersController {
 
   @Post()
   @Permissions('orders.write')
-  @ApiOperation({ summary: 'Create order (DRAFT by default). CONFIRMED deducts stock immediately.' })
+  @ApiOperation({
+    summary:
+      'Create order (DRAFT by default). CONFIRMED deducts stock immediately.',
+  })
   @ApiBody({
     type: CreateOrderDto,
     examples: {
@@ -23,7 +42,9 @@ export class OrdersController {
         summary: 'Draft POS order',
         value: {
           notes: 'Walk-in',
-          items: [{ productId: 'b2c3d4e5-f6a7-8901-bcde-f12345678901', quantity: 2 }],
+          items: [
+            { productId: 'b2c3d4e5-f6a7-8901-bcde-f12345678901', quantity: 2 },
+          ],
         },
       },
     },
@@ -92,7 +113,9 @@ export class OrdersController {
 
   @Patch(':id/cancel')
   @Permissions('orders.write')
-  @ApiOperation({ summary: 'Cancel order (restores stock if it was confirmed/paid)' })
+  @ApiOperation({
+    summary: 'Cancel order (restores stock if it was confirmed/paid)',
+  })
   async cancel(
     @Param('id') id: string,
     @CurrentUser() user: AuthUser,

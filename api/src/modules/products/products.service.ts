@@ -159,10 +159,18 @@ export class ProductsService {
           ...(dto.barcode !== undefined ? { barcode: dto.barcode } : {}),
           ...(dto.type != null ? { type: dto.type } : {}),
           ...(dto.unit != null ? { unit: dto.unit } : {}),
-          ...(dto.purchasePrice != null ? { purchasePrice: new Prisma.Decimal(dto.purchasePrice) } : {}),
-          ...(dto.salePrice != null ? { salePrice: new Prisma.Decimal(dto.salePrice) } : {}),
-          ...(dto.minStockAlert != null ? { minStockAlert: dto.minStockAlert } : {}),
-          ...(dto.categoryId !== undefined ? { categoryId: dto.categoryId } : {}),
+          ...(dto.purchasePrice != null
+            ? { purchasePrice: new Prisma.Decimal(dto.purchasePrice) }
+            : {}),
+          ...(dto.salePrice != null
+            ? { salePrice: new Prisma.Decimal(dto.salePrice) }
+            : {}),
+          ...(dto.minStockAlert != null
+            ? { minStockAlert: dto.minStockAlert }
+            : {}),
+          ...(dto.categoryId !== undefined
+            ? { categoryId: dto.categoryId }
+            : {}),
           ...(dto.companyId !== undefined ? { companyId: dto.companyId } : {}),
         },
         include: productInclude,
@@ -207,6 +215,11 @@ export class ProductsService {
   }
 
   private isUniqueViolation(e: unknown): boolean {
-    return typeof e === 'object' && e !== null && 'code' in e && (e as { code: string }).code === 'P2002';
+    return (
+      typeof e === 'object' &&
+      e !== null &&
+      'code' in e &&
+      (e as { code: string }).code === 'P2002'
+    );
   }
 }
