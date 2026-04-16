@@ -20,17 +20,18 @@ type LoginFormValues = yup.InferType<typeof loginSchema>;
 
 function LoginPageContent() {
   const { toast } = useToast();
-  const login = useLogin();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuthStore();
+  const redirect = searchParams.get('redirect') || '/dashboard';
+  const login = useLogin({ redirect });
 
   // Redirect if already authenticated
   React.useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      router.push(redirect);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, redirect]);
 
   // Show success message if user just registered
   React.useEffect(() => {
@@ -91,15 +92,7 @@ function LoginPageContent() {
               )}
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-sm text-primary hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"

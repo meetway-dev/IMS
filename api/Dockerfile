@@ -35,10 +35,26 @@ RUN addgroup -g 1001 -S nodejs && \
 FROM base AS dependencies
 
 # Copy package files
-COPY package*.json ./
+COPY api/package*.json ./
 
 # Install all dependencies (including dev dependencies for build)
 RUN npm ci --ignore-scripts && \
+    npm cache clean --force
+
+# ============================================
+# Shared Package Stage - Build shared package
+# ============================================
+FROM base AS shared-builder
+
+# Copy shared package files
+COPY shared/package.json ./shared/package.json
+COPY shared/tsconfig.json ./shared/tsconfig.json
+COPY shared/src ./shared/src
+
+# Build shared package
+WORKDIR /app/shared
+RUN npm install --include=dev && \
+    npm run build && \
     npm cache clean --force
 
 # ============================================
@@ -54,11 +70,15 @@ ENV NODE_ENV=development \
 RUN npm ci --ignore-scripts && \
     npm cache clean --force
 
+# Copy shared package from shared-builder
+COPY --from=shared-builder --chown=nodejs:nodejs /app/shared/dist ./node_modules/@ims/shared
+COPY --from=shared-builder --chown=nodejs:nodejs /app/shared/package.json ./node_modules/@ims/shared/package.json
+
 # Copy source code
-COPY prisma ./prisma
-COPY prisma.config.ts ./
-COPY tsconfig.json tsconfig.build.json nest-cli.json ./
-COPY src ./src
+COPY api/prisma ./prisma
+COPY api/prisma.config.ts ./
+COPY api/tsconfig.json api/tsconfig.build.json api/nest-cli.json ./
+COPY api/src ./src
 
 # Generate Prisma client
 RUN npx prisma generate --schema=./prisma/schema.prisma
@@ -76,11 +96,15 @@ RUN ls -la dist && \
 FROM base AS production
 
 # Copy package files
-COPY package*.json ./
+COPY api/package*.json ./
 
 # Install only production dependencies
 RUN npm ci --omit=dev --ignore-scripts && \
     npm cache clean --force
+
+# Copy shared package from shared-builder
+COPY --from=shared-builder --chown=nodejs:nodejs /app/shared/dist ./node_modules/@ims/shared
+COPY --from=shared-builder --chown=nodejs:nodejs /app/shared/package.json ./node_modules/@ims/shared/package.json
 
 # Copy Prisma client and migrations from builder
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
@@ -89,7 +113,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nodejs:nodejs /app/prisma.config.ts ./
 
 # Copy docker entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
+COPY api/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Change ownership of app directory

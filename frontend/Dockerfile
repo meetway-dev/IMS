@@ -48,23 +48,26 @@ RUN npm install --legacy-peer-deps && \
 # ============================================
 FROM base AS builder
 
-# Copy package files
-COPY package*.json ./
+# Set build environment to development to ensure devDependencies are installed
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1
+
+# Copy package files (only package.json to ensure fresh install)
+COPY package.json ./
 
 # Install all dependencies including dev dependencies for build
 RUN npm install --legacy-peer-deps && \
     npm cache clean --force
 
 # Set build environment to production for proper build behavior
-ENV NODE_ENV=production \
-    NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 
 # Copy source code explicitly
 COPY src ./src
 COPY tsconfig.json next.config.js postcss.config.js tailwind.config.ts ./
 
 # Copy environment file for build (create from example if needed)
-COPY .env.example .env.local
+COPY .env.local.example .env.local
 
 # Verify source files were copied correctly
 RUN ls -la src/ && \
@@ -85,15 +88,15 @@ FROM base AS production
 # Copy package files for production dependencies only
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm ci --omit=dev --ignore-scripts && \
+# Install all dependencies (including dev) for Next.js to work properly
+# Next.js needs dev dependencies like tailwindcss, autoprefixer, postcss for runtime
+RUN npm install --legacy-peer-deps && \
     npm cache clean --force
 
 # Copy built application from builder
 # Next.js standalone mode includes only necessary files
 COPY --from=builder --chown=nodejs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nodejs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nodejs:nodejs /app/public ./public
 
 # Change ownership of app directory
 RUN chown -R nodejs:nodejs /app

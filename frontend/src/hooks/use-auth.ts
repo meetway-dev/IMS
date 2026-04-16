@@ -5,8 +5,8 @@ import { STORAGE_KEYS } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 
-export function useLogin() {
-  const { setAuth } = useAuthStore();
+export function useLogin(options?: { redirect?: string }) {
+  const { setAuth, setUser } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -18,15 +18,27 @@ export function useLogin() {
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
         localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken);
+        
+        // Also set access token in a cookie for middleware
+        document.cookie = `access_token=${data.accessToken}; path=/; max-age=${data.expiresIn || 900}; SameSite=Strict`;
       }
-      // Fetch user profile after login
-      const user = await authService.getProfile();
-      useAuthStore.getState().setUser(user);
-      // Store user in localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+      
+      // Try to fetch user profile after login, but don't block redirection if it fails
+      try {
+        const user = await authService.getProfile();
+        setUser(user);
+        // Store user in localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+        }
+      } catch (error) {
+        console.warn('Failed to fetch user profile after login:', error);
+        // Continue with redirection even if profile fetch fails
+        // User can be fetched later via useProfile hook
       }
-      router.push('/dashboard');
+      
+      // Redirect to specified path or dashboard after successful login
+      router.push(options?.redirect || '/dashboard');
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },
   });
@@ -63,6 +75,9 @@ export function useLogout() {
       if (typeof window !== 'undefined') {
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        // Clear the access token cookie
+        document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
       }
       // Clear all queries
       queryClient.clear();

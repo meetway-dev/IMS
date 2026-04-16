@@ -76,8 +76,8 @@ services:
   # Backend API (NestJS)
   api:
     build:
-      context: ./api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api/Dockerfile
       target: production
       args:
         NODE_ENV: production

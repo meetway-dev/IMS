@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import { STORAGE_KEYS } from './constants';
+import { STORAGE_KEYS, API_ENDPOINTS } from './constants';
 
 // Create axios instance
 const axiosInstance = axios.create({
@@ -48,10 +48,7 @@ axiosInstance.interceptors.response.use(
         }
 
         // Call refresh endpoint
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-          { refreshToken }
-        );
+        const response = await axiosInstance.post(API_ENDPOINTS.AUTH.REFRESH, { refreshToken });
 
         const { accessToken, refreshToken: newRefreshToken } = response.data;
 
@@ -61,6 +58,8 @@ axiosInstance.interceptors.response.use(
           if (newRefreshToken) {
             localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
           }
+          // Also update the cookie for middleware
+          document.cookie = `access_token=${accessToken}; path=/; max-age=900; SameSite=Strict`;
         }
 
         // Retry original request with new token
@@ -74,6 +73,8 @@ axiosInstance.interceptors.response.use(
           localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
           localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
           localStorage.removeItem(STORAGE_KEYS.USER);
+          // Clear the cookie
+          document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
           window.location.href = '/login';
         }
         return Promise.reject(refreshError);

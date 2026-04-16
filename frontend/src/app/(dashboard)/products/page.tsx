@@ -23,82 +23,118 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const columns: ColumnDef<Product>[] = [
-  {
-    accessorKey: 'name',
-    header: 'Name',
-    cell: ({ row }) => row.original.name,
-  },
-  {
-    accessorKey: 'sku',
-    header: 'SKU',
-    cell: ({ row }) => row.original.sku,
-  },
-  {
-    accessorKey: 'category',
-    header: 'Category',
-    cell: ({ row }) => row.original.category?.name || '-',
-  },
-  {
-    accessorKey: 'price',
-    header: 'Price',
-    cell: ({ row }) => formatCurrency(row.original.price),
-  },
-  {
-    accessorKey: 'stock',
-    header: 'Stock',
-    cell: ({ row }) => {
-      const stock = row.original.minStockLevel;
-      return (
-        <span className={stock < 10 ? 'text-red-600' : ''}>
-          {stock}
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: 'isActive',
-    header: 'Status',
-    cell: ({ row }) => (
-      <span
-        className={`rounded-full px-2 py-1 text-xs ${
-          row.original.isActive
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'
-        }`}
-      >
-        {row.original.isActive ? 'Active' : 'Inactive'}
-      </span>
-    ),
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem className="text-destructive">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
-];
-
 export default function ProductsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setIsDialogOpen(true);
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (confirm('Are you sure you want to delete this product?')) {
+      await deleteProductMutation.mutateAsync(id);
+    }
+  };
+
+  const handleSubmitProduct = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get('name') as string,
+      sku: formData.get('sku') as string,
+      categoryId: formData.get('categoryId') as string,
+      price: Number(formData.get('price')),
+      cost: Number(formData.get('cost')),
+      unit: formData.get('unit') as string,
+      minStockLevel: Number(formData.get('minStockLevel')),
+    };
+
+    if (editingProduct) {
+      await updateProductMutation.mutateAsync({ id: editingProduct.id, data });
+    } else {
+      await createProductMutation.mutateAsync(data);
+    }
+  };
+
+  const columns: ColumnDef<Product>[] = [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => row.original.name,
+    },
+    {
+      accessorKey: 'sku',
+      header: 'SKU',
+      cell: ({ row }) => row.original.sku,
+    },
+    {
+      accessorKey: 'category',
+      header: 'Category',
+      cell: ({ row }) => row.original.category?.name || '-',
+    },
+    {
+      accessorKey: 'price',
+      header: 'Price',
+      cell: ({ row }) => formatCurrency(row.original.price),
+    },
+    {
+      accessorKey: 'stock',
+      header: 'Stock',
+      cell: ({ row }) => {
+        const stock = row.original.stock ?? 0;
+        const minStock = row.original.minStockLevel;
+        return (
+          <span className={stock < minStock ? 'text-red-600' : ''}>
+            {stock}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'isActive',
+      header: 'Status',
+      cell: ({ row }) => (
+        <span
+          className={`rounded-full px-2 py-1 text-xs ${
+            row.original.isActive
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800'
+          }`}
+        >
+          {row.original.isActive ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleEditProduct(row.original)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="text-destructive" 
+              onClick={() => handleDeleteProduct(row.original.id)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
 
   // Fetch products
   const { data: productsData, isLoading } = useQuery({
@@ -132,20 +168,45 @@ export default function ProductsPage() {
     },
   });
 
-  const handleCreateProduct = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get('name') as string,
-      sku: formData.get('sku') as string,
-      categoryId: formData.get('categoryId') as string,
-      price: Number(formData.get('price')),
-      cost: Number(formData.get('cost')),
-      unit: formData.get('unit') as string,
-      minStockLevel: Number(formData.get('minStockLevel')),
-    };
-    await createProductMutation.mutateAsync(data);
-  };
+  // Update product mutation
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => productService.updateProduct(id, data),
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Product updated successfully.',
+      });
+      setIsDialogOpen(false);
+      setEditingProduct(null);
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update product.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Delete product mutation
+  const deleteProductMutation = useMutation({
+    mutationFn: productService.deleteProduct,
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Product deleted successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete product.',
+        variant: 'destructive',
+      });
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -156,18 +217,21 @@ export default function ProductsPage() {
             Manage your product inventory
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setEditingProduct(null);
+        }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setEditingProduct(null)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Product
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
+              <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleCreateProduct} className="space-y-4">
+            <form key={editingProduct?.id || 'create'} onSubmit={handleSubmitProduct} className="space-y-4">
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Product Name</Label>
@@ -175,6 +239,7 @@ export default function ProductsPage() {
                     id="name"
                     name="name"
                     placeholder="Enter product name"
+                    defaultValue={editingProduct?.name || ''}
                     required
                   />
                 </div>
@@ -184,6 +249,7 @@ export default function ProductsPage() {
                     id="sku"
                     name="sku"
                     placeholder="Enter SKU"
+                    defaultValue={editingProduct?.sku || ''}
                     required
                   />
                 </div>
@@ -211,6 +277,7 @@ export default function ProductsPage() {
                       type="number"
                       step="0.01"
                       placeholder="0.00"
+                      defaultValue={editingProduct?.price || ''}
                       required
                     />
                   </div>
@@ -222,6 +289,7 @@ export default function ProductsPage() {
                       type="number"
                       step="0.01"
                       placeholder="0.00"
+                      defaultValue={editingProduct?.cost || ''}
                       required
                     />
                   </div>
@@ -233,6 +301,7 @@ export default function ProductsPage() {
                       id="unit"
                       name="unit"
                       placeholder="pcs, kg, etc."
+                      defaultValue={editingProduct?.unit || ''}
                       required
                     />
                   </div>
@@ -243,6 +312,7 @@ export default function ProductsPage() {
                       name="minStockLevel"
                       type="number"
                       placeholder="10"
+                      defaultValue={editingProduct?.minStockLevel || ''}
                       required
                     />
                   </div>

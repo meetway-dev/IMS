@@ -24,6 +24,8 @@ export type PaginatedMeta = {
   limit: number;
   total: number;
   totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 };
 
 export function paginationMeta(
@@ -32,7 +34,14 @@ export function paginationMeta(
   limit: number,
 ): PaginatedMeta {
   const totalPages = Math.max(1, Math.ceil(total / limit));
-  return { page, limit, total, totalPages };
+  return {
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1
+  };
 }
 
 export function buildPaginatedResult<T>(

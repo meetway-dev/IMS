@@ -49,6 +49,7 @@ export interface PaginationParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   search?: string;
+  searchFields?: string;
   lowStock?: boolean;
 }
 
@@ -74,6 +75,7 @@ export interface Product {
   cost: number;
   unit: string;
   minStockLevel: number;
+  stock?: number;
   isActive: boolean;
   companyId: string;
   createdAt: string;
@@ -196,6 +198,7 @@ export interface PaginationParams {
   page?: number;
   limit?: number;
   search?: string;
+  searchFields?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }

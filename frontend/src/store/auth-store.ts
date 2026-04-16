@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, TokenResponse } from '@/types';
 import { STORAGE_KEYS } from '@/lib/constants';
+import { getCookie } from '@/lib/utils';
 
 interface AuthState {
   user: User | null;
@@ -46,9 +47,13 @@ export const useAuthStore = create<AuthState>()(
           const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
           const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
           
-          if (accessToken && refreshToken) {
+          // Also check for cookie as fallback
+          const cookieToken = getCookie('access_token');
+          const token = accessToken || cookieToken;
+          
+          if (token && refreshToken) {
             const tokens: TokenResponse = {
-              accessToken,
+              accessToken: token,
               refreshToken,
               tokenType: 'Bearer',
               expiresIn: 900,

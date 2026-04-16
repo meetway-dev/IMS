@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedRoutes = ['/dashboard'];
+const protectedRoutes = ['/dashboard', '/dashboard/', '/dashboard/*'];
 const publicRoutes = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
@@ -12,14 +12,26 @@ export function middleware(request: NextRequest) {
                       request.headers.get('authorization')?.replace('Bearer ', '');
 
   // Check if user is trying to access protected route without token
-  if (protectedRoutes.some((route) => pathname.startsWith(route)) && !accessToken) {
+  const isProtectedRoute = protectedRoutes.some(route => {
+    if (route.endsWith('/*')) {
+      const base = route.slice(0, -2);
+      return pathname.startsWith(base);
+    }
+    return pathname === route || pathname.startsWith(route + '/');
+  });
+
+  if (isProtectedRoute && !accessToken) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Check if user is trying to access auth route with token
-  if (publicRoutes.some((route) => pathname.startsWith(route)) && accessToken) {
+  const isPublicRoute = publicRoutes.some(route =>
+    pathname === route || pathname.startsWith(route + '/')
+  );
+
+  if (isPublicRoute && accessToken) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
