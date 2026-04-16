@@ -152,4 +152,59 @@ export class InventoryService {
 
     return { data: alerts };
   }
+
+  async findAllItems(
+    page = 1,
+    limit = 20,
+    productId?: string,
+    variantId?: string,
+  ) {
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.InventoryItemWhereInput = {
+      deletedAt: null,
+    };
+
+    if (productId) where.productId = productId;
+    if (variantId) where.variantId = variantId;
+
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.inventoryItem.findMany({
+        where,
+        orderBy: { updatedAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          product: true,
+          variant: { include: { product: true } },
+        },
+      }),
+      this.prisma.inventoryItem.count({ where }),
+    ]);
+
+    return buildPaginatedResult(rows, total, page, limit);
+  }
+
+  async findOneItem(id: string) {
+    const item = await this.prisma.inventoryItem.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        product: true,
+        variant: { include: { product: true } },
+        transactions: {
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            createdByUser: { select: { id: true, email: true, name: true } },
+          },
+        },
+      },
+    });
+
+    if (!item) {
+      throw new NotFoundException('Inventory item not found');
+    }
+
+    return item;
+  }
 }

@@ -1,8 +1,20 @@
-import { Body, Controller, Get, Ip, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Ip,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -98,5 +110,44 @@ export class InventoryController {
   })
   async lowStock() {
     return await this.inventory.minStockAlerts();
+  }
+
+  @Get('items')
+  @Permissions('inventory.read')
+  @ApiOperation({ summary: 'List inventory items (paginated)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'productId', required: false, type: String })
+  @ApiQuery({ name: 'variantId', required: false, type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated inventory items',
+  })
+  async listItems(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('productId') productId?: string,
+    @Query('variantId') variantId?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+    return await this.inventory.findAllItems(
+      pageNum,
+      limitNum,
+      productId,
+      variantId,
+    );
+  }
+
+  @Get('items/:id')
+  @Permissions('inventory.read')
+  @ApiOperation({ summary: 'Get inventory item by ID' })
+  @ApiParam({ name: 'id', type: String, format: 'uuid' })
+  @ApiResponse({
+    status: 200,
+    description: 'Inventory item details',
+  })
+  async getItem(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.inventory.findOneItem(id);
   }
 }
