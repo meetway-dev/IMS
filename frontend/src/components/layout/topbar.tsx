@@ -92,7 +92,7 @@ export function Topbar() {
                     {user.email}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user.roles.join(', ')}
+                    {user.roles?.join(', ')}
                   </p>
                 </div>
               </DropdownMenuLabel>

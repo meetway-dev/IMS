@@ -135,7 +135,7 @@ export function Sidebar() {
                     {user.name}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {user.roles.join(', ')}
+                    {user.roles?.join(', ')}
                   </p>
                 </div>
               )}
