@@ -65,7 +65,7 @@ export function Sidebar() {
       {/* Mobile backdrop */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -73,19 +73,28 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-background transition-all duration-300 lg:static lg:inset-y-0',
-          sidebarOpen ? 'w-64' : 'w-20',
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-background/95 backdrop-blur-sm transition-all duration-300 lg:static lg:inset-y-0',
+          sidebarOpen ? 'w-72' : 'w-20',
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b px-4">
-          {sidebarOpen && (
-            <Link href="/dashboard" className="flex items-center space-x-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <span className="text-sm font-bold text-primary-foreground">IMS</span>
+        <div className="flex h-20 items-center justify-between border-b px-6">
+          {sidebarOpen ? (
+            <Link href="/dashboard" className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg">
+                <span className="text-base font-bold text-primary-foreground">IMS</span>
               </div>
-              <span className="text-lg font-semibold">Inventory</span>
+              <div className="flex flex-col">
+                <span className="text-xl font-bold tracking-tight">Inventory</span>
+                <span className="text-xs text-muted-foreground">Management System</span>
+              </div>
+            </Link>
+          ) : (
+            <Link href="/dashboard" className="mx-auto">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg">
+                <span className="text-base font-bold text-primary-foreground">IMS</span>
+              </div>
             </Link>
           )}
           <Button
@@ -99,7 +108,7 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+        <nav className="flex-1 space-y-2 overflow-y-auto p-4">
           {navigation.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
@@ -107,27 +116,43 @@ export function Sidebar() {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-smooth hover-lift',
+                  'group flex items-center space-x-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
                   isActive
-                    ? 'gradient-primary text-primary-foreground shadow-soft'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:shadow-soft'
+                    ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-l-4 border-primary shadow-sm'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:shadow-sm'
                 )}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                {sidebarOpen && <span className="font-medium">{item.name}</span>}
+                <item.icon className={cn(
+                  'h-5 w-5 flex-shrink-0 transition-transform duration-200',
+                  isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'
+                )} />
+                {sidebarOpen && (
+                  <span className={cn(
+                    'font-medium transition-all duration-200',
+                    isActive ? 'font-semibold' : 'group-hover:font-medium'
+                  )}>
+                    {item.name}
+                  </span>
+                )}
+                {sidebarOpen && isActive && (
+                  <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                )}
               </Link>
             );
           })}
         </nav>
 
         {/* User section */}
-        <div className="border-t p-4">
+        <div className="border-t p-6">
           {user && (
             <div className="flex items-center space-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-primary shadow-soft">
-                <span className="text-sm font-bold text-primary-foreground">
-                  {getInitials(user.name)}
-                </span>
+              <div className="relative">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-lg">
+                  <span className="text-sm font-bold text-primary-foreground">
+                    {getInitials(user.name)}
+                  </span>
+                </div>
+                <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-background bg-green-500" />
               </div>
               {sidebarOpen && (
                 <div className="flex-1 min-w-0">
@@ -143,10 +168,10 @@ export function Sidebar() {
           )}
           <Button
             variant="ghost"
-            className="mt-4 w-full justify-start transition-smooth hover:bg-accent/50 hover:text-accent-foreground"
+            className="mt-6 w-full justify-start transition-all duration-200 hover:bg-accent/50 hover:text-accent-foreground hover:shadow-sm"
             onClick={handleLogout}
           >
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut className="mr-3 h-4 w-4" />
             {sidebarOpen && <span className="font-medium">Logout</span>}
           </Button>
         </div>
@@ -155,7 +180,7 @@ export function Sidebar() {
         <Button
           variant="ghost"
           size="icon"
-          className="absolute -right-3 top-1/2 hidden h-6 w-6 rounded-full border bg-background lg:flex"
+          className="absolute -right-3 top-1/2 hidden h-6 w-6 rounded-full border bg-background shadow-md lg:flex"
           onClick={toggleSidebar}
         >
           {sidebarOpen ? (

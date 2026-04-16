@@ -52,9 +52,11 @@ export default function DashboardLayout({
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl">
-            {children}
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8">
+          <div className="mx-auto w-full max-w-7xl px-2 sm:px-4 lg:px-6">
+            <div className="animate-slide-in">
+              {children}
+            </div>
           </div>
         </main>
       </div>
