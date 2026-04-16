@@ -115,7 +115,7 @@ function LoginPageContent() {
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
               <Link
-                href="/auth/register"
+                href="/register"
                 className="text-primary hover:underline"
               >
                 Sign up

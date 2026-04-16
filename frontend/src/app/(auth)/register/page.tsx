@@ -150,7 +150,7 @@ export default function RegisterPage() {
             <p className="text-sm text-muted-foreground">
               Already have an account?{' '}
               <Link
-                href="/auth/login"
+                href="/login"
                 className="text-primary hover:underline"
               >
                 Sign in
