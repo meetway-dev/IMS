@@ -4,7 +4,6 @@ const nextConfig = {
   // Enable standalone output for Docker builds
   output: 'standalone',
   images: {
-    domains: ['localhost'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -28,10 +27,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Ensure ESLint doesn't block builds
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
   // Explicitly configure webpack to handle path aliases
   webpack: (config) => {
     config.resolve.alias = {
@@ -49,6 +44,7 @@ const nextConfig = {
     }
     return config
   },
+  turbopack: {},
 }
 
 module.exports = nextConfig
