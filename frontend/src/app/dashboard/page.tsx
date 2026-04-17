@@ -1,13 +1,14 @@
 'use client';
 
 import * as React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Package, 
   ShoppingCart, 
   Users, 
   TrendingUp, 
-  AlertTriangle, 
+  AlertTriangle,
   DollarSign,
   BarChart3,
   ArrowUpRight,
@@ -18,15 +19,20 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
+import { dashboardService } from '@/services/dashboard.service';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
 
-  // Mock data - replace with actual API calls
+  const { data: dashboardStats, isLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: () => dashboardService.getDashboardStats(),
+  });
+
   const stats = [
     {
       title: 'Total Revenue',
-      value: formatCurrency(125430),
+      value: formatCurrency(dashboardStats?.totalRevenue || 0),
       icon: DollarSign,
       trend: '+23.1%',
       trendUp: true,
@@ -35,7 +41,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Total Products',
-      value: '1,234',
+      value: dashboardStats?.totalProducts?.toLocaleString() || '0',
       icon: Package,
       trend: '+12.5%',
       trendUp: true,
@@ -44,7 +50,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Total Orders',
-      value: '456',
+      value: dashboardStats?.totalOrders?.toLocaleString() || '0',
       icon: ShoppingCart,
       trend: '+8.2%',
       trendUp: true,
@@ -53,7 +59,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Active Users',
-      value: '89',
+      value: dashboardStats?.activeUsers?.toLocaleString() || '0',
       icon: Users,
       trend: '+5.1%',
       trendUp: true,
@@ -63,20 +69,20 @@ export default function DashboardPage() {
   ];
 
   const lowStockItems = [
-    { id: 1, name: 'LED Bulb 10W', stock: 5, minStock: 20, category: 'Lighting', urgency: 'high' },
-    { id: 2, name: 'Copper Wire 2mm', stock: 8, minStock: 15, category: 'Wiring', urgency: 'medium' },
-    { id: 3, name: 'Switch 2-Way', stock: 3, minStock: 10, category: 'Switches', urgency: 'high' },
-    { id: 4, name: 'Circuit Breaker', stock: 12, minStock: 25, category: 'Safety', urgency: 'low' },
+    { id: 1, name: 'LED Bulb 10W', stock: 5, minStockLevel: 20, category: 'Lighting', urgency: 'high' },
+    { id: 2, name: 'Copper Wire 2mm', stock: 8, minStockLevel: 15, category: 'Wiring', urgency: 'medium' },
+    { id: 3, name: 'Switch 2-Way', stock: 3, minStockLevel: 10, category: 'Switches', urgency: 'high' },
+    { id: 4, name: 'Circuit Breaker', stock: 12, minStockLevel: 25, category: 'Safety', urgency: 'low' },
   ];
 
-  const recentOrders = [
+  const recentOrders = dashboardStats?.recentOrders || [
     { id: 'ORD-001', customer: 'John Doe', total: formatCurrency(1250), status: 'Completed', date: '2024-01-15' },
     { id: 'ORD-002', customer: 'Jane Smith', total: formatCurrency(890), status: 'Processing', date: '2024-01-14' },
     { id: 'ORD-003', customer: 'Bob Johnson', total: formatCurrency(2100), status: 'Pending', date: '2024-01-14' },
     { id: 'ORD-004', customer: 'Alice Brown', total: formatCurrency(1560), status: 'Completed', date: '2024-01-13' },
   ];
 
-  const performanceData = [
+  const performanceData = dashboardStats?.performanceData || [
     { month: 'Jan', revenue: 65000, orders: 120 },
     { month: 'Feb', revenue: 78000, orders: 145 },
     { month: 'Mar', revenue: 92000, orders: 165 },
@@ -109,6 +115,14 @@ export default function DashboardPage() {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -198,50 +212,26 @@ export default function DashboardPage() {
         <Card className="border-0 shadow-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-orange-500" />
-                Low Stock Alert
-              </CardTitle>
-              <span className="text-xs font-medium px-2 py-1 rounded-full bg-orange-100 text-orange-800">
-                {lowStockItems.length} items
-              </span>
+              <CardTitle className="text-lg font-semibold">Low Stock Alert</CardTitle>
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
             </div>
-            <p className="text-sm text-muted-foreground">Items requiring immediate attention</p>
+            <p className="text-sm text-muted-foreground">Items that need restocking</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {lowStockItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between rounded-xl border p-4 hover:shadow-sm transition-shadow"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${getUrgencyColor(item.urgency)}`}>
-                      <Package className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">{item.name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
-                          {item.category}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          Stock: <span className="font-semibold">{item.stock}</span> / Min: {item.minStock}
-                        </span>
-                      </div>
-                    </div>
+                <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">{item.category}</p>
                   </div>
-                  <div className="text-right">
-                    <div className={`text-xs font-medium px-2 py-1 rounded-full ${getUrgencyColor(item.urgency)}`}>
-                      {item.urgency.charAt(0).toUpperCase() + item.urgency.slice(1)}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-semibold">{item.stock} / {item.minStockLevel}</p>
+                      <p className="text-xs text-muted-foreground">Current / Min</p>
                     </div>
-                    <div className="mt-2">
-                      <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full ${item.urgency === 'high' ? 'bg-red-500' : item.urgency === 'medium' ? 'bg-orange-500' : 'bg-yellow-500'}`}
-                          style={{ width: `${(item.stock / item.minStock) * 100}%` }}
-                        />
-                      </div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getUrgencyColor(item.urgency)}`}>
+                      {item.urgency.toUpperCase()}
                     </div>
                   </div>
                 </div>
@@ -249,111 +239,46 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Recent Orders */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">Recent Orders</CardTitle>
-            <ShoppingCart className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <p className="text-sm text-muted-foreground">Latest transactions and their status</p>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Order ID</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Customer</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b hover:bg-gray-50/50 transition-colors">
-                    <td className="py-3 px-4">
-                      <span className="font-medium">{order.id}</span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <p className="font-medium">{order.customer}</p>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-muted-foreground">
-                      {new Date(order.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="font-semibold">{order.total}</span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(order.status)}
-                        <span className={`text-sm font-medium ${
-                          order.status === 'Completed' ? 'text-green-600' :
-                          order.status === 'Processing' ? 'text-blue-600' :
-                          'text-orange-600'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </div>
-                    </td>
+        {/* Recent Orders */}
+        <Card className="border-0 shadow-lg lg:col-span-2">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-semibold">Recent Orders</CardTitle>
+              <ShoppingCart className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">Latest transactions</p>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Order ID</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Customer</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Total</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-6 flex justify-center">
-            <button className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
-              View all orders →
-            </button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Stats */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Inventory Value</p>
-                <p className="text-2xl font-bold mt-2">{formatCurrency(452180)}</p>
-              </div>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
-                <TrendingUp className="h-6 w-6 text-white" />
-              </div>
+                </thead>
+                <tbody>
+                  {recentOrders.map((order) => (
+                    <tr key={order.id} className="border-b hover:bg-gray-50/50">
+                      <td className="py-3 px-4 font-medium">{order.id}</td>
+                      <td className="py-3 px-4">{order.customer}</td>
+                      <td className="py-3 px-4 font-semibold">{order.total}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(order.status)}
+                          <span>{order.status}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-muted-foreground">{order.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <p className="text-xs text-muted-foreground mt-4">Total value of all inventory items</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg Order Value</p>
-                <p className="text-2xl font-bold mt-2">{formatCurrency(2750)}</p>
-              </div>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
-                <DollarSign className="h-6 w-6 text-white" />
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-4">Average value per order</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Stock Turnover</p>
-                <p className="text-2xl font-bold mt-2">4.2x</p>
-              </div>
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-md">
-                <BarChart3 className="h-6 w-6 text-white" />
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-4">Inventory turnover rate this year</p>
           </CardContent>
         </Card>
       </div>

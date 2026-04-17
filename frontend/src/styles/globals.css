@@ -100,6 +100,84 @@
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  /* Glass morphism effect */
+  .glass {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+  }
+
+  .glass-dark {
+    @apply backdrop-blur-md bg-black/10 border border-white/10;
+  }
+
+  /* Beautiful gradient backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary via-primary/90 to-primary/70;
+  }
+
+  .gradient-success {
+    @apply bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500;
+  }
+
+  .gradient-warning {
+    @apply bg-gradient-to-br from-amber-500 via-orange-500 to-red-500;
+  }
+
+  .gradient-info {
+    @apply bg-gradient-to-br from-blue-500 via-cyan-500 to-sky-500;
+  }
+
+  .gradient-purple {
+    @apply bg-gradient-to-br from-purple-500 via-violet-500 to-fuchsia-500;
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all-smooth hover:shadow-2xl hover:-translate-y-1;
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    @apply relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent;
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Pulse animation for alerts */
+  .pulse-ring {
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-ring {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* Floating animation */
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  }
+
   /* Glass effect improvements */
   .glass {
     background: rgba(255, 255, 255, 0.08);
@@ -267,4 +345,3 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400 dark:bg-gray-600;
   }
-}

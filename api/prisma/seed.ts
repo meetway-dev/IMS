@@ -29,6 +29,10 @@ const PERMISSIONS = [
   { key: 'companies.read', description: 'Read companies' },
   { key: 'companies.write', description: 'Create/update companies' },
 
+  // Suppliers
+  { key: 'suppliers.read', description: 'Read suppliers' },
+  { key: 'suppliers.write', description: 'Create/update suppliers' },
+
   // Inventory
   { key: 'inventory.read', description: 'Read inventory' },
   { key: 'inventory.write', description: 'Adjust inventory' },
@@ -84,6 +88,8 @@ async function main() {
     'categories.write',
     'companies.read',
     'companies.write',
+    'suppliers.read',
+    'suppliers.write',
     'inventory.read',
     'inventory.write',
     'orders.read',
@@ -103,6 +109,7 @@ async function main() {
     'products.read',
     'categories.read',
     'companies.read',
+    'suppliers.read',
     'inventory.read',
     'orders.read',
     'orders.write',

@@ -8,77 +8,30 @@ import { Search, Filter, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DataTable } from '@/components/tables/data-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-// Mock data for audit logs - replace with actual API
-const mockAuditLogs = [
-  {
-    id: '1',
-    action: 'CREATE',
-    entity: 'Product',
-    entityId: 'PROD-001',
-    user: 'John Doe',
-    timestamp: '2024-01-15T10:30:00Z',
-    details: 'Created new product "LED Bulb 10W"',
-  },
-  {
-    id: '2',
-    action: 'UPDATE',
-    entity: 'Inventory',
-    entityId: 'INV-005',
-    user: 'Jane Smith',
-    timestamp: '2024-01-15T09:15:00Z',
-    details: 'Updated stock quantity from 50 to 45',
-  },
-  {
-    id: '3',
-    action: 'DELETE',
-    entity: 'Category',
-    entityId: 'CAT-003',
-    user: 'Admin User',
-    timestamp: '2024-01-14T16:45:00Z',
-    details: 'Deleted category "Electrical Fittings"',
-  },
-  {
-    id: '4',
-    action: 'LOGIN',
-    entity: 'User',
-    entityId: 'USR-001',
-    user: 'John Doe',
-    timestamp: '2024-01-14T08:20:00Z',
-    details: 'User logged in from IP 192.168.1.100',
-  },
-  {
-    id: '5',
-    action: 'EXPORT',
-    entity: 'Report',
-    entityId: 'REP-2024-01',
-    user: 'Jane Smith',
-    timestamp: '2024-01-13T14:10:00Z',
-    details: 'Exported inventory report as CSV',
-  },
-];
+import { auditService, AuditLog } from '@/services/audit.service';
 
 export default function AuditPage() {
   const [search, setSearch] = React.useState('');
   const [entityFilter, setEntityFilter] = React.useState('all');
   const [actionFilter, setActionFilter] = React.useState('all');
 
-  // In a real app, you would use useQuery with an audit service
-  const { data: auditLogs = mockAuditLogs, isLoading } = useQuery({
-    queryKey: ['audit-logs'],
-    queryFn: async () => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockAuditLogs;
-    },
+  // Use real API call
+  const { data: auditData, isLoading } = useQuery({
+    queryKey: ['audit-logs', { search, entityFilter, actionFilter }],
+    queryFn: () => auditService.getAuditLogs({
+      search,
+      entityType: entityFilter !== 'all' ? entityFilter : undefined,
+      action: actionFilter !== 'all' ? actionFilter : undefined,
+    }),
   });
 
-  const filteredLogs = auditLogs.filter(log => {
+  const auditLogs = auditData?.data || [];
+  const filteredLogs = auditLogs.filter((log: AuditLog) => {
     const matchesSearch = 
-      log.entity.toLowerCase().includes(search.toLowerCase()) ||
-      log.user.toLowerCase().includes(search.toLowerCase()) ||
-      log.details.toLowerCase().includes(search.toLowerCase());
-    const matchesEntity = entityFilter === 'all' || log.entity === entityFilter;
+      log.entityType.toLowerCase().includes(search.toLowerCase()) ||
+      log.actor?.name.toLowerCase().includes(search.toLowerCase()) ||
+      JSON.stringify(log.details).toLowerCase().includes(search.toLowerCase());
+    const matchesEntity = entityFilter === 'all' || log.entityType === entityFilter;
     const matchesAction = actionFilter === 'all' || log.action === actionFilter;
     return matchesSearch && matchesEntity && matchesAction;
   });
@@ -90,11 +43,11 @@ export default function AuditPage() {
       cell: ({ row }: any) => (
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            row.original.action === 'CREATE'
+            row.original.action.includes('CREATE') || row.original.action.includes('create')
               ? 'bg-green-100 text-green-800'
-              : row.original.action === 'UPDATE'
+              : row.original.action.includes('UPDATE') || row.original.action.includes('update')
               ? 'bg-blue-100 text-blue-800'
-              : row.original.action === 'DELETE'
+              : row.original.action.includes('DELETE') || row.original.action.includes('delete')
               ? 'bg-red-100 text-red-800'
               : 'bg-gray-100 text-gray-800'
           }`}
@@ -104,7 +57,7 @@ export default function AuditPage() {
       ),
     },
     {
-      accessorKey: 'entity',
+      accessorKey: 'entityType',
       header: 'Entity',
     },
     {
@@ -112,27 +65,30 @@ export default function AuditPage() {
       header: 'Entity ID',
     },
     {
-      accessorKey: 'user',
+      accessorKey: 'actor.name',
       header: 'User',
+      cell: ({ row }: any) => row.original.actor?.name || 'System',
     },
     {
-      accessorKey: 'timestamp',
+      accessorKey: 'createdAt',
       header: 'Timestamp',
-      cell: ({ row }: any) => new Date(row.original.timestamp).toLocaleString(),
+      cell: ({ row }: any) => new Date(row.original.createdAt).toLocaleString(),
     },
     {
       accessorKey: 'details',
       header: 'Details',
       cell: ({ row }: any) => (
-        <div className="max-w-xs truncate" title={row.original.details}>
-          {row.original.details}
+        <div className="max-w-xs truncate" title={JSON.stringify(row.original.details)}>
+          {typeof row.original.details === 'string' 
+            ? row.original.details 
+            : JSON.stringify(row.original.details)}
         </div>
       ),
     },
   ];
 
-  const entities = Array.from(new Set(auditLogs.map(log => log.entity)));
-  const actions = Array.from(new Set(auditLogs.map(log => log.action)));
+  const entities = Array.from(new Set(auditLogs.map((log: AuditLog) => log.entityType)));
+  const actions = Array.from(new Set(auditLogs.map((log: AuditLog) => log.action)));
 
   return (
     <div className="space-y-6">
@@ -173,7 +129,7 @@ export default function AuditPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Entities</SelectItem>
-                  {entities.map(entity => (
+                  {entities.map((entity: string) => (
                     <SelectItem key={entity} value={entity}>
                       {entity}
                     </SelectItem>
@@ -188,7 +144,7 @@ export default function AuditPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Actions</SelectItem>
-                  {actions.map(action => (
+                  {actions.map((action: string) => (
                     <SelectItem key={action} value={action}>
                       {action}
                     </SelectItem>

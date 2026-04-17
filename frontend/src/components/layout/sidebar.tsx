@@ -13,6 +13,7 @@ import {
   PackageOpen,
   ShoppingCart,
   FileText,
+  Users,
   LogOut,
   Menu,
   X,
@@ -34,6 +35,7 @@ const navigation = [
   { name: 'Inventory', href: '/dashboard/inventory', icon: PackageOpen },
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
   { name: 'Suppliers', href: '/dashboard/suppliers', icon: Truck },
+  { name: 'Users', href: '/dashboard/users', icon: Users },
   { name: 'Audit Logs', href: '/dashboard/audit', icon: FileText },
 ];
 

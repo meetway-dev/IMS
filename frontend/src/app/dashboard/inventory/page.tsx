@@ -24,8 +24,9 @@ import { formatCurrency } from '@/lib/utils';
 
 const columns: ColumnDef<Inventory>[] = [
   {
-    accessorKey: 'product.name',
+    id: 'product_name',
     header: 'Product',
+    accessorFn: (row) => row.product?.name,
     cell: ({ row }) => row.original.product?.name || '-',
   },
   {
@@ -47,18 +48,21 @@ const columns: ColumnDef<Inventory>[] = [
     },
   },
   {
-    accessorKey: 'product.minStockLevel',
+    id: 'product_minStockLevel',
     header: 'Min Stock',
+    accessorFn: (row) => row.product?.minStockLevel,
     cell: ({ row }) => row.original.product?.minStockLevel || '-',
   },
   {
-    accessorKey: 'product.price',
+    id: 'product_price',
     header: 'Price',
+    accessorFn: (row) => row.product?.price,
     cell: ({ row }) => formatCurrency(row.original.product?.price || 0),
   },
   {
-    accessorKey: 'product.cost',
+    id: 'product_cost',
     header: 'Cost',
+    accessorFn: (row) => row.product?.cost,
     cell: ({ row }) => formatCurrency(row.original.product?.cost || 0),
   },
   {
@@ -225,7 +229,7 @@ export default function InventoryPage() {
       <DataTable
         columns={columns}
         data={inventoryData?.data || []}
-        searchKey="product.name"
+        searchKey="product_name"
         searchPlaceholder="Search inventory..."
       />
     </div>

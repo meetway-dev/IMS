@@ -27,13 +27,13 @@ export const API_ENDPOINTS = {
   },
   // Inventory
   INVENTORY: {
-    LIST: '/inventory',
-    DETAIL: (id: string) => `/inventory/${id}`,
-    CREATE: '/inventory',
-    UPDATE: (id: string) => `/inventory/${id}`,
-    DELETE: (id: string) => `/inventory/${id}`,
+    LIST: '/inventory/items',
+    DETAIL: (id: string) => `/inventory/items/${id}`,
+    CREATE: '/inventory/items',
+    UPDATE: (id: string) => `/inventory/items/${id}`,
+    DELETE: (id: string) => `/inventory/items/${id}`,
     TRANSACTIONS: '/inventory/transactions',
-    ADJUST: '/inventory/adjust',
+    ADJUST: '/inventory/adjustments',
   },
   // Orders
   ORDERS: {
@@ -69,7 +69,8 @@ export const API_ENDPOINTS = {
   },
   // Audit
   AUDIT: {
-    LIST: '/audit',
+    LIST: '/audit-logs',
+    DETAIL: (id: string) => `/audit-logs/${id}`,
   },
   // Health
   HEALTH: '/health',
