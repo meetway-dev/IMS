@@ -3,6 +3,9 @@ import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class PaginationQueryDto {
+    @ApiPropertyOptional({ description: 'Search term', required: false })
+    @IsOptional()
+    search?: string;
   @ApiPropertyOptional({ example: 1, minimum: 1, default: 1 })
   @IsOptional()
   @Type(() => Number)

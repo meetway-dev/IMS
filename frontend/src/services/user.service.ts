@@ -1,3 +1,4 @@
+
 import apiClient from '@/lib/api-client';
 import { API_ENDPOINTS } from '@/lib/constants';
 import { User, PaginatedResponse, PaginationParams } from '@/types';
@@ -6,170 +7,80 @@ interface CreateUserData {
   email: string;
   password: string;
   name: string;
+  roleIds?: string[];
 }
 
 interface UpdateUserData extends Partial<CreateUserData> {
   password?: string;
+  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  roleIds?: string[];
+  permissionIds?: string[];
 }
+
 
 export const userService = {
   /**
    * Get all users with pagination
    */
   async getUsers(params?: PaginationParams): Promise<PaginatedResponse<User>> {
-    // Temporary mock data until UsersController is implemented
-    console.warn('Using mock user data - UsersController not implemented');
-    
-    const mockUsers: User[] = [
-      {
-        id: '1',
-        email: 'admin@ims.local',
-        name: 'IMS Admin',
-        roles: ['ADMIN'],
-        status: 'ACTIVE',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        email: 'manager@ims.local',
-        name: 'IMS Manager',
-        roles: ['MANAGER'],
-        status: 'ACTIVE',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: '3',
-        email: 'staff@ims.local',
-        name: 'IMS Staff',
-        roles: ['STAFF'],
-        status: 'ACTIVE',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ];
-
-    // Filter by search if provided
-    let filteredUsers = mockUsers;
-    if (params?.search) {
-      const searchLower = params.search.toLowerCase();
-      filteredUsers = mockUsers.filter(
-        user =>
-          user.name?.toLowerCase().includes(searchLower) ||
-          user.email.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Simple pagination
-    const page = params?.page || 1;
-    const limit = params?.limit || 10;
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
-
+    const res = await apiClient.getPaginated<any>(API_ENDPOINTS.USERS.LIST, params);
+    // Transform BE response { data, total, page, limit } to FE PaginatedResponse { data, meta }
     return {
-      data: paginatedUsers,
+      data: res.data,
       meta: {
-        page,
-        limit,
-        total: filteredUsers.length,
-        totalPages: Math.ceil(filteredUsers.length / limit),
+        total: res.total,
+        page: res.page,
+        limit: res.limit,
+        totalPages: res.limit ? Math.ceil(res.total / res.limit) : 1,
       },
     };
   },
+
 
   /**
    * Get user by ID
    */
   async getUser(id: string): Promise<User> {
-    // Temporary mock implementation
-    console.warn('Using mock user data - UsersController not implemented');
-    
-    const mockUsers: User[] = [
-      {
-        id: '1',
-        email: 'admin@ims.local',
-        name: 'IMS Admin',
-        roles: ['ADMIN'],
-        status: 'ACTIVE',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        email: 'manager@ims.local',
-        name: 'IMS Manager',
-        roles: ['MANAGER'],
-        status: 'ACTIVE',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: '3',
-        email: 'staff@ims.local',
-        name: 'IMS Staff',
-        roles: ['STAFF'],
-        status: 'ACTIVE',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ];
-    
-    const user = mockUsers.find(u => u.id === id);
-    if (!user) {
-      throw new Error(`User with ID ${id} not found`);
-    }
-    
-    return user;
+    const res = await apiClient.get<User>(API_ENDPOINTS.USERS.DETAIL(id));
+    return res.data;
   },
+
 
   /**
    * Create new user
    */
   async createUser(data: CreateUserData): Promise<User> {
-    // Temporary mock implementation
-    console.warn('Using mock user creation - UsersController not implemented');
-    
-    const newUser: User = {
-      id: Math.random().toString(36).substring(2, 9),
-      email: data.email,
-      name: data.name || data.email.split('@')[0],
-      roles: ['STAFF'], // Default role
-      status: 'ACTIVE',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    return newUser;
+    const res = await apiClient.post<User>(API_ENDPOINTS.USERS.CREATE, data);
+    return res.data;
   },
+
 
   /**
    * Update user
    */
   async updateUser(id: string, data: UpdateUserData): Promise<User> {
-    // Temporary mock implementation
-    console.warn('Using mock user update - UsersController not implemented');
-    
-    const mockUser: User = {
-      id,
-      email: data.email || 'updated@example.com',
-      name: data.name || 'Updated User',
-      roles: ['STAFF'], // Default role
-      status: 'ACTIVE',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    return mockUser;
+    const res = await apiClient.patch<User>(API_ENDPOINTS.USERS.UPDATE(id), data);
+    return res.data;
   },
 
   /**
-   * Delete user
+   * Delete user (soft delete)
    */
   async deleteUser(id: string): Promise<void> {
-    // Temporary mock implementation
-    console.warn('Using mock user deletion - UsersController not implemented');
-    // No-op for now
+    await apiClient.delete<User>(API_ENDPOINTS.USERS.DELETE(id));
+  },
+
+  /**
+   * Assign roles to user
+   */
+  async assignRoles(userId: string, roleIds: string[]): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.USERS.DETAIL(userId) + '/roles', { roleIds });
+  },
+
+  /**
+   * Assign direct permissions to user
+   */
+  async assignPermissions(userId: string, permissionIds: string[]): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.USERS.DETAIL(userId) + '/permissions', { permissionIds });
   },
 };

@@ -94,28 +94,24 @@ export class UsersService {
         orderBy: { createdAt: 'desc' },
         include: {
           roles: {
+            where: { role: { deletedAt: null } },
             include: {
               role: {
                 include: {
                   permissions: {
-                    include: {
-                      permission: true,
-                    },
                     where: { permission: { deletedAt: null } },
+                    include: { permission: true },
                   },
                 },
-                where: { deletedAt: null },
               },
             },
           },
           directPermissions: {
-            include: {
-              permission: true,
-            },
             where: {
               permission: { deletedAt: null },
               OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
             },
+            include: { permission: true },
             orderBy: { priority: 'desc' },
           },
         },

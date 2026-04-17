@@ -15,18 +15,63 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
 import { userService } from '@/services/user.service';
 import { User as UserType } from '@/types';
+import { useAuthStore } from '@/store/auth-store';
+import { UserFormModal } from './UserFormModal';
+import { UserDetailsModal } from './UserDetailsModal';
+import { AssignRolesPermissionsModal } from './AssignRolesPermissionsModal';
+import { roleService, permissionService } from '@/services/role-permission.service';
 
 export default function UsersPage() {
   const [search, setSearch] = React.useState('');
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [editUser, setEditUser] = React.useState<UserType | null>(null);
+  const { user, initializeAuth } = useAuthStore();
+  // Ensure user is loaded from storage/cookie on mount
+  React.useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
-  const { data: usersData, isLoading } = useQuery({
+  const isSuperAdmin = user?.roles?.includes('SUPER_ADMIN');
+
+
+  const [detailsUser, setDetailsUser] = React.useState<UserType | null>(null);
+  const [assignUser, setAssignUser] = React.useState<UserType | null>(null);
+  const [roles, setRoles] = React.useState<{ id: string; name: string }[]>([]);
+  const [permissions, setPermissions] = React.useState<{ id: string; key: string; name: string }[]>([]);
+
+  React.useEffect(() => {
+    if (isSuperAdmin) {
+      roleService.getAllRoles().then(setRoles);
+      permissionService.getAllPermissions().then(setPermissions);
+    }
+  }, [isSuperAdmin]);
+
+  const { data: usersData, isLoading, refetch } = useQuery({
     queryKey: ['users', { search }],
     queryFn: () => userService.getUsers({ search }),
+    enabled: !!user, // only fetch if user is logged in
   });
 
   const users = usersData?.data || [];
+
+
+  const handleAdd = () => {
+    setEditUser(null);
+    setModalOpen(true);
+  };
+  const handleEdit = (user: UserType) => {
+    setEditUser(user);
+    setModalOpen(true);
+  };
+  const handleDelete = async (user: UserType) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      await userService.deleteUser(user.id);
+      refetch();
+    }
+  };
 
   const columns = [
     {
@@ -100,16 +145,25 @@ export default function UsersPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(row.original.id)}
-            >
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(row.original.id)}>
               Copy user ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Edit user</DropdownMenuItem>
-            <DropdownMenuItem>View details</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">
-              Deactivate
+            {isSuperAdmin && (
+              <>
+                <DropdownMenuItem onClick={() => handleEdit(row.original)}>
+                  Edit user
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDelete(row.original)} className="text-red-600">
+                  Delete user
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setAssignUser(row.original)}>
+                  Assign roles/permissions
+                </DropdownMenuItem>
+              </>
+            )}
+            <DropdownMenuItem onClick={() => setDetailsUser(row.original)}>
+              View details
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -126,11 +180,36 @@ export default function UsersPage() {
             Manage system users, roles, and permissions
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add User
-        </Button>
+        {isSuperAdmin && (
+          <Button className="gap-2" onClick={handleAdd}>
+            <Plus className="h-4 w-4" />
+            Add User
+          </Button>
+        )}
       </div>
+
+
+      <UserFormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSuccess={refetch}
+        user={editUser}
+      />
+      <UserDetailsModal
+        open={!!detailsUser}
+        onClose={() => setDetailsUser(null)}
+        user={detailsUser}
+      />
+      <AssignRolesPermissionsModal
+        open={!!assignUser}
+        onClose={() => setAssignUser(null)}
+        userId={assignUser?.id || ''}
+        currentRoles={assignUser?.roles || []}
+        currentPermissions={[]}
+        allRoles={roles}
+        allPermissions={permissions}
+        onSuccess={refetch}
+      />
 
       <Card>
         <CardHeader>
