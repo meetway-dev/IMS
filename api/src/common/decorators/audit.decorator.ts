@@ -2,21 +2,22 @@
 
 import { applyDecorators, UseInterceptors } from '@nestjs/common';
 import { AuditInterceptor } from '../interceptors/audit.interceptor';
+import { AuditAction } from '@prisma/client';
 
 /**
  * Decorator to automatically log method execution to audit log
- * 
+ *
  * @param action - The action being performed (e.g., 'create', 'update', 'delete')
  * @param entityType - The type of entity being acted upon (e.g., 'Product', 'Supplier')
  * @param extractEntityId - Function to extract entity ID from method result or arguments
  */
 export function AuditLog(
-  action: string,
+  action: string | AuditAction,
   entityType?: string,
-  extractEntityId?: (result: any, args: any[]) => string | undefined
+  extractEntityId?: (result: any, args: any[]) => string | undefined,
 ) {
   return applyDecorators(
-    UseInterceptors(new AuditInterceptor(action, entityType, extractEntityId))
+    UseInterceptors(new AuditInterceptor(action, entityType, extractEntityId)),
   );
 }
 

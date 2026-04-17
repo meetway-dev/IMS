@@ -67,7 +67,6 @@ enum AuditAction {
   AUDIT_LOG_VIEWED
   SYSTEM_BACKUP
   SYSTEM_RESTORE
-  API_REQUEST
   
   // Business actions
   PRODUCT_CREATED
@@ -76,19 +75,7 @@ enum AuditAction {
   ORDER_CREATED
   ORDER_UPDATED
   ORDER_DELETED
-  ORDER_CONFIRMED
-  ORDER_PAID
-  ORDER_CANCELLED
   INVENTORY_ADJUSTED
-  CATEGORY_CREATED
-  CATEGORY_UPDATED
-  CATEGORY_DELETED
-  SUPPLIER_CREATED
-  SUPPLIER_UPDATED
-  SUPPLIER_DELETED
-  COMPANY_CREATED
-  COMPANY_UPDATED
-  COMPANY_DELETED
 }
 
 enum AuditActorType {
@@ -145,12 +132,6 @@ model User {
   // RBAC relationships
   roles           UserRole[]
   directPermissions UserPermission[]
-
-  // RBAC assignment relationships (opposite relations)
-  createdRoles    Role[]              @relation("RoleCreator")
-  assignedUserRoles UserRole[]        @relation("UserRoleAssigner")
-  assignedRolePermissions RolePermission[] @relation("RolePermissionAssigner")
-  assignedUserPermissions UserPermission[] @relation("UserPermissionAssigner")
 
   // Authentication
   refreshTokens   RefreshToken[]

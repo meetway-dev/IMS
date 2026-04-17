@@ -55,7 +55,10 @@ export abstract class CrudServiceBase<
   ) {
     this.defaultLimit = options.defaultLimit || 20;
     this.maxLimit = options.maxLimit || 100;
-    this.defaultSort = options.defaultSort || { field: 'createdAt', order: 'desc' };
+    this.defaultSort = options.defaultSort || {
+      field: 'createdAt',
+      order: 'desc',
+    };
   }
 
   /**
@@ -87,7 +90,7 @@ export abstract class CrudServiceBase<
    */
   protected buildWhereClause(
     query: TListQueryDto,
-    additionalFilters?: Record<string, any>
+    additionalFilters?: Record<string, any>,
   ): Prisma.Args<TModel, 'findMany'>['where'] {
     const where: Prisma.Args<TModel, 'findMany'>['where'] = {
       deletedAt: null,
@@ -112,7 +115,7 @@ export abstract class CrudServiceBase<
    * Build order by clause from query options
    */
   protected buildOrderByClause(
-    query: TListQueryDto
+    query: TListQueryDto,
   ): Prisma.Args<TModel, 'findMany'>['orderBy'] {
     if (query.sortBy) {
       return { [query.sortBy]: query.sortOrder || 'asc' };
@@ -172,7 +175,7 @@ export abstract class CrudServiceBase<
    */
   async findAll(
     query: TListQueryDto,
-    additionalFilters?: Record<string, any>
+    additionalFilters?: Record<string, any>,
   ): Promise<PaginatedResult<TModel>> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? this.defaultLimit, this.maxLimit);
@@ -204,7 +207,7 @@ export abstract class CrudServiceBase<
    */
   async findAllWithoutPagination(
     query: TListQueryDto,
-    additionalFilters?: Record<string, any>
+    additionalFilters?: Record<string, any>,
   ): Promise<TModel[]> {
     const where = this.buildWhereClause(query, additionalFilters);
     const orderBy = this.buildOrderByClause(query);

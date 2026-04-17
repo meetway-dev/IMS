@@ -17,6 +17,9 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { RbacGuard } from './modules/rbac/rbac.guard';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { UsersModule } from './modules/users/users.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
 
 @Module({
   imports: [
@@ -36,6 +39,9 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module';
     InventoryModule,
     OrdersModule,
     SuppliersModule,
+    UsersModule,
+    RolesModule,
+    PermissionsModule,
   ],
   controllers: [AppController],
   providers: [

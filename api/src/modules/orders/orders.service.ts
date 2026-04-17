@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, Prisma } from '@prisma/client';
+import { OrderStatus, Prisma, AuditAction } from '@prisma/client';
 import crypto from 'crypto';
 import { buildPaginatedResult } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
@@ -120,7 +120,7 @@ export class OrdersService {
 
     await this.audit.log({
       actorUserId: user.id,
-      action: 'order.create',
+      action: AuditAction.ORDER_CREATED,
       entityType: 'Order',
       entityId: order.id,
       metadata: { orderNumber: order.orderNumber, status: order.status },
@@ -196,7 +196,7 @@ export class OrdersService {
 
     await this.audit.log({
       actorUserId: user.id,
-      action: 'order.confirm',
+      action: AuditAction.ORDER_CONFIRMED,
       entityType: 'Order',
       entityId: id,
       ip,
@@ -219,7 +219,7 @@ export class OrdersService {
 
     await this.audit.log({
       actorUserId: user.id,
-      action: 'order.pay',
+      action: AuditAction.ORDER_PAID,
       entityType: 'Order',
       entityId: id,
       ip,
@@ -260,7 +260,7 @@ export class OrdersService {
 
     await this.audit.log({
       actorUserId: user.id,
-      action: 'order.cancel',
+      action: AuditAction.ORDER_CANCELLED,
       entityType: 'Order',
       entityId: id,
       metadata: { restoredStock: shouldRestore },

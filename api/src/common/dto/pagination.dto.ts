@@ -40,7 +40,7 @@ export function paginationMeta(
     total,
     totalPages,
     hasNextPage: page < totalPages,
-    hasPreviousPage: page > 1
+    hasPreviousPage: page > 1,
   };
 }
 

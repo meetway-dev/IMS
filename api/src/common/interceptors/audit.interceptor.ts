@@ -10,13 +10,17 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
 import { AuditService } from '../../modules/audit/audit.service';
+import { AuditAction } from '@prisma/client';
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
   constructor(
-    private readonly action: string,
+    private readonly action: AuditAction | string,
     private readonly entityType?: string,
-    private readonly extractEntityId?: (result: any, args: any[]) => string | undefined
+    private readonly extractEntityId?: (
+      result: any,
+      args: any[],
+    ) => string | undefined,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -49,7 +53,7 @@ export class AuditInterceptor implements NestInterceptor {
           // Don't throw error in audit logging to avoid breaking the main request
           console.error('Audit logging failed:', error);
         }
-      })
+      }),
     );
   }
 
@@ -81,7 +85,7 @@ export class AuditInterceptor implements NestInterceptor {
 
     // Extract relevant information from arguments
     if (args && args.length > 0) {
-      const safeArgs = args.map(arg => {
+      const safeArgs = args.map((arg) => {
         if (arg && typeof arg === 'object') {
           const { password, token, refreshToken, ...safeArg } = arg;
           return safeArg;

@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InventoryTransactionType, Prisma } from '@prisma/client';
+import { InventoryTransactionType, Prisma, AuditAction } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type { AuthUser } from '../../types/express';
@@ -63,7 +63,7 @@ export class InventoryService {
 
     await this.audit.log({
       actorUserId: user.id,
-      action: 'inventory.adjust',
+      action: AuditAction.INVENTORY_ADJUSTED,
       entityType: 'InventoryItem',
       entityId: dto.inventoryItemId,
       metadata: {

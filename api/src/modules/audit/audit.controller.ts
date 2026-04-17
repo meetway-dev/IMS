@@ -5,7 +5,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
+import { Prisma, AuditAction } from '@prisma/client';
 import {
   PaginationQueryDto,
   buildPaginatedResult,
@@ -60,11 +60,11 @@ export class AuditController {
     const skip = (page - 1) * limit;
 
     const where: Prisma.AuditLogWhereInput = {};
-    if (action) where.action = { contains: action, mode: 'insensitive' };
+    if (action) where.action = action as AuditAction;
     if (entityType)
       where.entityType = { equals: entityType, mode: 'insensitive' };
     if (userId) where.actorUserId = userId;
-    
+
     if (startDate || endDate) {
       where.createdAt = {};
       if (startDate) where.createdAt.gte = new Date(startDate);

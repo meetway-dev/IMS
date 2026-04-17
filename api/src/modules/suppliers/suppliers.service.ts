@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, AuditAction } from '@prisma/client';
 import { buildPaginatedResult } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -41,7 +41,7 @@ export class SuppliersService {
 
       await this.audit.log({
         actorUserId: user.id,
-        action: 'supplier.create',
+        action: AuditAction.SUPPLIER_CREATED,
         entityType: 'Supplier',
         entityId: row.id,
         metadata: { name: row.name },
@@ -128,7 +128,7 @@ export class SuppliersService {
 
       await this.audit.log({
         actorUserId: user.id,
-        action: 'supplier.update',
+        action: AuditAction.SUPPLIER_UPDATED,
         entityType: 'Supplier',
         entityId: row.id,
         metadata: { name: row.name },
@@ -158,7 +158,7 @@ export class SuppliersService {
 
     await this.audit.log({
       actorUserId: user.id,
-      action: 'supplier.delete',
+      action: AuditAction.SUPPLIER_DELETED,
       entityType: 'Supplier',
       entityId: row.id,
       metadata: { name: row.name },

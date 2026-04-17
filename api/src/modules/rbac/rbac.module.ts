@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
+import { RbacService } from './rbac.service';
+import { RbacGuard } from './rbac.guard';
 
-/** Placeholder module for future RBAC-related providers (e.g. role admin APIs). */
-@Module({})
+@Module({
+  providers: [RbacService, RbacGuard],
+  exports: [RbacService, RbacGuard],
+})
 export class RbacModule {}

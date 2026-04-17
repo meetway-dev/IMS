@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, AuditAction } from '@prisma/client';
 import { slugify } from '../../common/utils/slug';
 import { buildPaginatedResult } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
@@ -46,7 +46,7 @@ export class CategoriesService {
 
       await this.audit.log({
         actorUserId: user.id,
-        action: 'category.create',
+        action: AuditAction.CATEGORY_CREATED,
         entityType: 'Category',
         entityId: row.id,
         metadata: { slug: row.slug },
@@ -168,7 +168,7 @@ export class CategoriesService {
 
       await this.audit.log({
         actorUserId: user.id,
-        action: 'category.update',
+        action: AuditAction.CATEGORY_UPDATED,
         entityType: 'Category',
         entityId: id,
         metadata: { fields: Object.keys(dto) },
@@ -203,7 +203,7 @@ export class CategoriesService {
 
     await this.audit.log({
       actorUserId: user.id,
-      action: 'category.delete',
+      action: AuditAction.CATEGORY_DELETED,
       entityType: 'Category',
       entityId: id,
       ip,

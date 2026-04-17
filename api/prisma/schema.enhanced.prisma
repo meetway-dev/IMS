@@ -1,8 +1,15 @@
 // ==============================================
-// ENHANCED PRODUCTION-GRADE RBAC SCHEMA (CORRECTED)
+// ENHANCED PRODUCTION-GRADE RBAC SCHEMA
 // ==============================================
-// This is a minimal enhancement that can be applied as a migration
-// while keeping backward compatibility
+// This schema addresses all identified gaps:
+// 1. Permission type classification
+// 2. Role hierarchy and precedence
+// 3. Resource-level permission scoping
+// 4. Permission groups for organization
+// 5. Enhanced audit logging
+// 6. Performance optimizations
+// 7. Microservices-ready structure
+// ==============================================
 
 generator client {
   provider = "prisma-client-js"
@@ -10,6 +17,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ==============================================
@@ -67,7 +75,6 @@ enum AuditAction {
   AUDIT_LOG_VIEWED
   SYSTEM_BACKUP
   SYSTEM_RESTORE
-  API_REQUEST
   
   // Business actions
   PRODUCT_CREATED
@@ -76,19 +83,7 @@ enum AuditAction {
   ORDER_CREATED
   ORDER_UPDATED
   ORDER_DELETED
-  ORDER_CONFIRMED
-  ORDER_PAID
-  ORDER_CANCELLED
   INVENTORY_ADJUSTED
-  CATEGORY_CREATED
-  CATEGORY_UPDATED
-  CATEGORY_DELETED
-  SUPPLIER_CREATED
-  SUPPLIER_UPDATED
-  SUPPLIER_DELETED
-  COMPANY_CREATED
-  COMPANY_UPDATED
-  COMPANY_DELETED
 }
 
 enum AuditActorType {
@@ -126,7 +121,7 @@ enum OrderStatus {
 }
 
 // ==============================================
-// CORE RBAC MODELS (Enhanced)
+// CORE RBAC MODELS
 // ==============================================
 
 model User {
@@ -145,12 +140,7 @@ model User {
   // RBAC relationships
   roles           UserRole[]
   directPermissions UserPermission[]
-
-  // RBAC assignment relationships (opposite relations)
-  createdRoles    Role[]              @relation("RoleCreator")
-  assignedUserRoles UserRole[]        @relation("UserRoleAssigner")
-  assignedRolePermissions RolePermission[] @relation("RolePermissionAssigner")
-  assignedUserPermissions UserPermission[] @relation("UserPermissionAssigner")
+  permissionCache UserPermissionCache? // Optional precomputed cache for performance
 
   // Authentication
   refreshTokens   RefreshToken[]
@@ -221,10 +211,12 @@ model Permission {
   resource    String?        // e.g., "User", "Product", "Order"
   action      String?        // e.g., "create", "read", "update", "delete"
   scope       String?        // e.g., "own", "all", "team"
+  groupId     String?        @db.Uuid // Optional grouping
   
   // Relationships
   roles       RolePermission[]
   userPermissions UserPermission[]
+  group       PermissionGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   
   // Metadata
   isSystem    Boolean @default(false)
@@ -242,7 +234,24 @@ model Permission {
   @@index([resource])
   @@index([action])
   @@index([type])
+  @@index([groupId])
   @@index([key])
+}
+
+model PermissionGroup {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  module      String  // e.g., "users", "products"
+  
+  permissions Permission[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  
+  @@index([module])
+  @@index([deletedAt])
 }
 
 model UserRole {
@@ -310,6 +319,22 @@ model UserPermission {
   @@index([effect])
 }
 
+// Performance optimization: Precomputed user permission cache
+model UserPermissionCache {
+  id        String @id @default(uuid()) @db.Uuid
+  userId    String @unique @db.Uuid
+  permissions Json // JSON array of permission keys
+  roles     Json   // JSON array of role names
+  expiresAt DateTime
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([expiresAt])
+}
+
 // ==============================================
 // ENHANCED AUDIT LOGGING
 // ==============================================
@@ -344,7 +369,7 @@ model AuditLog {
 }
 
 // ==============================================
-// EXISTING BUSINESS MODELS (Preserved exactly as in current schema)
+// EXISTING BUSINESS MODELS (Preserved)
 // ==============================================
 
 model Company {
@@ -552,27 +577,4 @@ model RefreshToken {
 
   user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   replacedBy RefreshToken?  @relation("RefreshTokenRotation", fields: [replacedById], references: [id], onDelete: SetNull)
-  replaces   RefreshToken[] @relation("RefreshTokenRotation")
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, sessionId])
-  @@index([expiresAt])
-  @@index([revokedAt])
-}
-
-model PasswordResetToken {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @db.Uuid
-  tokenHash String
-  expiresAt DateTime
-  usedAt    DateTime?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([expiresAt])
-  @@index([usedAt])
-}
+  replaces   RefreshToken[] @relation("RefreshToken

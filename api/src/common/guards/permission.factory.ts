@@ -16,7 +16,7 @@ import { Roles } from '../decorators/roles.decorator';
 export function RequirePermissions(...permissions: string[]) {
   return applyDecorators(
     UseGuards(JwtAuthGuard, RbacGuard),
-    Permissions(...permissions)
+    Permissions(...permissions),
   );
 }
 
@@ -24,10 +24,7 @@ export function RequirePermissions(...permissions: string[]) {
  * Require specific roles for a route
  */
 export function RequireRoles(...roles: string[]) {
-  return applyDecorators(
-    UseGuards(JwtAuthGuard, RbacGuard),
-    Roles(...roles)
-  );
+  return applyDecorators(UseGuards(JwtAuthGuard, RbacGuard), Roles(...roles));
 }
 
 /**
@@ -35,12 +32,12 @@ export function RequireRoles(...roles: string[]) {
  */
 export function RequirePermissionsOrRoles(
   permissions: string[],
-  roles: string[]
+  roles: string[],
 ) {
   return applyDecorators(
     UseGuards(JwtAuthGuard, RbacGuard),
     Permissions(...permissions),
-    Roles(...roles)
+    Roles(...roles),
   );
 }
 
@@ -106,17 +103,17 @@ export { Public };
 
 /**
  * Example usage in controllers:
- * 
+ *
  * @Controller('products')
  * export class ProductsController {
  *   @RequireReadPermission('products')
  *   @Get()
  *   findAll() { ... }
- * 
+ *
  *   @RequireWritePermission('products')
  *   @Post()
  *   create() { ... }
- * 
+ *
  *   @AdminOnly()
  *   @Delete(':id')
  *   delete() { ... }

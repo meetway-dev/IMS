@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, AuditAction } from '@prisma/client';
 import { paginationMeta } from '../../common/dto/pagination.dto';
 import { decToString } from '../../common/utils/decimal';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
@@ -97,7 +97,7 @@ export class ProductsService {
 
       await this.audit.log({
         actorUserId,
-        action: 'product.create',
+        action: AuditAction.PRODUCT_CREATED,
         entityType: 'Product',
         entityId: result.id,
         metadata: { sku: result.sku },
@@ -177,7 +177,7 @@ export class ProductsService {
       });
       await this.audit.log({
         actorUserId,
-        action: 'product.update',
+        action: AuditAction.PRODUCT_UPDATED,
         entityType: 'Product',
         entityId: id,
         metadata: { fields: Object.keys(dto) } as Prisma.InputJsonValue,
@@ -199,7 +199,7 @@ export class ProductsService {
     });
     await this.audit.log({
       actorUserId,
-      action: 'product.delete',
+      action: AuditAction.PRODUCT_DELETED,
       entityType: 'Product',
       entityId: id,
     });

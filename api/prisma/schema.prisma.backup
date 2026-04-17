@@ -1,9 +1,3 @@
-// ==============================================
-// ENHANCED PRODUCTION-GRADE RBAC SCHEMA (CORRECTED)
-// ==============================================
-// This is a minimal enhancement that can be applied as a migration
-// while keeping backward compatibility
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,93 +6,11 @@ datasource db {
   provider = "postgresql"
 }
 
-// ==============================================
-// ENHANCED ENUMS
-// ==============================================
-
 enum UserStatus {
   ACTIVE
   SUSPENDED
-  INACTIVE
-  PENDING
 }
 
-enum PermissionType {
-  CRUD      // Standard CRUD operations (create, read, update, delete)
-  PAGE      // Page-level access (dashboard.view, admin.panel.access)
-  ACTION    // Action-level (approve, export, import, etc.)
-  RESOURCE  // Resource-specific (users.update.own, users.update.all)
-  SYSTEM    // System-level permissions (admin, super_admin)
-}
-
-enum PermissionEffect {
-  ALLOW
-  DENY
-}
-
-enum AuditAction {
-  // User actions
-  USER_CREATED
-  USER_UPDATED
-  USER_DELETED
-  USER_ROLE_ASSIGNED
-  USER_ROLE_REVOKED
-  USER_PERMISSION_ASSIGNED
-  USER_PERMISSION_REVOKED
-  USER_LOGIN
-  USER_LOGOUT
-  USER_PASSWORD_CHANGED
-  
-  // Role actions
-  ROLE_CREATED
-  ROLE_UPDATED
-  ROLE_DELETED
-  ROLE_PERMISSION_ASSIGNED
-  ROLE_PERMISSION_REVOKED
-  ROLE_CLONED
-  
-  // Permission actions
-  PERMISSION_CREATED
-  PERMISSION_UPDATED
-  PERMISSION_DELETED
-  
-  // System actions
-  SETTINGS_UPDATED
-  AUDIT_LOG_VIEWED
-  SYSTEM_BACKUP
-  SYSTEM_RESTORE
-  API_REQUEST
-  
-  // Business actions
-  PRODUCT_CREATED
-  PRODUCT_UPDATED
-  PRODUCT_DELETED
-  ORDER_CREATED
-  ORDER_UPDATED
-  ORDER_DELETED
-  ORDER_CONFIRMED
-  ORDER_PAID
-  ORDER_CANCELLED
-  INVENTORY_ADJUSTED
-  CATEGORY_CREATED
-  CATEGORY_UPDATED
-  CATEGORY_DELETED
-  SUPPLIER_CREATED
-  SUPPLIER_UPDATED
-  SUPPLIER_DELETED
-  COMPANY_CREATED
-  COMPANY_UPDATED
-  COMPANY_DELETED
-}
-
-enum AuditActorType {
-  USER
-  SYSTEM
-  API
-  BATCH
-}
-
-// Existing enums (preserved)
 enum ProductType {
   SANITARY
   ELECTRICAL
@@ -125,9 +37,18 @@ enum OrderStatus {
   REFUNDED
 }
 
-// ==============================================
-// CORE RBAC MODELS (Enhanced)
-// ==============================================
+enum AuditActorType {
+  USER
+  SYSTEM
+}
+
+enum SystemRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  USER
+  STAFF
+}
 
 model User {
   id              String     @id @default(uuid()) @db.Uuid
@@ -138,43 +59,21 @@ model User {
   status          UserStatus @default(ACTIVE)
   isEmailVerified Boolean    @default(false)
   lastLoginAt     DateTime?
-  lastPasswordChangeAt DateTime?
-  failedLoginAttempts Int    @default(0)
-  lockedUntil     DateTime?
 
-  // RBAC relationships
-  roles           UserRole[]
-  directPermissions UserPermission[]
-
-  // RBAC assignment relationships (opposite relations)
-  createdRoles    Role[]              @relation("RoleCreator")
-  assignedUserRoles UserRole[]        @relation("UserRoleAssigner")
-  assignedRolePermissions RolePermission[] @relation("RolePermissionAssigner")
-  assignedUserPermissions UserPermission[] @relation("UserPermissionAssigner")
-
-  // Authentication
   refreshTokens   RefreshToken[]
   passwordResets  PasswordResetToken[]
-
-  // Audit
+  roles           UserRole[]
+  directPermissions UserPermission[]
   auditLogs       AuditLog[]           @relation("AuditActorUser")
 
-  // Business relationships
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  deletedAt             DateTime?
   inventoryTransactions InventoryTransaction[]
   orders                Order[]
 
-  // Timestamps
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  deletedAt       DateTime?
-  archivedAt      DateTime?
-
-  // Indexes
   @@index([status])
   @@index([deletedAt])
-  @@index([email])
-  @@index([lastLoginAt])
-  @@index([createdAt])
 }
 
 model Role {
@@ -183,169 +82,83 @@ model Role {
   description String?
   isSystem    Boolean @default(false)
   isDefault   Boolean @default(false)
-  priority    Int     @default(0) // Higher priority roles override lower ones
-  parentRoleId String? @db.Uuid // For role hierarchy
-  
-  // Relationships
+
   users       UserRole[]
   permissions RolePermission[]
-  parentRole  Role?    @relation("RoleHierarchy", fields: [parentRoleId], references: [id], onDelete: SetNull)
-  childRoles  Role[]   @relation("RoleHierarchy")
-  
-  // Metadata
-  createdByUserId String? @db.Uuid
-  createdByUser   User?   @relation("RoleCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  
-  // Timestamps
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  // Indexes
   @@index([deletedAt])
   @@index([isSystem])
   @@index([isDefault])
-  @@index([priority])
-  @@index([parentRoleId])
-  @@index([name])
 }
 
 model Permission {
-  id          String         @id @default(uuid()) @db.Uuid
-  key         String         @unique
-  name        String
+  id          String  @id @default(uuid()) @db.Uuid
+  key         String  @unique
   description String?
-  type        PermissionType @default(CRUD)
-  effect      PermissionEffect @default(ALLOW)
-  module      String         // e.g., "users", "products", "inventory"
-  resource    String?        // e.g., "User", "Product", "Order"
-  action      String?        // e.g., "create", "read", "update", "delete"
-  scope       String?        // e.g., "own", "all", "team"
-  
-  // Relationships
-  roles       RolePermission[]
-  userPermissions UserPermission[]
-  
-  // Metadata
-  isSystem    Boolean @default(false)
-  version     Int     @default(1)
-  
-  // Timestamps
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  module      String?  // e.g., "users", "products", "inventory"
+  resource    String?  // e.g., "User", "Product", "Order"
+  action      String?  // e.g., "create", "read", "update", "delete"
 
-  // Constraints and Indexes
-  @@unique([resource, action, scope])
+  roles RolePermission[]
+  userPermissions UserPermission[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
   @@index([deletedAt])
   @@index([module])
   @@index([resource])
   @@index([action])
-  @@index([type])
-  @@index([key])
+  @@unique([resource, action])
 }
 
 model UserRole {
   userId String @db.Uuid
   roleId String @db.Uuid
-  
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  
-  assignedByUserId String? @db.Uuid
-  assignedByUser   User?   @relation("UserRoleAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
-  expiresAt        DateTime?
-  
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+
   @@id([userId, roleId])
   @@index([roleId])
-  @@index([userId])
-  @@index([expiresAt])
 }
 
 model RolePermission {
   roleId       String @db.Uuid
   permissionId String @db.Uuid
-  
+
   role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  
-  assignedByUserId String? @db.Uuid
-  assignedByUser   User?   @relation("RolePermissionAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
-  expiresAt        DateTime?
-  
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+
   @@id([roleId, permissionId])
   @@index([permissionId])
-  @@index([roleId])
-  @@index([expiresAt])
 }
 
 model UserPermission {
   userId       String @db.Uuid
   permissionId String @db.Uuid
   priority     Int    @default(0) // Higher priority overrides lower
-  effect       PermissionEffect @default(ALLOW)
-  
+
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  
-  assignedByUserId String? @db.Uuid
-  assignedByUser   User?   @relation("UserPermissionAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
-  reason           String?
-  
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
   expiresAt DateTime? // Optional expiration for temporary permissions
-  
+
   @@id([userId, permissionId])
   @@index([permissionId])
-  @@index([userId])
   @@index([priority])
   @@index([expiresAt])
-  @@index([effect])
 }
-
-// ==============================================
-// ENHANCED AUDIT LOGGING
-// ==============================================
-
-model AuditLog {
-  id          String         @id @default(uuid()) @db.Uuid
-  actorType   AuditActorType @default(USER)
-  actorUserId String?        @db.Uuid
-  action      AuditAction
-  entityType  String?
-  entityId    String?
-  ip          String?
-  userAgent   String?
-  metadata    Json?
-  
-  // Request context
-  requestId   String? @unique
-  endpoint    String?
-  method      String?
-  statusCode  Int?
-  
-  actorUser User? @relation("AuditActorUser", fields: [actorUserId], references: [id], onDelete: SetNull)
-  
-  createdAt DateTime @default(now())
-  
-  @@index([actorType, createdAt])
-  @@index([actorUserId])
-  @@index([action])
-  @@index([entityType, entityId])
-  @@index([createdAt])
-  @@index([requestId])
-}
-
-// ==============================================
-// EXISTING BUSINESS MODELS (Preserved exactly as in current schema)
-// ==============================================
 
 model Company {
   id   String  @id @default(uuid()) @db.Uuid
@@ -575,4 +388,25 @@ model PasswordResetToken {
   @@index([userId])
   @@index([expiresAt])
   @@index([usedAt])
+}
+
+model AuditLog {
+  id          String         @id @default(uuid()) @db.Uuid
+  actorType   AuditActorType @default(USER)
+  actorUserId String?        @db.Uuid
+  action      String
+  entityType  String?
+  entityId    String?
+  ip          String?
+  userAgent   String?
+  metadata    Json?
+
+  actorUser User? @relation("AuditActorUser", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([actorType, createdAt])
+  @@index([actorUserId])
+  @@index([action])
+  @@index([entityType, entityId])
 }

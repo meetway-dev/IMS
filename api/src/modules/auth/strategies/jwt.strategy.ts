@@ -31,10 +31,22 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
               include: {
                 permissions: {
                   include: { permission: true },
+                  where: { permission: { deletedAt: null } },
                 },
               },
+              where: { deletedAt: null },
             },
           },
+        },
+        directPermissions: {
+          include: {
+            permission: true,
+          },
+          where: {
+            permission: { deletedAt: null },
+            OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+          },
+          orderBy: { priority: 'desc' },
         },
       },
     });
@@ -44,13 +56,28 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const roles: string[] = [];
     const permissions = new Set<string>();
 
+    // Add role-based permissions
     for (const ur of user.roles) {
-      if (ur.role.deletedAt) continue;
+      if (!ur.role) continue;
       roles.push(ur.role.name);
       for (const rp of ur.role.permissions) {
-        if (rp.permission.deletedAt) continue;
         permissions.add(rp.permission.key);
       }
+    }
+
+    // Add direct permissions (override role permissions)
+    for (const up of (user as any).directPermissions) {
+      permissions.add(up.permission.key);
+    }
+
+    // SUPER_ADMIN override: if user has SUPER_ADMIN role, grant all permissions
+    if (roles.includes('SUPER_ADMIN')) {
+      return {
+        id: user.id,
+        email: user.email,
+        roles,
+        permissions: ['*'], // Wildcard for all permissions
+      };
     }
 
     return {

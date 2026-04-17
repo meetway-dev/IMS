@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, AuditAction } from '@prisma/client';
 import { buildPaginatedResult } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -37,7 +37,7 @@ export class CompaniesService {
 
       await this.audit.log({
         actorUserId: user.id,
-        action: 'company.create',
+        action: AuditAction.COMPANY_CREATED,
         entityType: 'Company',
         entityId: row.id,
         metadata: { name: row.name },
@@ -110,7 +110,7 @@ export class CompaniesService {
 
       await this.audit.log({
         actorUserId: user.id,
-        action: 'company.update',
+        action: AuditAction.COMPANY_UPDATED,
         entityType: 'Company',
         entityId: id,
         metadata: { fields: Object.keys(dto) },
@@ -139,7 +139,7 @@ export class CompaniesService {
 
     await this.audit.log({
       actorUserId: user.id,
-      action: 'company.delete',
+      action: AuditAction.COMPANY_DELETED,
       entityType: 'Company',
       entityId: id,
       ip,

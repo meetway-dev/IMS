@@ -34,7 +34,7 @@ export class PaginationBuilder<T> {
 
   constructor(
     private modelName: string,
-    private prisma: any
+    private prisma: any,
   ) {}
 
   /**
@@ -130,12 +130,16 @@ export class PaginationBuilder<T> {
    */
   static buildWhereClause<T>(
     options: PaginationOptions,
-    additionalFilters?: Record<string, any>
+    additionalFilters?: Record<string, any>,
   ): Prisma.Args<T, 'findMany'>['where'] {
     const where: Prisma.Args<T, 'findMany'>['where'] = {};
 
     // Apply search
-    if (options.search && options.searchFields && options.searchFields.length > 0) {
+    if (
+      options.search &&
+      options.searchFields &&
+      options.searchFields.length > 0
+    ) {
       where.OR = options.searchFields.map((field) => ({
         [field]: { contains: options.search, mode: 'insensitive' as const },
       }));
@@ -159,7 +163,10 @@ export class PaginationBuilder<T> {
    */
   static buildOrderByClause<T>(
     options: PaginationOptions,
-    defaultSort: { field: string; order: 'asc' | 'desc' } = { field: 'createdAt', order: 'desc' }
+    defaultSort: { field: string; order: 'asc' | 'desc' } = {
+      field: 'createdAt',
+      order: 'desc',
+    },
   ): Prisma.Args<T, 'findMany'>['orderBy'] {
     if (options.sortBy) {
       return { [options.sortBy]: options.sortOrder || 'asc' };
@@ -170,11 +177,7 @@ export class PaginationBuilder<T> {
   /**
    * Calculate pagination metadata
    */
-  static calculatePaginationMeta(
-    total: number,
-    page: number,
-    limit: number
-  ) {
+  static calculatePaginationMeta(total: number, page: number, limit: number) {
     const totalPages = Math.max(1, Math.ceil(total / limit));
     const hasNextPage = page < totalPages;
     const hasPreviousPage = page > 1;
@@ -195,13 +198,10 @@ export class PaginationBuilder<T> {
   static sanitizePaginationParams(
     params: PaginationQueryDto,
     defaultLimit: number = 20,
-    maxLimit: number = 100
+    maxLimit: number = 100,
   ): { page: number; limit: number } {
     const page = Math.max(1, params.page || 1);
-    const limit = Math.min(
-      Math.max(1, params.limit || defaultLimit),
-      maxLimit
-    );
+    const limit = Math.min(Math.max(1, params.limit || defaultLimit), maxLimit);
 
     return { page, limit };
   }
