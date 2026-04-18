@@ -9,6 +9,39 @@ export interface User {
   updatedAt: string;
 }
 
+export interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  isSystem: boolean;
+  isDefault: boolean;
+  priority: number;
+  parentRoleId?: string;
+  parentRole?: Role;
+  childRoles?: Role[];
+  permissions?: Permission[];
+  userCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Permission {
+  id: string;
+  key: string;
+  name: string;
+  description?: string;
+  type: 'API' | 'UI' | 'DATA';
+  effect: 'ALLOW' | 'DENY';
+  module: string;
+  resource?: string;
+  action?: string;
+  scope?: string;
+  isSystem: boolean;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF';
 
 export interface AuthTokens {

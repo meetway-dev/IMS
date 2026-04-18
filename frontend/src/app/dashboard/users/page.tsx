@@ -37,8 +37,8 @@ export default function UsersPage() {
 
   React.useEffect(() => {
     if (isSuperAdmin) {
-      roleService.getAllRoles().then(setRoles);
-      permissionService.getAllPermissions().then(setPermissions);
+      roleService.getAllRoles().then(response => setRoles(response.data));
+      permissionService.getAllPermissions().then(response => setPermissions(response.data));
     }
   }, [isSuperAdmin]);
 

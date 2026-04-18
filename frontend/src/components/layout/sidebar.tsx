@@ -47,6 +47,8 @@ const navigationSections = [
     items: [
       { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
       { name: 'Users', href: '/dashboard/users', icon: Users },
+      { name: 'Roles', href: '/dashboard/roles', icon: Shield },
+      { name: 'Permissions', href: '/dashboard/permissions', icon: Settings },
       { name: 'Companies', href: '/dashboard/companies', icon: Building },
     ],
   },

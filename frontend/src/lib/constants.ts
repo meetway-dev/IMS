@@ -51,6 +51,25 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/users/${id}`,
     DELETE: (id: string) => `/users/${id}`,
   },
+  // Roles
+  ROLES: {
+    LIST: '/roles',
+    DETAIL: (id: string) => `/roles/${id}`,
+    CREATE: '/roles',
+    UPDATE: (id: string) => `/roles/${id}`,
+    DELETE: (id: string) => `/roles/${id}`,
+    ASSIGN_PERMISSIONS: (id: string) => `/roles/${id}/permissions`,
+    CLONE: (id: string) => `/roles/${id}/clone`,
+  },
+  // Permissions
+  PERMISSIONS: {
+    LIST: '/permissions',
+    DETAIL: (id: string) => `/permissions/${id}`,
+    CREATE: '/permissions',
+    UPDATE: (id: string) => `/permissions/${id}`,
+    DELETE: (id: string) => `/permissions/${id}`,
+    BY_MODULE: (module: string) => `/permissions/module/${module}`,
+  },
   // Companies
   COMPANIES: {
     LIST: '/companies',
