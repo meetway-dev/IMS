@@ -166,7 +166,7 @@ export function Topbar() {
                 </div>
                 <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-background bg-green-500" />
                 <span className="hidden md:inline text-sm font-medium truncate max-w-[100px]">
-                  {user.name.split(' ')[0]}
+                  {user.name?.split(' ')[0] || 'User'}
                 </span>
                 <ChevronDown className="hidden md:block h-4 w-4 ml-1" />
               </Button>
@@ -180,7 +180,7 @@ export function Topbar() {
                     </span>
                   </div>
                   <div className="flex flex-col">
-                    <p className="text-sm font-semibold leading-none">{user.name}</p>
+                    <p className="text-sm font-semibold leading-none">{user.name || 'User'}</p>
                     <p className="text-xs leading-none text-muted-foreground truncate max-w-[180px]">
                       {user.email}
                     </p>

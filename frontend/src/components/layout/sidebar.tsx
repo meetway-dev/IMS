@@ -187,7 +187,7 @@ export function Sidebar() {
               </div>
               {sidebarOpen && (
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-semibold">{user.name}</p>
+                  <p className="truncate text-sm font-semibold">{user.name || 'User'}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {user.roles?.join(', ')}
                   </p>

@@ -44,6 +44,39 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading, children, disabled, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
+
+    // Render loader and children
+    const content = loading ? (
+      <>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        {children}
+      </>
+    ) : (
+      children
+    );
+
+    // If asChild is true, ensure a single child for Slot
+    let slotChild = content;
+    if (asChild) {
+      const childCount = React.Children.count(content);
+      if (childCount === 0) {
+        // No children, provide a placeholder span (invisible) to satisfy Slot
+        slotChild = <span className="hidden" />;
+      } else if (childCount === 1) {
+        // Single child, ensure it's a valid element
+        const child = React.Children.toArray(content)[0];
+        if (React.isValidElement(child)) {
+          slotChild = child;
+        } else {
+          // Fallback wrap
+          slotChild = <span className="inline-flex items-center justify-center gap-2">{content}</span>;
+        }
+      } else {
+        // Multiple children, wrap them in a span
+        slotChild = <span className="inline-flex items-center justify-center gap-2">{content}</span>;
+      }
+    }
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }), loading && 'cursor-wait')}
@@ -51,8 +84,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         {...props}
       >
-        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {children}
+        {slotChild}
       </Comp>
     );
   }
