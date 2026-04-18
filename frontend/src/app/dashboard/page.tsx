@@ -3,11 +3,11 @@
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  TrendingUp, 
+import {
+  Package,
+  ShoppingCart,
+  Users,
+  TrendingUp,
   AlertTriangle,
   DollarSign,
   BarChart3,
@@ -15,11 +15,17 @@ import {
   ArrowDownRight,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  TrendingDown,
+  Activity,
+  PackageOpen,
+  ShieldCheck
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import { dashboardService } from '@/services/dashboard.service';
+import { StatsCard, StatsGrid } from '@/components/ui/stats-card';
+import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -29,7 +35,8 @@ export default function DashboardPage() {
     queryFn: () => dashboardService.getDashboardStats(),
   });
 
-  const stats = [
+  // Enhanced stats with fallback values
+  const enhancedStats = [
     {
       title: 'Total Revenue',
       value: formatCurrency(dashboardStats?.totalRevenue || 0),
@@ -37,7 +44,7 @@ export default function DashboardPage() {
       trend: '+23.1%',
       trendUp: true,
       description: 'From last month',
-      color: 'from-green-500 to-emerald-600',
+      color: 'from-green-500 to-emerald-500',
     },
     {
       title: 'Total Products',
@@ -46,7 +53,7 @@ export default function DashboardPage() {
       trend: '+12.5%',
       trendUp: true,
       description: 'Active in inventory',
-      color: 'from-blue-500 to-cyan-600',
+      color: 'from-blue-500 to-cyan-500',
     },
     {
       title: 'Total Orders',
@@ -55,7 +62,7 @@ export default function DashboardPage() {
       trend: '+8.2%',
       trendUp: true,
       description: 'This month',
-      color: 'from-purple-500 to-violet-600',
+      color: 'from-purple-500 to-violet-500',
     },
     {
       title: 'Active Users',
@@ -64,7 +71,43 @@ export default function DashboardPage() {
       trend: '+5.1%',
       trendUp: true,
       description: 'Currently online',
-      color: 'from-orange-500 to-amber-600',
+      color: 'from-orange-500 to-amber-500',
+    },
+    {
+      title: 'Low Stock Items',
+      value: '12',
+      icon: AlertTriangle,
+      trend: '-3.2%',
+      trendUp: false,
+      description: 'Need restocking',
+      color: 'from-red-500 to-rose-500',
+    },
+    {
+      title: 'Order Fulfillment',
+      value: '98.5%',
+      icon: ShieldCheck,
+      trend: '+1.8%',
+      trendUp: true,
+      description: 'On-time delivery',
+      color: 'from-indigo-500 to-blue-500',
+    },
+    {
+      title: 'Avg Order Value',
+      value: formatCurrency(1250),
+      icon: TrendingUp,
+      trend: '+4.7%',
+      trendUp: true,
+      description: 'Customer spending',
+      color: 'from-teal-500 to-emerald-500',
+    },
+    {
+      title: 'Inventory Turnover',
+      value: '4.2x',
+      icon: Activity,
+      trend: '+0.8%',
+      trendUp: true,
+      description: 'Monthly rate',
+      color: 'from-pink-500 to-rose-500',
     },
   ];
 
@@ -134,35 +177,47 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title} className="overflow-hidden border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className="text-2xl font-bold mt-2">{stat.value}</p>
-                  <div className="flex items-center mt-2">
-                    {stat.trendUp ? (
-                      <ArrowUpRight className="h-4 w-4 text-green-500 mr-1" />
-                    ) : (
-                      <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
-                    )}
-                    <span className={`text-sm font-medium ${stat.trendUp ? 'text-green-600' : 'text-red-600'}`}>
-                      {stat.trend}
-                    </span>
-                    <span className="text-xs text-muted-foreground ml-2">{stat.description}</span>
-                  </div>
-                </div>
-                <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-md`}>
-                  <stat.icon className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Enhanced Stats Cards */}
+      <StatsGrid>
+        {enhancedStats.slice(0, 4).map((stat, index) => (
+          <StatsCard
+            key={stat.title}
+            title={stat.title}
+            value={stat.value}
+            description={stat.description}
+            icon={stat.icon}
+            trend={{
+              value: stat.trend,
+              isPositive: stat.trendUp,
+              label: stat.description
+            }}
+            color={stat.color}
+            loading={isLoading}
+            gradient={stat.color}
+          />
         ))}
-      </div>
+      </StatsGrid>
+
+      {/* Additional Stats Grid */}
+      <StatsGrid>
+        {enhancedStats.slice(4).map((stat, index) => (
+          <StatsCard
+            key={stat.title}
+            title={stat.title}
+            value={stat.value}
+            description={stat.description}
+            icon={stat.icon}
+            trend={{
+              value: stat.trend,
+              isPositive: stat.trendUp,
+              label: stat.description
+            }}
+            color={stat.color}
+            loading={isLoading}
+            gradient={stat.color}
+          />
+        ))}
+      </StatsGrid>
 
       {/* Charts and Tables */}
       <div className="grid gap-6 lg:grid-cols-2">

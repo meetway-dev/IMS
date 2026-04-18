@@ -23,17 +23,7 @@ export const userService = {
    * Get all users with pagination
    */
   async getUsers(params?: PaginationParams): Promise<PaginatedResponse<User>> {
-    const res = await apiClient.getPaginated<any>(API_ENDPOINTS.USERS.LIST, params);
-    // Transform BE response { data, total, page, limit } to FE PaginatedResponse { data, meta }
-    return {
-      data: res.data,
-      meta: {
-        total: res.total,
-        page: res.page,
-        limit: res.limit,
-        totalPages: res.limit ? Math.ceil(res.total / res.limit) : 1,
-      },
-    };
+    return apiClient.getPaginated<User>(API_ENDPOINTS.USERS.LIST, params);
   },
 
 
