@@ -15,57 +15,7 @@ import { Label } from '@/components/ui/label';
 import { companyService } from '@/services/company.service';
 import { Company } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-
-const columns: ColumnDef<Company>[] = [
-  {
-    accessorKey: 'name',
-    header: 'Company Name',
-    cell: ({ row }) => row.original.name,
-  },
-  {
-    accessorKey: 'email',
-    header: 'Email',
-    cell: ({ row }) => row.original.email || '-',
-  },
-  {
-    accessorKey: 'phone',
-    header: 'Phone',
-    cell: ({ row }) => row.original.phone || '-',
-  },
-  {
-    accessorKey: 'address',
-    header: 'Address',
-    cell: ({ row }) => row.original.address || '-',
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem className="text-destructive">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
-];
+import { ActionMenu } from '@/components/ui/action-menu';
 
 export default function CompaniesPage() {
   const { toast } = useToast();
@@ -109,6 +59,87 @@ export default function CompaniesPage() {
     };
     await createCompanyMutation.mutateAsync(data);
   };
+
+  const handleEditCompany = (company: Company) => {
+    // TODO: Implement edit functionality
+    toast({
+      title: 'Edit Company',
+      description: `Editing company: ${company.name}`,
+    });
+    console.log('Edit company', company);
+  };
+
+  const handleDeleteCompany = async (id: string) => {
+    if (confirm('Are you sure you want to delete this company?')) {
+      await deleteCompanyMutation.mutateAsync(id);
+    }
+  };
+
+  // Delete company mutation
+  const deleteCompanyMutation = useMutation({
+    mutationFn: companyService.deleteCompany,
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Company deleted successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete company.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const columns: ColumnDef<Company>[] = [
+    {
+      accessorKey: 'name',
+      header: 'Company Name',
+      cell: ({ row }) => row.original.name,
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      cell: ({ row }) => row.original.email || '-',
+    },
+    {
+      accessorKey: 'phone',
+      header: 'Phone',
+      cell: ({ row }) => row.original.phone || '-',
+    },
+    {
+      accessorKey: 'address',
+      header: 'Address',
+      cell: ({ row }) => row.original.address || '-',
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <ActionMenu
+          trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon' }}
+          items={[
+            {
+              label: 'Edit',
+              icon: Edit,
+              iconPosition: 'start',
+              onClick: () => handleEditCompany(row.original)
+            },
+            {
+              label: 'Delete',
+              icon: Trash2,
+              iconPosition: 'start',
+              variant: 'destructive',
+              onClick: () => handleDeleteCompany(row.original.id)
+            },
+          ]}
+          align="end"
+        />
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">

@@ -13,82 +13,7 @@ import { Label } from '@/components/ui/label';
 import { supplierService } from '@/services/supplier.service';
 import { Supplier } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-
-const columns: ColumnDef<Supplier>[] = [
-  {
-    accessorKey: 'name',
-    header: 'Name',
-    cell: ({ row }) => row.original.name,
-  },
-  {
-    accessorKey: 'email',
-    header: 'Email',
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <Mail className="h-4 w-4 text-muted-foreground" />
-        <span>{row.original.email || '-'}</span>
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'phone',
-    header: 'Phone',
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <Phone className="h-4 w-4 text-muted-foreground" />
-        <span>{row.original.phone || '-'}</span>
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'contactPerson',
-    header: 'Contact Person',
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <User className="h-4 w-4 text-muted-foreground" />
-        <span>{row.original.contactPerson || '-'}</span>
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'address',
-    header: 'Address',
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <MapPin className="h-4 w-4 text-muted-foreground" />
-        <span className="max-w-[200px] truncate">{row.original.address || '-'}</span>
-      </div>
-    ),
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem className="text-destructive">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
-];
+import { ActionMenu } from '@/components/ui/action-menu';
 
 export default function SuppliersPage() {
   const { toast } = useToast();
@@ -121,6 +46,21 @@ export default function SuppliersPage() {
     },
   });
 
+  const handleEditSupplier = (supplier: Supplier) => {
+    // TODO: Implement edit functionality
+    toast({
+      title: 'Edit Supplier',
+      description: `Editing supplier: ${supplier.name}`,
+    });
+    console.log('Edit supplier', supplier);
+  };
+
+  const handleDeleteSupplier = async (id: string) => {
+    if (confirm('Are you sure you want to delete this supplier?')) {
+      await deleteSupplierMutation.mutateAsync(id);
+    }
+  };
+
   const handleCreateSupplier = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -134,6 +74,97 @@ export default function SuppliersPage() {
     };
     await createSupplierMutation.mutateAsync(data);
   };
+
+  // Delete supplier mutation
+  const deleteSupplierMutation = useMutation({
+    mutationFn: supplierService.deleteSupplier,
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Supplier deleted successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete supplier.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const columns: ColumnDef<Supplier>[] = [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => row.original.name,
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Mail className="h-4 w-4 text-muted-foreground" />
+          <span>{row.original.email || '-'}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'phone',
+      header: 'Phone',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Phone className="h-4 w-4 text-muted-foreground" />
+          <span>{row.original.phone || '-'}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'contactPerson',
+      header: 'Contact Person',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4 text-muted-foreground" />
+          <span>{row.original.contactPerson || '-'}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'address',
+      header: 'Address',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <span className="max-w-[200px] truncate">{row.original.address || '-'}</span>
+        </div>
+      ),
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <ActionMenu
+          trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon' }}
+          items={[
+            {
+              label: 'Edit',
+              icon: Edit,
+              iconPosition: 'start',
+              onClick: () => handleEditSupplier(row.original)
+            },
+            {
+              label: 'Delete',
+              icon: Trash2,
+              iconPosition: 'start',
+              variant: 'destructive',
+              onClick: () => handleDeleteSupplier(row.original.id)
+            },
+          ]}
+          align="end"
+        />
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">

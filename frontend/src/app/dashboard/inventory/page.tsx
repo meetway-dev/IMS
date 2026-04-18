@@ -14,80 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { inventoryService } from '@/services/inventory.service';
 import { Inventory } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { ActionMenu } from '@/components/ui/action-menu';
 import { formatCurrency } from '@/lib/utils';
-
-const columns: ColumnDef<Inventory>[] = [
-  {
-    id: 'product_name',
-    header: 'Product',
-    accessorFn: (row) => row.product?.name,
-    cell: ({ row }) => row.original.product?.name || '-',
-  },
-  {
-    accessorKey: 'quantity',
-    header: 'Quantity',
-    cell: ({ row }) => {
-      const minStock = row.original.product?.minStockLevel;
-      const isLowStock = minStock !== undefined && row.original.quantity <= minStock;
-      return (
-        <div className="flex items-center gap-2">
-          <span>{row.original.quantity}</span>
-          {isLowStock && (
-            <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
-              Low
-            </span>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    id: 'product_minStockLevel',
-    header: 'Min Stock',
-    accessorFn: (row) => row.product?.minStockLevel,
-    cell: ({ row }) => row.original.product?.minStockLevel || '-',
-  },
-  {
-    id: 'product_price',
-    header: 'Price',
-    accessorFn: (row) => row.product?.price,
-    cell: ({ row }) => formatCurrency(row.original.product?.price || 0),
-  },
-  {
-    id: 'product_cost',
-    header: 'Cost',
-    accessorFn: (row) => row.product?.cost,
-    cell: ({ row }) => formatCurrency(row.original.product?.cost || 0),
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>
-            <Edit className="mr-2 h-4 w-4" />
-            Adjust Stock
-          </DropdownMenuItem>
-          <DropdownMenuItem className="text-destructive">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
-];
 
 export default function InventoryPage() {
   const { toast } = useToast();
@@ -131,6 +59,109 @@ export default function InventoryPage() {
     };
     await adjustInventoryMutation.mutateAsync(data);
   };
+
+  const handleAdjustStock = (inventory: Inventory) => {
+    // TODO: Implement specific inventory adjustment
+    toast({
+      title: 'Adjust Stock',
+      description: `Adjusting stock for ${inventory.product?.name}`,
+    });
+    console.log('Adjust stock for inventory', inventory);
+  };
+
+  const handleDeleteInventory = async (id: string) => {
+    if (confirm('Are you sure you want to delete this inventory record?')) {
+      await deleteInventoryMutation.mutateAsync(id);
+    }
+  };
+
+  // Delete inventory mutation
+  const deleteInventoryMutation = useMutation({
+    mutationFn: inventoryService.deleteInventory,
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Inventory record deleted successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete inventory record.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const columns: ColumnDef<Inventory>[] = [
+    {
+      id: 'product_name',
+      header: 'Product',
+      accessorFn: (row) => row.product?.name,
+      cell: ({ row }) => row.original.product?.name || '-',
+    },
+    {
+      accessorKey: 'quantity',
+      header: 'Quantity',
+      cell: ({ row }) => {
+        const minStock = row.original.product?.minStockLevel;
+        const isLowStock = minStock !== undefined && row.original.quantity <= minStock;
+        return (
+          <div className="flex items-center gap-2">
+            <span>{row.original.quantity}</span>
+            {isLowStock && (
+              <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+                Low
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'product_minStockLevel',
+      header: 'Min Stock',
+      accessorFn: (row) => row.product?.minStockLevel,
+      cell: ({ row }) => row.original.product?.minStockLevel || '-',
+    },
+    {
+      id: 'product_price',
+      header: 'Price',
+      accessorFn: (row) => row.product?.price,
+      cell: ({ row }) => formatCurrency(row.original.product?.price || 0),
+    },
+    {
+      id: 'product_cost',
+      header: 'Cost',
+      accessorFn: (row) => row.product?.cost,
+      cell: ({ row }) => formatCurrency(row.original.product?.cost || 0),
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <ActionMenu
+          trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon' }}
+          items={[
+            {
+              label: 'Adjust Stock',
+              icon: Edit,
+              iconPosition: 'start',
+              onClick: () => handleAdjustStock(row.original)
+            },
+            {
+              label: 'Delete',
+              icon: Trash2,
+              iconPosition: 'start',
+              variant: 'destructive',
+              onClick: () => handleDeleteInventory(row.original.id)
+            },
+          ]}
+          align="end"
+        />
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">

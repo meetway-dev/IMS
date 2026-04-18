@@ -16,12 +16,7 @@ import { categoryService } from '@/services/category.service';
 import { Product, Category } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { ActionMenu } from '@/components/ui/action-menu';
 
 export default function ProductsPage() {
   const { toast } = useToast();
@@ -112,26 +107,25 @@ export default function ProductsPage() {
     {
       id: 'actions',
       cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleEditProduct(row.original)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-destructive" 
-              onClick={() => handleDeleteProduct(row.original.id)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ActionMenu
+          trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon' }}
+          items={[
+            {
+              label: 'Edit',
+              icon: Edit,
+              iconPosition: 'start',
+              onClick: () => handleEditProduct(row.original)
+            },
+            {
+              label: 'Delete',
+              icon: Trash2,
+              iconPosition: 'start',
+              variant: 'destructive',
+              onClick: () => handleDeleteProduct(row.original.id)
+            },
+          ]}
+          align="end"
+        />
       ),
     },
   ];

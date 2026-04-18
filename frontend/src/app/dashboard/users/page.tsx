@@ -4,17 +4,10 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, User, Mail, Shield, MoreVertical } from 'lucide-react';
+import { Search, Plus, User, Mail, Shield, MoreVertical, Copy, Edit, Trash2, Eye, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DataTable } from '@/components/tables/data-table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { ActionMenu } from '@/components/ui/action-menu';
 
 import { userService } from '@/services/user.service';
 import { User as UserType } from '@/types';
@@ -135,39 +128,62 @@ export default function UsersPage() {
     },
     {
       id: 'actions',
-      cell: ({ row }: any) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(row.original.id)}>
-              Copy user ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {isSuperAdmin && (
-              <>
-                <DropdownMenuItem onClick={() => handleEdit(row.original)}>
-                  Edit user
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleDelete(row.original)} className="text-red-600">
-                  Delete user
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setAssignUser(row.original)}>
-                  Assign roles/permissions
-                </DropdownMenuItem>
-              </>
-            )}
-            <DropdownMenuItem onClick={() => setDetailsUser(row.original)}>
-              View details
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+      cell: ({ row }: any) => {
+        // Import helper functions (they're exported from action-menu)
+        const { menuItem, menuSeparator, menuLabel } = require('@/components/ui/action-menu');
+        
+        const items = [
+          menuLabel({ label: 'Actions' }),
+          menuItem({
+            label: 'Copy user ID',
+            icon: Copy,
+            iconPosition: 'start' as const,
+            onClick: () => navigator.clipboard.writeText(row.original.id)
+          }),
+          menuSeparator(),
+        ];
+        
+        if (isSuperAdmin) {
+          items.push(
+            menuItem({
+              label: 'Edit user',
+              icon: Edit,
+              iconPosition: 'start' as const,
+              onClick: () => handleEdit(row.original)
+            }),
+            menuItem({
+              label: 'Delete user',
+              icon: Trash2,
+              iconPosition: 'start' as const,
+              variant: 'destructive' as const,
+              onClick: () => handleDelete(row.original)
+            }),
+            menuItem({
+              label: 'Assign roles/permissions',
+              icon: ShieldCheck,
+              iconPosition: 'start' as const,
+              onClick: () => setAssignUser(row.original)
+            })
+          );
+        }
+        
+        items.push(
+          menuItem({
+            label: 'View details',
+            icon: Eye,
+            iconPosition: 'start' as const,
+            onClick: () => setDetailsUser(row.original)
+          })
+        );
+        
+        return (
+          <ActionMenu
+            trigger={{ icon: MoreVertical, variant: 'ghost', size: 'icon' }}
+            items={items}
+            align="end"
+          />
+        );
+      },
     },
   ];
 
