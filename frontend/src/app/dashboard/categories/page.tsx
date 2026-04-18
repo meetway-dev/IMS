@@ -14,12 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { categoryService } from '@/services/category.service';
 import { Category } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { ActionMenu, menuItem, menuSeparator } from '@/components/ui/action-menu';
 
 const columns: ColumnDef<Category>[] = [
   {
@@ -40,23 +35,29 @@ const columns: ColumnDef<Category>[] = [
   {
     id: 'actions',
     cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem className="text-destructive">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <ActionMenu
+        trigger={{
+          icon: MoreHorizontal,
+          variant: 'ghost',
+          size: 'icon',
+        }}
+        items={[
+          {
+            label: 'Edit',
+            icon: Edit,
+            iconPosition: 'start',
+            onClick: () => console.log('Edit category', row.original),
+          },
+          {
+            label: 'Delete',
+            icon: Trash2,
+            iconPosition: 'start',
+            variant: 'destructive',
+            onClick: () => console.log('Delete category', row.original),
+          },
+        ]}
+        align="end"
+      />
     ),
   },
 ];
