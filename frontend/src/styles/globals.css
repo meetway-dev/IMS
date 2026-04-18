@@ -23,7 +23,7 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
@@ -270,15 +270,77 @@
     border-radius: 1.5rem;
   }
 
-  /* Spacing utilities */
+  /* Spacing utilities - Professional dense spacing for data-heavy applications */
+  .space-y-dense > * + * {
+    margin-top: 0.5rem; /* 8px - tighter spacing for dense layouts */
+  }
+
+  .space-y-compact > * + * {
+    margin-top: 0.75rem; /* 12px - balanced spacing */
+  }
+
   .space-y-responsive > * + * {
-    margin-top: 1rem;
+    margin-top: 1rem; /* 16px - default responsive spacing */
   }
 
   @media (min-width: 768px) {
     .space-y-responsive > * + * {
       margin-top: 1.5rem;
     }
+  }
+
+  /* Padding utilities for dense tables and cards */
+  .p-dense {
+    padding: 0.75rem; /* 12px instead of 1rem */
+  }
+
+  .px-dense {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .py-dense {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  /* Compact table cell padding */
+  .table-cell-compact {
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Reduced card padding for dense layouts */
+  .card-compact {
+    padding: 1rem;
+  }
+
+  /* Gap utilities for grid layouts */
+  .gap-dense {
+    gap: 0.5rem;
+  }
+
+  .gap-compact {
+    gap: 0.75rem;
+  }
+
+  /* Margin utilities for tighter layouts */
+  .mt-tight {
+    margin-top: 0.25rem;
+  }
+
+  .mb-tight {
+    margin-bottom: 0.25rem;
+  }
+
+  /* Container constraints for better data visibility */
+  .max-h-data {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .max-h-data-lg {
+    max-height: 700px;
+    overflow-y: auto;
   }
 
   /* Animation utilities */
@@ -313,6 +375,34 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* Color utilities */

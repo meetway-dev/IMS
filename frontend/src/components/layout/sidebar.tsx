@@ -14,53 +14,56 @@ import {
   ShoppingCart,
   FileText,
   Users,
-  LogOut,
-  Menu,
   X,
   ChevronLeft,
   ChevronRight,
+  Settings,
+  BarChart3,
+  Shield,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
-import { useLogout } from '@/hooks/use-auth';
 import { useUIStore } from '@/store/ui-store';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
 import { getInitials } from '@/lib/utils';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Products', href: '/dashboard/products', icon: Package },
-  { name: 'Categories', href: '/dashboard/categories', icon: Tag },
-  { name: 'Companies', href: '/dashboard/companies', icon: Building },
-  { name: 'Inventory', href: '/dashboard/inventory', icon: PackageOpen },
-  { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
-  { name: 'Suppliers', href: '/dashboard/suppliers', icon: Truck },
-  { name: 'Users', href: '/dashboard/users', icon: Users },
-  { name: 'Audit Logs', href: '/dashboard/audit', icon: FileText },
+const navigationSections = [
+  {
+    title: 'Core',
+    items: [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    title: 'Inventory',
+    items: [
+      { name: 'Products', href: '/dashboard/products', icon: Package },
+      { name: 'Categories', href: '/dashboard/categories', icon: Tag },
+      { name: 'Inventory', href: '/dashboard/inventory', icon: PackageOpen },
+      { name: 'Suppliers', href: '/dashboard/suppliers', icon: Truck },
+    ],
+  },
+  {
+    title: 'Management',
+    items: [
+      { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
+      { name: 'Users', href: '/dashboard/users', icon: Users },
+      { name: 'Companies', href: '/dashboard/companies', icon: Building },
+    ],
+  },
+  {
+    title: 'System',
+    items: [
+      { name: 'Audit Logs', href: '/dashboard/audit', icon: FileText },
+      { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+      { name: 'Security', href: '/dashboard/security', icon: Shield },
+    ],
+  },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const logout = useLogout();
   const { sidebarOpen, toggleSidebar, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
-  const { toast } = useToast();
-
-  const handleLogout = async () => {
-    try {
-      await logout.mutateAsync();
-      toast({
-        title: 'Logged out',
-        description: 'You have been logged out successfully.',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to logout. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  };
 
   return (
     <>
@@ -110,38 +113,64 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-2 overflow-y-auto p-4">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'group flex items-center space-x-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
-                  isActive
-                    ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-l-4 border-primary shadow-sm'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:shadow-sm'
-                )}
-              >
-                <item.icon className={cn(
-                  'h-5 w-5 flex-shrink-0 transition-transform duration-200',
-                  isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'
-                )} />
+        <nav className="flex-1 overflow-y-auto p-4">
+          <div className="space-y-6">
+            {navigationSections.map((section) => (
+              <div key={section.title} className="space-y-2">
                 {sidebarOpen && (
-                  <span className={cn(
-                    'font-medium transition-all duration-200',
-                    isActive ? 'font-semibold' : 'group-hover:font-medium'
-                  )}>
-                    {item.name}
-                  </span>
+                  <div className="px-3 py-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {section.title}
+                    </p>
+                  </div>
                 )}
-                {sidebarOpen && isActive && (
-                  <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
-                )}
-              </Link>
-            );
-          })}
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={cn(
+                          'group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                          isActive
+                            ? 'bg-primary/10 text-primary shadow-sm'
+                            : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
+                        )}
+                      >
+                        <div className="relative flex items-center justify-center">
+                          <item.icon
+                            className={cn(
+                              'h-5 w-5 flex-shrink-0 transition-transform duration-200',
+                              isActive
+                                ? 'text-primary'
+                                : 'text-muted-foreground group-hover:text-primary'
+                            )}
+                          />
+                          {isActive && (
+                            <div className="absolute -left-2 h-6 w-1 rounded-full bg-primary" />
+                          )}
+                        </div>
+                        {sidebarOpen && (
+                          <span
+                            className={cn(
+                              'ml-3 transition-all duration-200',
+                              isActive ? 'font-semibold' : 'font-medium'
+                            )}
+                          >
+                            {item.name}
+                          </span>
+                        )}
+                        {sidebarOpen && isActive && (
+                          <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
         </nav>
 
         {/* User section */}
@@ -149,18 +178,16 @@ export function Sidebar() {
           {user && (
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-lg">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-md">
                   <span className="text-sm font-bold text-primary-foreground">
                     {getInitials(user.name)}
                   </span>
                 </div>
-                <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-background bg-green-500" />
+                <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-background bg-green-500" />
               </div>
               {sidebarOpen && (
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-semibold">
-                    {user.name}
-                  </p>
+                  <p className="truncate text-sm font-semibold">{user.name}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {user.roles?.join(', ')}
                   </p>
@@ -168,14 +195,6 @@ export function Sidebar() {
               )}
             </div>
           )}
-          <Button
-            variant="ghost"
-            className="mt-6 w-full justify-start transition-all duration-200 hover:bg-accent/50 hover:text-accent-foreground hover:shadow-sm"
-            onClick={handleLogout}
-          >
-            <LogOut className="mr-3 h-4 w-4" />
-            {sidebarOpen && <span className="font-medium">Logout</span>}
-          </Button>
         </div>
 
         {/* Collapse toggle */}

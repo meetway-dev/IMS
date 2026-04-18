@@ -168,11 +168,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div>
+      <div className="mb-4">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-1">
           Welcome back, <span className="font-semibold text-primary">{user?.name || 'User'}</span>! Here's what's happening with your inventory today.
         </p>
       </div>
@@ -220,38 +220,38 @@ export default function DashboardPage() {
       </StatsGrid>
 
       {/* Charts and Tables */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Performance Chart */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="pb-3">
+        <Card className="border shadow-sm card-compact">
+          <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold">Revenue & Orders Trend</CardTitle>
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
+              <CardTitle className="text-base font-semibold">Revenue & Orders Trend</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground">Monthly performance overview</p>
+            <p className="text-xs text-muted-foreground">Monthly performance overview</p>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-4">
+            <div className="space-y-3">
               {performanceData.map((item) => (
                 <div key={item.month} className="flex items-center">
-                  <div className="w-16 text-sm font-medium">{item.month}</div>
+                  <div className="w-12 text-xs font-medium">{item.month}</div>
                   <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm">Revenue</span>
-                      <span className="text-sm font-semibold">{formatCurrency(item.revenue)}</span>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs">Revenue</span>
+                      <span className="text-xs font-semibold">{formatCurrency(item.revenue)}</span>
                     </div>
-                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div 
+                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                      <div
                         className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
                         style={{ width: `${(item.revenue / 150000) * 100}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-sm">Orders</span>
-                      <span className="text-sm font-semibold">{item.orders}</span>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs">Orders</span>
+                      <span className="text-xs font-semibold">{item.orders}</span>
                     </div>
-                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden mt-1">
-                      <div 
+                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mt-0.5">
+                      <div
                         className="h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full"
                         style={{ width: `${(item.orders / 250) * 100}%` }}
                       />
@@ -264,28 +264,28 @@ export default function DashboardPage() {
         </Card>
 
         {/* Low Stock Alert */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="pb-3">
+        <Card className="border shadow-sm card-compact">
+          <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold">Low Stock Alert</CardTitle>
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <CardTitle className="text-base font-semibold">Low Stock Alert</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
             </div>
-            <p className="text-sm text-muted-foreground">Items that need restocking</p>
+            <p className="text-xs text-muted-foreground">Items that need restocking</p>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-4">
+            <div className="space-y-3">
               {lowStockItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border">
+                <div key={item.id} className="flex items-center justify-between p-2 rounded border">
                   <div>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">{item.category}</p>
+                    <p className="font-medium text-sm">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">{item.category}</p>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="font-semibold">{item.stock} / {item.minStockLevel}</p>
+                      <p className="font-semibold text-sm">{item.stock} / {item.minStockLevel}</p>
                       <p className="text-xs text-muted-foreground">Current / Min</p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getUrgencyColor(item.urgency)}`}>
+                    <div className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getUrgencyColor(item.urgency)}`}>
                       {item.urgency.toUpperCase()}
                     </div>
                   </div>
@@ -296,39 +296,39 @@ export default function DashboardPage() {
         </Card>
 
         {/* Recent Orders */}
-        <Card className="border-0 shadow-lg lg:col-span-2">
-          <CardHeader className="pb-3">
+        <Card className="border shadow-sm lg:col-span-2 card-compact">
+          <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold">Recent Orders</CardTitle>
-              <ShoppingCart className="h-5 w-5 text-muted-foreground" />
+              <CardTitle className="text-base font-semibold">Recent Orders</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground">Latest transactions</p>
+            <p className="text-xs text-muted-foreground">Latest transactions</p>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto max-h-data">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Order ID</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Customer</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Total</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Order ID</th>
+                    <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Customer</th>
+                    <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Total</th>
+                    <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Status</th>
+                    <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentOrders.map((order) => (
                     <tr key={order.id} className="border-b hover:bg-gray-50/50">
-                      <td className="py-3 px-4 font-medium">{order.id}</td>
-                      <td className="py-3 px-4">{order.customer}</td>
-                      <td className="py-3 px-4 font-semibold">{order.total}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
+                      <td className="py-2 px-3 font-medium text-sm">{order.id}</td>
+                      <td className="py-2 px-3 text-sm">{order.customer}</td>
+                      <td className="py-2 px-3 font-semibold text-sm">{order.total}</td>
+                      <td className="py-2 px-3">
+                        <div className="flex items-center gap-1.5">
                           {getStatusIcon(order.status)}
-                          <span>{order.status}</span>
+                          <span className="text-sm">{order.status}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-muted-foreground">{order.date}</td>
+                      <td className="py-2 px-3 text-muted-foreground text-sm">{order.date}</td>
                     </tr>
                   ))}
                 </tbody>
