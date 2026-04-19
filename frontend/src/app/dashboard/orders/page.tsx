@@ -96,7 +96,7 @@ export default function OrdersPage() {
               <p className="text-destructive">Failed to load orders</p>
             </div>
           ) : (
-            <DataTable columns={columns} data={orders} />
+            <DataTable columns={columns} data={orders} isLoading={isLoading} error={error} />
           )}
         </CardContent>
       </Card>

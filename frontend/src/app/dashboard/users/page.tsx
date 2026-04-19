@@ -22,13 +22,14 @@ export default function UsersPage() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editUser, setEditUser] = React.useState<UserType | null>(null);
   const { user, initializeAuth } = useAuthStore();
+  const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');
+
   // Ensure user is loaded from storage/cookie on mount
   React.useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
   const isSuperAdmin = user?.roles?.includes('SUPER_ADMIN');
-
 
   const [detailsUser, setDetailsUser] = React.useState<UserType | null>(null);
   const [assignUser, setAssignUser] = React.useState<UserType | null>(null);
@@ -42,13 +43,54 @@ export default function UsersPage() {
     }
   }, [isSuperAdmin]);
 
-  const { data: usersData, isLoading, refetch } = useQuery({
+  const { data: usersData, isLoading, refetch, error } = useQuery({
     queryKey: ['users', { search }],
     queryFn: () => userService.getUsers({ search }),
     enabled: !!user, // only fetch if user is logged in
   });
 
-  const users = usersData?.data || [];
+  const handleBulkDelete = async (selectedUsers: UserType[]) => {
+    if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} user(s)? This action cannot be undone.`)) {
+      try {
+        await Promise.all(selectedUsers.map(user => userService.deleteUser(user.id)));
+        refetch();
+      } catch (error) {
+        console.error('Failed to delete users:', error);
+      }
+    }
+  };
+
+  const handleExport = (data: UserType[]) => {
+    // Simple CSV export
+    const csv = [
+      ['Name', 'Email', 'Roles', 'Status', 'Created', 'Last Login'],
+      ...data.map(user => [
+        user.name,
+        user.email,
+        user.roles?.join('; ') || '',
+        user.status,
+        new Date(user.createdAt).toLocaleDateString(),
+        'N/A' // lastLoginAt not in User interface
+      ])
+    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'users.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const bulkActions = [
+    {
+      label: 'Delete Selected',
+      icon: Trash2,
+      onClick: handleBulkDelete,
+      variant: 'destructive' as const,
+    },
+  ];
 
 
   const handleAdd = () => {
@@ -228,33 +270,28 @@ export default function UsersPage() {
       />
 
       <Card>
-        <CardHeader>
-          <CardTitle>All Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search users by name or email..."
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline">Filter</Button>
-              <Button variant="outline">Export</Button>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex h-64 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
-          ) : (
-            <DataTable columns={columns} data={users} />
-          )}
+        <CardContent className="p-6">
+          <DataTable
+            columns={columns}
+            data={usersData?.data || []}
+            searchKey="name"
+            searchPlaceholder="Search users by name or email..."
+            isLoading={isLoading}
+            error={error}
+            onRetry={refetch}
+            emptyState={{
+              icon: <User className="h-12 w-12 text-muted-foreground/50" />,
+              title: 'No users found',
+              description: 'There are no users to display at the moment.',
+            }}
+            bulkActions={bulkActions}
+            exportAction={{
+              label: 'Export CSV',
+              onClick: handleExport,
+            }}
+            density={density}
+            onDensityChange={setDensity}
+          />
         </CardContent>
       </Card>
 
@@ -264,9 +301,9 @@ export default function UsersPage() {
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.length}</div>
+            <div className="text-2xl font-bold">{usersData?.data?.length || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Active users: {users.filter((u: UserType) => u.status === 'ACTIVE').length}
+              Active users: {usersData?.data?.filter((u: UserType) => u.status === 'ACTIVE').length || 0}
             </p>
           </CardContent>
         </Card>
@@ -279,19 +316,19 @@ export default function UsersPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm">Admins</span>
                 <span className="font-medium">
-                  {users.filter((u: UserType) => u.roles?.includes('ADMIN')).length}
+                  {usersData?.data?.filter((u: UserType) => u.roles?.includes('ADMIN')).length || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Managers</span>
                 <span className="font-medium">
-                  {users.filter((u: UserType) => u.roles?.includes('MANAGER')).length}
+                  {usersData?.data?.filter((u: UserType) => u.roles?.includes('MANAGER')).length || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Staff</span>
                 <span className="font-medium">
-                  {users.filter((u: UserType) => u.roles?.includes('STAFF')).length}
+                  {usersData?.data?.filter((u: UserType) => u.roles?.includes('STAFF')).length || 0}
                 </span>
               </div>
             </div>

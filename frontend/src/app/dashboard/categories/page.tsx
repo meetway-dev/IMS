@@ -180,6 +180,7 @@ export default function CategoriesPage() {
         data={categoriesData?.data || []}
         searchKey="name"
         searchPlaceholder="Search categories..."
+        isLoading={isLoading}
       />
     </div>
   );

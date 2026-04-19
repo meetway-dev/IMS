@@ -262,6 +262,7 @@ export default function InventoryPage() {
         data={inventoryData?.data || []}
         searchKey="product_name"
         searchPlaceholder="Search inventory..."
+        isLoading={isLoading}
       />
     </div>
   );

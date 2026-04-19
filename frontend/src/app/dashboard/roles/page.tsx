@@ -37,6 +37,7 @@ export default function RolesPage() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editRole, setEditRole] = React.useState<Role | null>(null);
   const { user, initializeAuth } = useAuthStore();
+  const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');
 
   React.useEffect(() => {
     initializeAuth();
@@ -54,7 +55,7 @@ export default function RolesPage() {
     }
   }, [isSuperAdmin]);
 
-  const { data: rolesData, isLoading, refetch } = useQuery({
+  const { data: rolesData, isLoading, refetch, error } = useQuery({
     queryKey: ['roles', { search }],
     queryFn: () => roleService.getAllRoles({ search }),
     enabled: !!user,
@@ -86,6 +87,49 @@ export default function RolesPage() {
       refetch();
     }
   };
+
+  const handleBulkDelete = async (selectedRoles: Role[]) => {
+    if (window.confirm(`Are you sure you want to delete ${selectedRoles.length} role(s)? This action cannot be undone.`)) {
+      try {
+        await Promise.all(selectedRoles.map(role => roleService.deleteRole(role.id)));
+        refetch();
+      } catch (error) {
+        console.error('Failed to delete roles:', error);
+      }
+    }
+  };
+
+  const handleExport = (data: Role[]) => {
+    // Simple CSV export
+    const csv = [
+      ['Name', 'Description', 'Users', 'Permissions', 'Priority', 'Created'],
+      ...data.map(role => [
+        role.name,
+        role.description || '',
+        role.userCount.toString(),
+        role.permissions?.map(p => p.key).join('; ') || '',
+        role.priority.toString(),
+        new Date(role.createdAt).toLocaleDateString()
+      ])
+    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'roles.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const bulkActions = [
+    {
+      label: 'Delete Selected',
+      icon: Trash2,
+      onClick: handleBulkDelete,
+      variant: 'destructive' as const,
+    },
+  ];
 
   const columns = [
     {
@@ -263,33 +307,28 @@ export default function RolesPage() {
       />
 
       <Card>
-        <CardHeader>
-          <CardTitle>All Roles</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search roles by name or description..."
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline">Filter</Button>
-              <Button variant="outline">Export</Button>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex h-64 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
-          ) : (
-            <DataTable columns={columns} data={roles} />
-          )}
+        <CardContent className="p-6">
+          <DataTable
+            columns={columns}
+            data={roles}
+            searchKey="name"
+            searchPlaceholder="Search roles by name..."
+            isLoading={isLoading}
+            error={error}
+            onRetry={refetch}
+            emptyState={{
+              icon: <Shield className="h-12 w-12 text-muted-foreground/50" />,
+              title: 'No roles found',
+              description: 'There are no roles to display at the moment.',
+            }}
+            bulkActions={bulkActions}
+            exportAction={{
+              label: 'Export CSV',
+              onClick: handleExport,
+            }}
+            density={density}
+            onDensityChange={setDensity}
+          />
         </CardContent>
       </Card>
 

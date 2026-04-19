@@ -264,7 +264,9 @@ export default function SuppliersPage() {
         data={suppliersData?.data || []}
         searchKey="name"
         searchPlaceholder="Search suppliers..."
+        isLoading={isLoading}
       />
     </div>
   );
 }
+

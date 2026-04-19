@@ -35,6 +35,7 @@ export default function PermissionsPage() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editPermission, setEditPermission] = React.useState<Permission | null>(null);
   const { user, initializeAuth } = useAuthStore();
+  const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');
 
   React.useEffect(() => {
     initializeAuth();
@@ -44,7 +45,7 @@ export default function PermissionsPage() {
 
   const [detailsPermission, setDetailsPermission] = React.useState<Permission | null>(null);
 
-  const { data: permissionsData, isLoading, refetch } = useQuery({
+  const { data: permissionsData, isLoading, refetch, error } = useQuery({
     queryKey: ['permissions', { search }],
     queryFn: () => permissionService.getAllPermissions({ search }),
     enabled: !!user,
@@ -80,16 +81,60 @@ export default function PermissionsPage() {
     }
   };
 
+  const handleBulkDelete = async (selectedPermissions: Permission[]) => {
+    if (window.confirm(`Are you sure you want to delete ${selectedPermissions.length} permission(s)? This action cannot be undone.`)) {
+      try {
+        await Promise.all(selectedPermissions.map(permission => permissionService.deletePermission(permission.id)));
+        refetch();
+      } catch (error) {
+        console.error('Failed to delete permissions:', error);
+      }
+    }
+  };
+
+  const handleExport = (data: Permission[]) => {
+    // Simple CSV export
+    const csv = [
+      ['Key', 'Name', 'Description', 'Type', 'Effect', 'Resource', 'Created'],
+      ...data.map(permission => [
+        permission.key,
+        permission.name,
+        permission.description || '',
+        permission.type,
+        permission.effect,
+        permission.resource || '',
+        new Date(permission.createdAt).toLocaleDateString()
+      ])
+    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'permissions.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const bulkActions = [
+    {
+      label: 'Delete Selected',
+      icon: Trash2,
+      onClick: handleBulkDelete,
+      variant: 'destructive' as const,
+    },
+  ];
+
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'API':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
       case 'UI':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
       case 'DATA':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
     }
   };
 
@@ -268,34 +313,28 @@ export default function PermissionsPage() {
       />
 
       <Card>
-        <CardHeader>
-          <CardTitle>All Permissions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search permissions by key, name, or module..."
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline">Filter by Module</Button>
-              <Button variant="outline">Filter by Type</Button>
-              <Button variant="outline">Export</Button>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex h-64 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
-          ) : (
-            <DataTable columns={columns} data={permissions} />
-          )}
+        <CardContent className="p-6">
+          <DataTable
+            columns={columns}
+            data={permissions}
+            searchKey="key"
+            searchPlaceholder="Search permissions by key, name, or module..."
+            isLoading={isLoading}
+            error={error}
+            onRetry={refetch}
+            emptyState={{
+              icon: <Key className="h-12 w-12 text-muted-foreground/50" />,
+              title: 'No permissions found',
+              description: 'There are no permissions to display at the moment.',
+            }}
+            bulkActions={bulkActions}
+            exportAction={{
+              label: 'Export CSV',
+              onClick: handleExport,
+            }}
+            density={density}
+            onDensityChange={setDensity}
+          />
         </CardContent>
       </Card>
 

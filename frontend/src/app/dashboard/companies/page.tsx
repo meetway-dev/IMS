@@ -221,6 +221,7 @@ export default function CompaniesPage() {
         data={companiesData?.data || []}
         searchKey="name"
         searchPlaceholder="Search companies..."
+        isLoading={isLoading}
       />
     </div>
   );
