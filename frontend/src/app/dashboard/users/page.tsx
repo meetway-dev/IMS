@@ -14,7 +14,7 @@ import { User as UserType } from '@/types';
 import { useAuthStore } from '@/store/auth-store';
 import { UserFormModal } from './UserFormModal';
 import { UserDetailsModal } from './UserDetailsModal';
-import { EnhancedAssignRolesPermissionsModal } from './EnhancedAssignRolesPermissionsModal';
+import { SimpleAssignRolesModal } from './SimpleAssignRolesModal';
 import { roleService, permissionService } from '@/services/role-permission.service';
 
 export default function UsersPage() {
@@ -286,13 +286,12 @@ export default function UsersPage() {
         onClose={() => setDetailsUser(null)}
         user={detailsUser}
       />
-      <EnhancedAssignRolesPermissionsModal
+      <SimpleAssignRolesModal
         open={!!assignUser}
         onClose={() => setAssignUser(null)}
         userId={assignUser?.id || ''}
         userName={assignUser?.name || ''}
         currentRoles={assignUser?.roles || []}
-        currentPermissions={[]}
         onSuccess={refetch}
       />
 
