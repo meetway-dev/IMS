@@ -10,7 +10,12 @@ import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { PermissionEntity } from './entities/permission.entity';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
-import { Prisma, AuditAction, PermissionType, PermissionEffect } from '@prisma/client';
+import {
+  Prisma,
+  AuditAction,
+  PermissionType,
+  PermissionEffect,
+} from '@prisma/client';
 
 @Injectable()
 export class PermissionsService {
@@ -19,7 +24,10 @@ export class PermissionsService {
     private readonly auditService: AuditService,
   ) {}
 
-  async create(createPermissionDto: CreatePermissionDto, actorId?: string): Promise<PermissionEntity> {
+  async create(
+    createPermissionDto: CreatePermissionDto,
+    actorId?: string,
+  ): Promise<PermissionEntity> {
     // Check if permission key already exists
     const existingPermission = await this.prisma.permission.findFirst({
       where: { key: createPermissionDto.key, deletedAt: null },
@@ -96,7 +104,7 @@ export class PermissionsService {
     ]);
 
     return {
-      data: permissions.map(permission => this.mapToEntity(permission)),
+      data: permissions.map((permission) => this.mapToEntity(permission)),
       total,
       page,
       limit,
@@ -131,10 +139,14 @@ export class PermissionsService {
       orderBy: { key: 'asc' },
     });
 
-    return permissions.map(permission => this.mapToEntity(permission));
+    return permissions.map((permission) => this.mapToEntity(permission));
   }
 
-  async update(id: string, updatePermissionDto: UpdatePermissionDto, actorId?: string): Promise<PermissionEntity> {
+  async update(
+    id: string,
+    updatePermissionDto: UpdatePermissionDto,
+    actorId?: string,
+  ): Promise<PermissionEntity> {
     const permission = await this.prisma.permission.findUnique({
       where: { id },
     });
@@ -155,7 +167,9 @@ export class PermissionsService {
         },
       });
 
-      const isSuperAdmin = actorRbac?.roles.some(ur => ur.role.name === 'SUPER_ADMIN');
+      const isSuperAdmin = actorRbac?.roles.some(
+        (ur) => ur.role.name === 'SUPER_ADMIN',
+      );
       if (!isSuperAdmin) {
         throw new BadRequestException('Cannot modify system permissions');
       }
@@ -206,7 +220,9 @@ export class PermissionsService {
 
     // Check if permission is assigned to roles or users
     if (permission._count.roles > 0 || permission._count.userPermissions > 0) {
-      throw new BadRequestException('Cannot delete permission that is assigned to roles or users');
+      throw new BadRequestException(
+        'Cannot delete permission that is assigned to roles or users',
+      );
     }
 
     await this.prisma.permission.update({

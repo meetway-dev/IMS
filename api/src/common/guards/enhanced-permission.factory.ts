@@ -6,7 +6,10 @@ import { JwtAuthGuard } from '../../modules/auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../modules/rbac/rbac.guard';
 import { Permissions } from '../decorators/permissions.decorator';
 import { Roles } from '../decorators/roles.decorator';
-import { PermissionLogicDecorator, PermissionLogic } from '../decorators/permission-logic.decorator';
+import {
+  PermissionLogicDecorator,
+  PermissionLogic,
+} from '../decorators/permission-logic.decorator';
 import { ResourceScope } from '../decorators/resource-scope.decorator';
 
 /**
@@ -43,10 +46,7 @@ export function RequirePermissions(
  * Require specific roles for a route
  */
 export function RequireRoles(...roles: string[]) {
-  return applyDecorators(
-    UseGuards(JwtAuthGuard, RbacGuard),
-    Roles(...roles),
-  );
+  return applyDecorators(UseGuards(JwtAuthGuard, RbacGuard), Roles(...roles));
 }
 
 /**
@@ -89,7 +89,10 @@ export function RequireAnyPermission(...permissions: string[]) {
 /**
  * Convenience decorators for common CRUD operations with resource scope
  */
-export function RequireReadPermission(entity: string, scope?: 'own' | 'all' | 'team') {
+export function RequireReadPermission(
+  entity: string,
+  scope?: 'own' | 'all' | 'team',
+) {
   const permission = scope ? `${entity}.read.${scope}` : `${entity}.read`;
   return RequirePermissions([permission]);
 }
@@ -98,15 +101,23 @@ export function RequireCreatePermission(entity: string) {
   return RequirePermissions([`${entity}.create`]);
 }
 
-export function RequireUpdatePermission(entity: string, scope?: 'own' | 'all' | 'team') {
+export function RequireUpdatePermission(
+  entity: string,
+  scope?: 'own' | 'all' | 'team',
+) {
   const permission = scope ? `${entity}.update.${scope}` : `${entity}.update`;
-  const resourceScope = scope === 'own' ? { type: 'OWN' as const, paramName: 'id' } : undefined;
+  const resourceScope =
+    scope === 'own' ? { type: 'OWN' as const, paramName: 'id' } : undefined;
   return RequirePermissions([permission], { resourceScope });
 }
 
-export function RequireDeletePermission(entity: string, scope?: 'own' | 'all' | 'team') {
+export function RequireDeletePermission(
+  entity: string,
+  scope?: 'own' | 'all' | 'team',
+) {
   const permission = scope ? `${entity}.delete.${scope}` : `${entity}.delete`;
-  const resourceScope = scope === 'own' ? { type: 'OWN' as const, paramName: 'id' } : undefined;
+  const resourceScope =
+    scope === 'own' ? { type: 'OWN' as const, paramName: 'id' } : undefined;
   return RequirePermissions([permission], { resourceScope });
 }
 

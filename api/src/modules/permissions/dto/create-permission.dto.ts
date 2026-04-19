@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsBoolean, IsUUID, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsUUID,
+  IsEnum,
+} from 'class-validator';
 import { PermissionType, PermissionEffect } from '@prisma/client';
 
 export class CreatePermissionDto {

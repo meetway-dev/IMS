@@ -120,7 +120,7 @@ export class UsersService {
     ]);
 
     const userEntities = users.map((user) => {
-      const roleNames = user.roles.map(ur => ur.role.name);
+      const roleNames = user.roles.map((ur) => ur.role.name);
       const permissionKeys = new Set<string>();
 
       // Add role-based permissions
@@ -182,7 +182,7 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    const roleNames = user.roles.map(ur => ur.role.name);
+    const roleNames = user.roles.map((ur) => ur.role.name);
     const permissionKeys = new Set<string>();
 
     // Add role-based permissions
@@ -234,7 +234,7 @@ export class UsersService {
 
     if (!user) return null;
 
-    const roleNames = user.roles.map(ur => ur.role.name);
+    const roleNames = user.roles.map((ur) => ur.role.name);
     const permissionKeys = new Set<string>();
 
     // Add role-based permissions

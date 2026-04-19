@@ -57,7 +57,9 @@ export class AuditService {
         },
       });
 
-      this.logger.debug(`Audit logged: ${input.action} by ${input.actorUserId}`);
+      this.logger.debug(
+        `Audit logged: ${input.action} by ${input.actorUserId}`,
+      );
       return auditLog.id;
     } catch (error) {
       this.logger.error('Failed to log audit event', error);
@@ -281,7 +283,7 @@ export class AuditService {
     const byEntityType: Record<string, number> = {};
     const dailyCountsMap: Record<string, number> = {};
 
-    logs.forEach(log => {
+    logs.forEach((log) => {
       // Count by action
       byAction[log.action] = (byAction[log.action] || 0) + 1;
 
@@ -339,7 +341,7 @@ export class AuditService {
       'Status Code',
     ];
 
-    const rows = data.map(log => [
+    const rows = data.map((log) => [
       log.createdAt.toISOString(),
       log.action,
       log.actorType,
@@ -357,7 +359,7 @@ export class AuditService {
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
     ].join('\n');
 
     return csvContent;
@@ -378,7 +380,9 @@ export class AuditService {
       },
     });
 
-    this.logger.log(`Cleaned up ${result.count} audit logs older than ${retentionDays} days`);
+    this.logger.log(
+      `Cleaned up ${result.count} audit logs older than ${retentionDays} days`,
+    );
     return result.count;
   }
 

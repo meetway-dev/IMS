@@ -1,12 +1,20 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import type { RequestRbac, PermissionCheckOptions, BulkPermissionAssignment, PermissionValidationResult } from './rbac.types';
+import type {
+  RequestRbac,
+  PermissionCheckOptions,
+  BulkPermissionAssignment,
+  PermissionValidationResult,
+} from './rbac.types';
 import { PermissionEffect, PermissionType } from '@prisma/client';
 
 @Injectable()
 export class RbacService implements OnModuleInit {
   private readonly logger = new Logger(RbacService.name);
-  private permissionCache = new Map<string, { permissions: string[]; roles: string[]; expiresAt: Date }>();
+  private permissionCache = new Map<
+    string,
+    { permissions: string[]; roles: string[]; expiresAt: Date }
+  >();
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -71,10 +79,12 @@ export class RbacService implements OnModuleInit {
     // Process role hierarchy
     for (const userRole of user.roles) {
       if (!userRole.role) continue;
-      
-      const roleWithHierarchy = await this.getRoleWithHierarchy(userRole.role.id);
+
+      const roleWithHierarchy = await this.getRoleWithHierarchy(
+        userRole.role.id,
+      );
       roleNames.push(roleWithHierarchy.name);
-      
+
       // Add all permissions from role hierarchy
       for (const permission of roleWithHierarchy.permissions) {
         if (permission.effect === PermissionEffect.ALLOW) {
@@ -135,14 +145,16 @@ export class RbacService implements OnModuleInit {
       return { id: roleId, name: '', permissions: [] };
     }
 
-    const permissions = role.permissions.map(rp => ({
+    const permissions = role.permissions.map((rp) => ({
       key: rp.permission.key,
       effect: rp.permission.effect,
     }));
 
     // Recursively add parent role permissions
     if (role.parentRole) {
-      const parentPermissions = await this.getRoleWithHierarchy(role.parentRole.id);
+      const parentPermissions = await this.getRoleWithHierarchy(
+        role.parentRole.id,
+      );
       permissions.push(...parentPermissions.permissions);
     }
 
@@ -162,7 +174,7 @@ export class RbacService implements OnModuleInit {
     options?: Omit<PermissionCheckOptions, 'userId' | 'permissions'>,
   ): Promise<boolean> {
     const rbac = await this.getUserRbac(userId);
-    
+
     if (rbac.permissionKeys.includes('*')) {
       return true;
     }
@@ -189,7 +201,7 @@ export class RbacService implements OnModuleInit {
     options?: Omit<PermissionCheckOptions, 'userId' | 'permissions'>,
   ): Promise<boolean> {
     const rbac = await this.getUserRbac(userId);
-    
+
     if (rbac.permissionKeys.includes('*')) {
       return true;
     }
@@ -203,7 +215,7 @@ export class RbacService implements OnModuleInit {
       );
     }
 
-    return permissionKeys.some(key => effectivePermissions.includes(key));
+    return permissionKeys.some((key) => effectivePermissions.includes(key));
   }
 
   /**
@@ -215,7 +227,7 @@ export class RbacService implements OnModuleInit {
     options?: Omit<PermissionCheckOptions, 'userId' | 'permissions'>,
   ): Promise<boolean> {
     const rbac = await this.getUserRbac(userId);
-    
+
     if (rbac.permissionKeys.includes('*')) {
       return true;
     }
@@ -229,7 +241,7 @@ export class RbacService implements OnModuleInit {
       );
     }
 
-    return permissionKeys.every(key => effectivePermissions.includes(key));
+    return permissionKeys.every((key) => effectivePermissions.includes(key));
   }
 
   /**
@@ -253,7 +265,7 @@ export class RbacService implements OnModuleInit {
    */
   async hasAnyRole(userId: string, roleNames: string[]): Promise<boolean> {
     const roles = await this.getUserRoles(userId);
-    return roleNames.some(role => roles.includes(role));
+    return roleNames.some((role) => roles.includes(role));
   }
 
   /**
@@ -264,9 +276,13 @@ export class RbacService implements OnModuleInit {
     actorId?: string,
   ): Promise<{ success: number; failed: number }> {
     const { userIds, permissionIds, expiresAt, reason } = assignment;
-    
+
     let success = 0;
-    const failed: Array<{ userId: string; permissionId: string; error: string }> = [];
+    const failed: Array<{
+      userId: string;
+      permissionId: string;
+      error: string;
+    }> = [];
 
     for (const userId of userIds) {
       for (const permissionId of permissionIds) {
@@ -292,7 +308,7 @@ export class RbacService implements OnModuleInit {
     }
 
     // Invalidate cache for affected users
-    userIds.forEach(userId => this.permissionCache.delete(userId));
+    userIds.forEach((userId) => this.permissionCache.delete(userId));
 
     return { success, failed: failed.length };
   }
@@ -333,7 +349,7 @@ export class RbacService implements OnModuleInit {
     });
 
     // Copy permissions
-    const rolePermissionsData = sourceRole.permissions.map(rp => ({
+    const rolePermissionsData = sourceRole.permissions.map((rp) => ({
       roleId: newRole.id,
       permissionId: rp.permissionId,
       assignedByUserId: actorId,
@@ -378,13 +394,17 @@ export class RbacService implements OnModuleInit {
 
     // Check format: module.resource.action.scope
     const parts = permissionKey.split('.');
-    
+
     if (parts.length < 2) {
-      errors.push('Permission key must have at least module and action (e.g., "users.create")');
+      errors.push(
+        'Permission key must have at least module and action (e.g., "users.create")',
+      );
     }
 
     if (parts.length > 4) {
-      warnings.push('Permission key has more than 4 parts, consider simplifying');
+      warnings.push(
+        'Permission key has more than 4 parts, consider simplifying',
+      );
     }
 
     // Check if permission exists in database
@@ -406,26 +426,31 @@ export class RbacService implements OnModuleInit {
   /**
    * Get all permissions grouped by module
    */
-  async getPermissionsByModule(): Promise<Record<string, Array<{
-    id: string;
-    key: string;
-    name: string;
-    description: string | null;
-    type: PermissionType;
-    effect: PermissionEffect;
-  }>>> {
+  async getPermissionsByModule(): Promise<
+    Record<
+      string,
+      Array<{
+        id: string;
+        key: string;
+        name: string;
+        description: string | null;
+        type: PermissionType;
+        effect: PermissionEffect;
+      }>
+    >
+  > {
     const permissions = await this.prisma.permission.findMany({
       where: { deletedAt: null },
       orderBy: [{ module: 'asc' }, { resource: 'asc' }, { action: 'asc' }],
     });
 
     const grouped: Record<string, any[]> = {};
-    
+
     for (const permission of permissions) {
       if (!grouped[permission.module]) {
         grouped[permission.module] = [];
       }
-      
+
       grouped[permission.module].push({
         id: permission.id,
         key: permission.key,
@@ -470,8 +495,10 @@ export class RbacService implements OnModuleInit {
       });
 
       for (const role of systemRoles) {
-        const permissions = role.permissions.map(rp => rp.permission.key);
-        this.logger.debug(`Cached system role: ${role.name} with ${permissions.length} permissions`);
+        const permissions = role.permissions.map((rp) => rp.permission.key);
+        this.logger.debug(
+          `Cached system role: ${role.name} with ${permissions.length} permissions`,
+        );
       }
     } catch (error) {
       this.logger.error('Failed to warm up cache', error);
@@ -496,35 +523,46 @@ export class RbacService implements OnModuleInit {
    */
   private filterPermissionsByScope(
     permissions: string[],
-    scope: { type: 'OWN' | 'TEAM' | 'ALL'; paramName?: string; userIdField?: string },
+    scope: {
+      type: 'OWN' | 'TEAM' | 'ALL';
+      paramName?: string;
+      userIdField?: string;
+    },
     request: any,
   ): string[] {
     const { type, paramName = 'id', userIdField = 'userId' } = scope;
-    
+
     switch (type) {
       case 'OWN':
-        const resourceUserId = request.params[paramName] || request.body[userIdField];
+        const resourceUserId =
+          request.params[paramName] || request.body[userIdField];
         if (resourceUserId && request.user?.id === resourceUserId) {
-          return permissions.filter(p => {
+          return permissions.filter((p) => {
             const parts = p.split('.');
             const lastPart = parts[parts.length - 1];
-            return lastPart === 'own' || !['own', 'all', 'team'].includes(lastPart);
+            return (
+              lastPart === 'own' || !['own', 'all', 'team'].includes(lastPart)
+            );
           });
         }
-        return permissions.filter(p => {
+        return permissions.filter((p) => {
           const parts = p.split('.');
           const lastPart = parts[parts.length - 1];
-          return lastPart === 'all' || !['own', 'all', 'team'].includes(lastPart);
+          return (
+            lastPart === 'all' || !['own', 'all', 'team'].includes(lastPart)
+          );
         });
-        
+
       case 'TEAM':
         // In a real implementation, check if resource belongs to user's team
-        return permissions.filter(p => {
+        return permissions.filter((p) => {
           const parts = p.split('.');
           const lastPart = parts[parts.length - 1];
-          return lastPart === 'team' || !['own', 'all', 'team'].includes(lastPart);
+          return (
+            lastPart === 'team' || !['own', 'all', 'team'].includes(lastPart)
+          );
         });
-        
+
       case 'ALL':
       default:
         return permissions;

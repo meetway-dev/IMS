@@ -25,7 +25,10 @@ export class PermissionsController {
 
   @Post()
   @Permissions('permissions.create')
-  create(@Body() createPermissionDto: CreatePermissionDto, @CurrentUser() user: AuthUser) {
+  create(
+    @Body() createPermissionDto: CreatePermissionDto,
+    @CurrentUser() user: AuthUser,
+  ) {
     return this.permissionsService.create(createPermissionDto, user.id);
   }
 

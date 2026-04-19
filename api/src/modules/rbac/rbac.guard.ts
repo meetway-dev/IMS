@@ -9,8 +9,14 @@ import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from '../../common/decorators/permissions.decorator';
 import { ROLES_KEY } from '../../common/decorators/roles.decorator';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
-import { PERMISSION_LOGIC_KEY, PermissionLogic } from '../../common/decorators/permission-logic.decorator';
-import { RESOURCE_SCOPE_KEY, ResourceScope } from '../../common/decorators/resource-scope.decorator';
+import {
+  PERMISSION_LOGIC_KEY,
+  PermissionLogic,
+} from '../../common/decorators/permission-logic.decorator';
+import {
+  RESOURCE_SCOPE_KEY,
+  ResourceScope,
+} from '../../common/decorators/resource-scope.decorator';
 import type { AuthUser } from '../../types/express';
 
 @Injectable()
@@ -36,10 +42,11 @@ export class RbacGuard implements CanActivate {
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
     );
-    const permissionLogic = this.reflector.getAllAndOverride<PermissionLogic>(
-      PERMISSION_LOGIC_KEY,
-      [context.getHandler(), context.getClass()],
-    ) || PermissionLogic.AND;
+    const permissionLogic =
+      this.reflector.getAllAndOverride<PermissionLogic>(PERMISSION_LOGIC_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]) || PermissionLogic.AND;
     const resourceScope = this.reflector.getAllAndOverride<ResourceScope>(
       RESOURCE_SCOPE_KEY,
       [context.getHandler(), context.getClass()],
@@ -57,7 +64,9 @@ export class RbacGuard implements CanActivate {
 
     // SUPER_ADMIN/ADMIN override: if user has SUPER_ADMIN or ADMIN role, grant all access
     if (user.roles.includes('SUPER_ADMIN') || user.roles.includes('ADMIN')) {
-      this.logger.debug(`${user.roles.includes('SUPER_ADMIN') ? 'SUPER_ADMIN' : 'ADMIN'} access granted for user ${user.id}`);
+      this.logger.debug(
+        `${user.roles.includes('SUPER_ADMIN') ? 'SUPER_ADMIN' : 'ADMIN'} access granted for user ${user.id}`,
+      );
       return true;
     }
 
@@ -143,36 +152,43 @@ export class RbacGuard implements CanActivate {
     request: any,
   ): string[] {
     const { type, paramName, userIdField = 'userId' } = scope;
-    
+
     switch (type) {
       case 'OWN':
         // Check if user owns the resource
         if (!paramName) return permissions;
-        const resourceUserId = request.params[paramName] || request.body?.[userIdField];
+        const resourceUserId =
+          request.params[paramName] || request.body?.[userIdField];
         if (resourceUserId && request.user?.id === resourceUserId) {
           // Return permissions that end with .own or don't have scope
-          return permissions.filter(p => {
+          return permissions.filter((p) => {
             const parts = p.split('.');
             const lastPart = parts[parts.length - 1];
-            return lastPart === 'own' || !['own', 'all', 'team'].includes(lastPart);
+            return (
+              lastPart === 'own' || !['own', 'all', 'team'].includes(lastPart)
+            );
           });
         }
         // Return permissions that end with .all or don't specify scope
-        return permissions.filter(p => {
+        return permissions.filter((p) => {
           const parts = p.split('.');
           const lastPart = parts[parts.length - 1];
-          return lastPart === 'all' || !['own', 'all', 'team'].includes(lastPart);
+          return (
+            lastPart === 'all' || !['own', 'all', 'team'].includes(lastPart)
+          );
         });
-        
+
       case 'TEAM':
         // In a real implementation, you would check if the resource belongs to user's team
         // For now, return permissions that end with .team or don't specify scope
-        return permissions.filter(p => {
+        return permissions.filter((p) => {
           const parts = p.split('.');
           const lastPart = parts[parts.length - 1];
-          return lastPart === 'team' || !['own', 'all', 'team'].includes(lastPart);
+          return (
+            lastPart === 'team' || !['own', 'all', 'team'].includes(lastPart)
+          );
         });
-        
+
       case 'ALL':
       default:
         return permissions;

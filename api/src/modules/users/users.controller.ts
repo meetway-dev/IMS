@@ -56,8 +56,14 @@ export class UsersController {
     const result = await this.usersService.findAll(pagination);
     // Use buildPaginatedResult to add meta field for FE compatibility
     // (imported from ../../common/dto/pagination.dto)
-    const { buildPaginatedResult } = await import('../../common/dto/pagination.dto');
-    return buildPaginatedResult(result.data, result.total, result.page, result.limit);
+    const { buildPaginatedResult } =
+      await import('../../common/dto/pagination.dto');
+    return buildPaginatedResult(
+      result.data,
+      result.total,
+      result.page,
+      result.limit,
+    );
   }
 
   @Get(':id')

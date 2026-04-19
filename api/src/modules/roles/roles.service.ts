@@ -21,7 +21,10 @@ export class RolesService {
     private readonly auditService: AuditService,
   ) {}
 
-  async create(createRoleDto: CreateRoleDto, actorId?: string): Promise<RoleEntity> {
+  async create(
+    createRoleDto: CreateRoleDto,
+    actorId?: string,
+  ): Promise<RoleEntity> {
     // Check if role name already exists
     const existingRole = await this.prisma.role.findFirst({
       where: { name: createRoleDto.name, deletedAt: null },
@@ -39,7 +42,12 @@ export class RolesService {
         throw new BadRequestException('Parent role not found');
       }
       // Prevent circular hierarchy
-      if (await this.wouldCreateCircularHierarchy(createRoleDto.parentRoleId, createRoleDto.parentRoleId)) {
+      if (
+        await this.wouldCreateCircularHierarchy(
+          createRoleDto.parentRoleId,
+          createRoleDto.parentRoleId,
+        )
+      ) {
         throw new BadRequestException('Circular role hierarchy not allowed');
       }
     }
@@ -65,7 +73,11 @@ export class RolesService {
 
     // Assign permissions if provided
     if (createRoleDto.permissionIds?.length) {
-      await this.assignPermissions(role.id, createRoleDto.permissionIds, actorId);
+      await this.assignPermissions(
+        role.id,
+        createRoleDto.permissionIds,
+        actorId,
+      );
     }
 
     // Audit log
@@ -127,7 +139,7 @@ export class RolesService {
     ]);
 
     return {
-      data: roles.map(role => this.mapToEntity(role)),
+      data: roles.map((role) => this.mapToEntity(role)),
       total,
       page,
       limit,
@@ -156,7 +168,11 @@ export class RolesService {
     return this.mapToEntity(role);
   }
 
-  async update(id: string, updateRoleDto: UpdateRoleDto, actorId?: string): Promise<RoleEntity> {
+  async update(
+    id: string,
+    updateRoleDto: UpdateRoleDto,
+    actorId?: string,
+  ): Promise<RoleEntity> {
     const role = await this.prisma.role.findUnique({
       where: { id },
     });
@@ -177,7 +193,9 @@ export class RolesService {
         },
       });
 
-      const isSuperAdmin = actorRbac?.roles.some(ur => ur.role.name === 'SUPER_ADMIN');
+      const isSuperAdmin = actorRbac?.roles.some(
+        (ur) => ur.role.name === 'SUPER_ADMIN',
+      );
       if (!isSuperAdmin) {
         throw new ForbiddenException('Cannot modify system roles');
       }
@@ -191,7 +209,9 @@ export class RolesService {
       if (!parentRole || parentRole.deletedAt) {
         throw new BadRequestException('Parent role not found');
       }
-      if (await this.wouldCreateCircularHierarchy(id, updateRoleDto.parentRoleId)) {
+      if (
+        await this.wouldCreateCircularHierarchy(id, updateRoleDto.parentRoleId)
+      ) {
         throw new BadRequestException('Circular role hierarchy not allowed');
       }
     }
@@ -244,7 +264,9 @@ export class RolesService {
 
     // Check if role has users assigned
     if (role._count.users > 0) {
-      throw new BadRequestException('Cannot delete role that has users assigned');
+      throw new BadRequestException(
+        'Cannot delete role that has users assigned',
+      );
     }
 
     await this.prisma.role.update({
@@ -264,7 +286,11 @@ export class RolesService {
     }
   }
 
-  async assignPermissions(roleId: string, permissionIds: string[], actorId?: string): Promise<void> {
+  async assignPermissions(
+    roleId: string,
+    permissionIds: string[],
+    actorId?: string,
+  ): Promise<void> {
     const role = await this.prisma.role.findUnique({
       where: { id: roleId },
     });
@@ -288,7 +314,7 @@ export class RolesService {
     });
 
     // Add new permissions
-    const rolePermissions = permissionIds.map(permissionId => ({
+    const rolePermissions = permissionIds.map((permissionId) => ({
       roleId,
       permissionId,
       assignedByUserId: actorId,
@@ -310,7 +336,11 @@ export class RolesService {
     }
   }
 
-  async cloneRole(id: string, newName: string, actorId?: string): Promise<RoleEntity> {
+  async cloneRole(
+    id: string,
+    newName: string,
+    actorId?: string,
+  ): Promise<RoleEntity> {
     const originalRole = await this.prisma.role.findUnique({
       where: { id },
       include: {
@@ -350,7 +380,9 @@ export class RolesService {
 
     // Copy permissions
     if (originalRole.permissions.length > 0) {
-      const permissionIds = originalRole.permissions.map(rp => rp.permissionId);
+      const permissionIds = originalRole.permissions.map(
+        (rp) => rp.permissionId,
+      );
       await this.assignPermissions(clonedRole.id, permissionIds, actorId);
     }
 
@@ -368,7 +400,10 @@ export class RolesService {
     return this.mapToEntity(clonedRole);
   }
 
-  private async wouldCreateCircularHierarchy(roleId: string, potentialParentId: string): Promise<boolean> {
+  private async wouldCreateCircularHierarchy(
+    roleId: string,
+    potentialParentId: string,
+  ): Promise<boolean> {
     let currentId = potentialParentId;
     const visited = new Set<string>();
 
