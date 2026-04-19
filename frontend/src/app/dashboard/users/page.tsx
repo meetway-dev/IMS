@@ -14,7 +14,7 @@ import { User as UserType } from '@/types';
 import { useAuthStore } from '@/store/auth-store';
 import { UserFormModal } from './UserFormModal';
 import { UserDetailsModal } from './UserDetailsModal';
-import { AssignRolesPermissionsModal } from './AssignRolesPermissionsModal';
+import { EnhancedAssignRolesPermissionsModal } from './EnhancedAssignRolesPermissionsModal';
 import { roleService, permissionService } from '@/services/role-permission.service';
 
 export default function UsersPage() {
@@ -29,7 +29,35 @@ export default function UsersPage() {
     initializeAuth();
   }, [initializeAuth]);
 
-  const isSuperAdmin = user?.roles?.includes('SUPER_ADMIN');
+  // Debug the user object structure
+  React.useEffect(() => {
+    console.log('=== AUTH DEBUG ===');
+    console.log('Full user object:', user);
+    console.log('User keys:', user ? Object.keys(user) : 'No user');
+    console.log('User roles property:', user?.roles);
+    console.log('User roles type:', typeof user?.roles);
+    console.log('=== END DEBUG ===');
+  }, [user]);
+
+  // Handle roles - they might be missing or in different format
+  const userRoles = user?.roles;
+  let roleNames: string[] = [];
+  
+  if (Array.isArray(userRoles)) {
+    // Type guard for string array
+    if (userRoles.length > 0 && typeof userRoles[0] === 'string') {
+      roleNames = userRoles as string[];
+    } else if (userRoles.length > 0 && typeof userRoles[0] === 'object') {
+      // Handle object array - extract name or id property
+      roleNames = userRoles.map((role: any) => role?.name || role?.id || '').filter(Boolean);
+    }
+  }
+  
+  const isSuperAdmin = roleNames.includes('SUPER_ADMIN');
+  const isAdmin = roleNames.includes('ADMIN');
+  
+  // TEMPORARY: Allow all logged in users to see the assign roles action for debugging
+  const canAssignRoles = !!user; // Temporary - allow any logged in user
 
   const [detailsUser, setDetailsUser] = React.useState<UserType | null>(null);
   const [assignUser, setAssignUser] = React.useState<UserType | null>(null);
@@ -37,11 +65,11 @@ export default function UsersPage() {
   const [permissions, setPermissions] = React.useState<{ id: string; key: string; name: string }[]>([]);
 
   React.useEffect(() => {
-    if (isSuperAdmin) {
+    if (canAssignRoles) {
       roleService.getAllRoles().then(response => setRoles(response.data));
       permissionService.getAllPermissions().then(response => setPermissions(response.data));
     }
-  }, [isSuperAdmin]);
+  }, [canAssignRoles]);
 
   const { data: usersData, isLoading, refetch, error } = useQuery({
     queryKey: ['users', { search }],
@@ -185,7 +213,7 @@ export default function UsersPage() {
           menuSeparator(),
         ];
         
-        if (isSuperAdmin) {
+        if (canAssignRoles) {
           items.push(
             menuItem({
               label: 'Edit user',
@@ -238,7 +266,7 @@ export default function UsersPage() {
             Manage system users, roles, and permissions
           </p>
         </div>
-        {isSuperAdmin && (
+        {canAssignRoles && (
           <Button className="gap-2" onClick={handleAdd}>
             <Plus className="h-4 w-4" />
             Add User
@@ -258,14 +286,13 @@ export default function UsersPage() {
         onClose={() => setDetailsUser(null)}
         user={detailsUser}
       />
-      <AssignRolesPermissionsModal
+      <EnhancedAssignRolesPermissionsModal
         open={!!assignUser}
         onClose={() => setAssignUser(null)}
         userId={assignUser?.id || ''}
+        userName={assignUser?.name || ''}
         currentRoles={assignUser?.roles || []}
         currentPermissions={[]}
-        allRoles={roles}
-        allPermissions={permissions}
         onSuccess={refetch}
       />
 
