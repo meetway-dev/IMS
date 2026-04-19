@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { cn, isAdmin, hasPermissions } from '@/lib/utils';
 import {
   LayoutDashboard,
   Package,
@@ -45,28 +45,28 @@ const navigationGroups = [
         href: '/dashboard/products',
         icon: Package,
         description: 'Manage product catalog',
-        permissions: ['products:read']
+        permissions: ['products.read']
       },
       {
         name: 'Categories',
         href: '/dashboard/categories',
         icon: Tag,
         description: 'Product categories & taxonomy',
-        permissions: ['categories:read']
+        permissions: ['categories.read']
       },
       {
         name: 'Inventory',
         href: '/dashboard/inventory',
         icon: PackageOpen,
         description: 'Stock levels & adjustments',
-        permissions: ['inventory:read']
+        permissions: ['inventory.read']
       },
       {
         name: 'Suppliers',
         href: '/dashboard/suppliers',
         icon: Truck,
         description: 'Vendor & supplier management',
-        permissions: ['suppliers:read']
+        permissions: ['suppliers.read']
       },
     ],
   },
@@ -82,14 +82,14 @@ const navigationGroups = [
         href: '/dashboard/orders',
         icon: ShoppingCart,
         description: 'Customer orders & transactions',
-        permissions: ['orders:read']
+        permissions: ['orders.read']
       },
       {
         name: 'Customers',
         href: '/dashboard/customers',
         icon: Users,
         description: 'Customer management',
-        permissions: ['customers:read'],
+        permissions: ['customers.read'],
         badge: 'Coming Soon'
       },
       {
@@ -97,7 +97,7 @@ const navigationGroups = [
         href: '/dashboard/invoices',
         icon: FileText,
         description: 'Billing & invoicing',
-        permissions: ['invoices:read'],
+        permissions: ['invoices.read'],
         badge: 'Coming Soon'
       },
     ],
@@ -114,28 +114,28 @@ const navigationGroups = [
         href: '/dashboard/users',
         icon: Users,
         description: 'User accounts & access',
-        permissions: ['users:read']
+        permissions: ['users.read']
       },
       {
         name: 'Roles',
         href: '/dashboard/roles',
         icon: Shield,
         description: 'Role-based access control',
-        permissions: ['roles:read']
+        permissions: ['roles.read']
       },
       {
         name: 'Permissions',
         href: '/dashboard/permissions',
         icon: Settings,
         description: 'System permissions',
-        permissions: ['permissions:read']
+        permissions: ['permissions.read']
       },
       {
         name: 'Companies',
         href: '/dashboard/companies',
         icon: Building,
         description: 'Organization settings',
-        permissions: ['companies:read']
+        permissions: ['companies.read']
       },
     ],
   },
@@ -151,7 +151,7 @@ const navigationGroups = [
         href: '/dashboard/analytics',
         icon: BarChart3,
         description: 'Business intelligence',
-        permissions: ['analytics:read'],
+        permissions: ['analytics.read'],
         badge: 'Beta'
       },
       {
@@ -159,14 +159,14 @@ const navigationGroups = [
         href: '/dashboard/audit',
         icon: FileText,
         description: 'System activity logs',
-        permissions: ['audit:read']
+        permissions: ['audit.read']
       },
       {
         name: 'Reports',
         href: '/dashboard/reports',
         icon: FileText,
         description: 'Custom reports',
-        permissions: ['reports:read'],
+        permissions: ['reports.read'],
         badge: 'Coming Soon'
       },
     ],
@@ -183,7 +183,7 @@ const navigationGroups = [
         href: '/dashboard/settings',
         icon: Settings,
         description: 'System configuration',
-        permissions: ['settings:read'],
+        permissions: ['settings.read'],
         badge: 'Coming Soon'
       },
       {
@@ -191,7 +191,7 @@ const navigationGroups = [
         href: '/dashboard/integrations',
         icon: Settings,
         description: 'Third-party integrations',
-        permissions: ['integrations:read'],
+        permissions: ['integrations.read'],
         badge: 'Coming Soon'
       },
       {
@@ -199,7 +199,7 @@ const navigationGroups = [
         href: '/dashboard/backup',
         icon: Settings,
         description: 'Data backup & restore',
-        permissions: ['backup:read'],
+        permissions: ['backup.read'],
         badge: 'Coming Soon'
       },
     ],
@@ -213,14 +213,17 @@ function NavigationGroup({
   sidebarOpen,
   expandedGroups,
   toggleGroup,
+  user,
 }: {
   group: any;
   pathname: string;
   sidebarOpen: boolean;
   expandedGroups: Record<string, boolean>;
   toggleGroup: (groupId: string) => void;
+  user: any;
 }) {
   const isExpanded = expandedGroups[group.id] ?? group.defaultExpanded;
+  const userRoles = user?.roles || [];
   
   // Single item (non-group)
   if (group.type === 'single') {
@@ -292,8 +295,11 @@ function NavigationGroup({
             <div className="ml-7 space-y-1 border-l pl-3">
               {group.items.map((item: any) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                // TODO: Implement permission-based filtering
-                const hasPermission = true; // Placeholder for permission check
+                
+                // Check permissions: For now, show all items to everyone
+                // ADMIN/SUPER_ADMIN already have backend permission overrides
+                // TODO: Implement proper permission checking for non-admin users
+                const hasPermission = true;
                 
                 if (!hasPermission) return null;
                 
@@ -347,7 +353,11 @@ function NavigationGroup({
             <div className="space-y-1">
               {group.items.map((item: any) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                const hasPermission = true; // Placeholder
+                
+                // Check permissions: For now, show all items to everyone
+                // ADMIN/SUPER_ADMIN already have backend permission overrides
+                // TODO: Implement proper permission checking for non-admin users
+                const hasPermission = true;
                 
                 if (!hasPermission) return null;
                 
@@ -380,6 +390,7 @@ function NavigationGroup({
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
+  const { user } = useAuthStore();
   
   // State for expanded/collapsed groups
   const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>(() => {
@@ -458,6 +469,7 @@ export function Sidebar() {
                 sidebarOpen={sidebarOpen}
                 expandedGroups={expandedGroups}
                 toggleGroup={toggleGroup}
+                user={user}
               />
             ))}
           </div>

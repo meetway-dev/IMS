@@ -55,9 +55,9 @@ export class RbacGuard implements CanActivate {
       throw new ForbiddenException('Missing user context');
     }
 
-    // SUPER_ADMIN override: if user has SUPER_ADMIN role, grant all access
-    if (user.roles.includes('SUPER_ADMIN')) {
-      this.logger.debug(`SUPER_ADMIN access granted for user ${user.id}`);
+    // SUPER_ADMIN/ADMIN override: if user has SUPER_ADMIN or ADMIN role, grant all access
+    if (user.roles.includes('SUPER_ADMIN') || user.roles.includes('ADMIN')) {
+      this.logger.debug(`${user.roles.includes('SUPER_ADMIN') ? 'SUPER_ADMIN' : 'ADMIN'} access granted for user ${user.id}`);
       return true;
     }
 

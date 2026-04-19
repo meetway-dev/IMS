@@ -90,19 +90,7 @@ const PERMISSIONS = [
 // Role-Permission mappings
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   SUPER_ADMIN: ['*'], // Wildcard for all permissions
-  ADMIN: [
-    'users.create', 'users.read', 'users.update', 'users.delete',
-    'roles.create', 'roles.read', 'roles.update', 'roles.delete',
-    'permissions.read', 'permissions.assign',
-    'products.create', 'products.read', 'products.update', 'products.delete',
-    'categories.create', 'categories.read', 'categories.update', 'categories.delete',
-    'suppliers.create', 'suppliers.read', 'suppliers.update', 'suppliers.delete',
-    'inventory.create', 'inventory.read', 'inventory.update', 'inventory.delete', 'inventory.adjust',
-    'orders.create', 'orders.read', 'orders.update', 'orders.delete', 'orders.approve',
-    'companies.create', 'companies.read', 'companies.update', 'companies.delete',
-    'audit.read',
-    'dashboard.view', 'admin.panel.access',
-  ],
+  ADMIN: ['*'], // Admin also gets wildcard for full access
   MANAGER: [
     'users.read',
     'products.create', 'products.read', 'products.update',

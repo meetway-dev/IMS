@@ -94,8 +94,8 @@ export class RbacService implements OnModuleInit {
       }
     }
 
-    // SUPER_ADMIN override
-    if (roleNames.includes('SUPER_ADMIN')) {
+    // SUPER_ADMIN/ADMIN override
+    if (roleNames.includes('SUPER_ADMIN') || roleNames.includes('ADMIN')) {
       const result = { roleNames, permissionKeys: ['*'] };
       this.cacheUserPermissions(userId, result);
       return result;

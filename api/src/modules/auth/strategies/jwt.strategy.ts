@@ -70,8 +70,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       permissions.add(up.permission.key);
     }
 
-    // SUPER_ADMIN override: if user has SUPER_ADMIN role, grant all permissions
-    if (roles.includes('SUPER_ADMIN')) {
+    // SUPER_ADMIN/ADMIN override: if user has SUPER_ADMIN or ADMIN role, grant all permissions
+    if (roles.includes('SUPER_ADMIN') || roles.includes('ADMIN')) {
       return {
         id: user.id,
         email: user.email,

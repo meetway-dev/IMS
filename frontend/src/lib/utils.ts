@@ -138,3 +138,46 @@ export function getCookie(name: string): string | null {
   if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
   return null;
 }
+
+/**
+ * Check if user has required permissions
+ * @param userPermissions Array of user's permission keys
+ * @param requiredPermissions Array of required permission keys
+ * @returns boolean indicating if user has all required permissions
+ */
+export function hasPermissions(
+  userPermissions: string[] = [],
+  requiredPermissions: string[] = []
+): boolean {
+  // If user has wildcard permission, grant all access
+  if (userPermissions.includes('*')) {
+    return true;
+  }
+
+  // Check if user has all required permissions
+  return requiredPermissions.every(permission =>
+    userPermissions.includes(permission)
+  );
+}
+
+/**
+ * Check if user has any of the required roles
+ * @param userRoles Array of user's roles
+ * @param requiredRoles Array of required roles
+ * @returns boolean indicating if user has any of the required roles
+ */
+export function hasAnyRole(
+  userRoles: string[] = [],
+  requiredRoles: string[] = []
+): boolean {
+  return requiredRoles.some(role => userRoles.includes(role));
+}
+
+/**
+ * Check if user is admin or super admin
+ * @param userRoles Array of user's roles
+ * @returns boolean indicating if user is ADMIN or SUPER_ADMIN
+ */
+export function isAdmin(userRoles: string[] = []): boolean {
+  return userRoles.includes('ADMIN') || userRoles.includes('SUPER_ADMIN');
+}
