@@ -36,6 +36,13 @@ export function formatDateTime(date: string | Date): string {
 }
 
 /**
+ * Format number with commas
+ */
+export function formatNumber(num: number): string {
+  return new Intl.NumberFormat('en-US').format(num);
+}
+
+/**
  * Truncate text with ellipsis
  */
 export function truncate(text: string, length: number): string {
