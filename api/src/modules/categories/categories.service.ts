@@ -41,7 +41,12 @@ export class CategoriesService {
 
     try {
       const row = await this.prisma.category.create({
-        data: { name: dto.name.trim(), slug, parentId },
+        data: {
+          name: dto.name.trim(),
+          slug,
+          description: dto.description ? dto.description.trim() : null,
+          parentId,
+        },
       });
 
       await this.audit.log({
@@ -162,6 +167,12 @@ export class CategoriesService {
         data: {
           name: dto.name?.trim(),
           slug,
+          description:
+            dto.description !== undefined
+              ? dto.description
+                ? dto.description.trim()
+                : null
+              : undefined,
           parentId: dto.parentId === undefined ? undefined : dto.parentId,
         },
       });

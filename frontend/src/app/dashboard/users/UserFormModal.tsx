@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { FormModal } from '@/components/ui/responsive-modal';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { userService } from '@/services/user.service';
@@ -54,49 +54,50 @@ export function UserFormModal({ open, onClose, onSuccess, user }: UserFormModalP
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit User' : 'Add User'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <FormModal
+      open={open}
+      onClose={onClose}
+      title={isEdit ? 'Edit User' : 'Add User'}
+      footer={
+        <div className="flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type="submit" form="user-form" loading={loading}>
+            {isEdit ? 'Update' : 'Create'}
+          </Button>
+        </div>
+      }
+    >
+      <form id="user-form" onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          name="email"
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+          disabled={isEdit}
+        />
+        <Input
+          name="name"
+          placeholder="Name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+        {!isEdit && (
           <Input
-            name="email"
-            type="email"
-            placeholder="Email"
-            value={form.email}
+            name="password"
+            type="password"
+            placeholder="Password"
+            value={form.password}
             onChange={handleChange}
             required
-            disabled={isEdit}
           />
-          <Input
-            name="name"
-            placeholder="Name"
-            value={form.name}
-            onChange={handleChange}
-            required
-          />
-          {!isEdit && (
-            <Input
-              name="password"
-              type="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-          )}
-          {/* TODO: Add role selection UI here */}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={loading}>
-              {isEdit ? 'Update' : 'Create'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        )}
+        {/* TODO: Add role selection UI here */}
+      </form>
+    </FormModal>
   );
 }

@@ -26,6 +26,12 @@ export class CreateCategoryDto {
   @MaxLength(128)
   slug?: string;
 
+  @ApiPropertyOptional({ example: 'Sanitary products category' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
@@ -45,6 +51,12 @@ export class UpdateCategoryDto {
   @IsString()
   @MaxLength(128)
   slug?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()

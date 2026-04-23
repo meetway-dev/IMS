@@ -30,7 +30,6 @@ export function StockBadge({
         variant: 'destructive' as const,
         label: 'Out of Stock',
         icon: <XCircle className="h-3 w-3" />,
-        color: 'bg-red-100 text-red-800 border-red-200',
       };
     }
     
@@ -39,16 +38,14 @@ export function StockBadge({
         variant: 'warning' as const,
         label: 'Low Stock',
         icon: <AlertTriangle className="h-3 w-3" />,
-        color: 'bg-orange-100 text-orange-800 border-orange-200',
       };
     }
     
     if (quantity >= maxStock) {
       return {
-        variant: 'secondary' as const,
+        variant: 'info' as const,
         label: 'Overstock',
         icon: <Package className="h-3 w-3" />,
-        color: 'bg-blue-100 text-blue-800 border-blue-200',
       };
     }
     
@@ -56,7 +53,6 @@ export function StockBadge({
       variant: 'success' as const,
       label: 'In Stock',
       icon: <CheckCircle className="h-3 w-3" />,
-      color: 'bg-green-100 text-green-800 border-green-200',
     };
   };
 
@@ -97,10 +93,10 @@ export function StockLevelIndicator({
   const percentage = Math.min((quantity / maxStock) * 100, 100);
   
   const getBarColor = () => {
-    if (quantity === 0) return 'bg-red-500';
-    if (quantity <= minStock) return 'bg-orange-500';
-    if (quantity >= maxStock * 0.9) return 'bg-blue-500';
-    return 'bg-green-500';
+    if (quantity === 0) return 'bg-destructive';
+    if (quantity <= minStock) return 'bg-warning';
+    if (quantity >= maxStock * 0.9) return 'bg-info';
+    return 'bg-emerald-500';
   };
 
   const getStatusText = () => {
@@ -120,7 +116,7 @@ export function StockLevelIndicator({
           </>
         )}
       </div>
-      <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
         <div
           className={cn('h-full rounded-full transition-all duration-300', getBarColor())}
           style={{ width: `${percentage}%` }}

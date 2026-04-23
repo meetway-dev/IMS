@@ -2,12 +2,15 @@
 
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, User, Mail, Shield, MoreVertical, Copy, Edit, Trash2, Eye, ShieldCheck } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Users as UsersIcon, Plus, User, Shield, MoreVertical, Copy, Edit, Trash2, Eye, ShieldCheck, Activity, UserCheck, Clock } from 'lucide-react';
 import { DataTable } from '@/components/tables/data-table';
 import { ActionMenu } from '@/components/ui/action-menu';
+import { PageHeader } from '@/components/ui/page-header';
+import { ErrorState } from '@/components/ui/states';
 
 import { userService } from '@/services/user.service';
 import { User as UserType } from '@/types';
@@ -17,6 +20,32 @@ import { UserDetailsModal } from './UserDetailsModal';
 import { SimpleAssignRolesModal } from './SimpleAssignRolesModal';
 import { roleService, permissionService } from '@/services/role-permission.service';
 
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06 },
+  },
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } },
+};
+
+const roleVariantMap: Record<string, 'destructive' | 'info' | 'secondary' | 'muted'> = {
+  SUPER_ADMIN: 'destructive',
+  ADMIN: 'destructive',
+  MANAGER: 'info',
+  STAFF: 'secondary',
+};
+
+const statusVariantMap: Record<string, 'success' | 'secondary' | 'destructive'> = {
+  ACTIVE: 'success',
+  INACTIVE: 'secondary',
+  SUSPENDED: 'destructive',
+};
+
 export default function UsersPage() {
   const [search, setSearch] = React.useState('');
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -24,40 +53,25 @@ export default function UsersPage() {
   const { user, initializeAuth } = useAuthStore();
   const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');
 
-  // Ensure user is loaded from storage/cookie on mount
   React.useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
-  // Debug the user object structure
-  React.useEffect(() => {
-    console.log('=== AUTH DEBUG ===');
-    console.log('Full user object:', user);
-    console.log('User keys:', user ? Object.keys(user) : 'No user');
-    console.log('User roles property:', user?.roles);
-    console.log('User roles type:', typeof user?.roles);
-    console.log('=== END DEBUG ===');
-  }, [user]);
-
   // Handle roles - they might be missing or in different format
   const userRoles = user?.roles;
   let roleNames: string[] = [];
-  
+
   if (Array.isArray(userRoles)) {
-    // Type guard for string array
     if (userRoles.length > 0 && typeof userRoles[0] === 'string') {
       roleNames = userRoles as string[];
     } else if (userRoles.length > 0 && typeof userRoles[0] === 'object') {
-      // Handle object array - extract name or id property
       roleNames = userRoles.map((role: any) => role?.name || role?.id || '').filter(Boolean);
     }
   }
-  
+
   const isSuperAdmin = roleNames.includes('SUPER_ADMIN');
   const isAdmin = roleNames.includes('ADMIN');
-  
-  // TEMPORARY: Allow all logged in users to see the assign roles action for debugging
-  const canAssignRoles = !!user; // Temporary - allow any logged in user
+  const canAssignRoles = !!user;
 
   const [detailsUser, setDetailsUser] = React.useState<UserType | null>(null);
   const [assignUser, setAssignUser] = React.useState<UserType | null>(null);
@@ -74,13 +88,13 @@ export default function UsersPage() {
   const { data: usersData, isLoading, refetch, error } = useQuery({
     queryKey: ['users', { search }],
     queryFn: () => userService.getUsers({ search }),
-    enabled: !!user, // only fetch if user is logged in
+    enabled: !!user,
   });
 
   const handleBulkDelete = async (selectedUsers: UserType[]) => {
     if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} user(s)? This action cannot be undone.`)) {
       try {
-        await Promise.all(selectedUsers.map(user => userService.deleteUser(user.id)));
+        await Promise.all(selectedUsers.map(u => userService.deleteUser(u.id)));
         refetch();
       } catch (error) {
         console.error('Failed to delete users:', error);
@@ -89,16 +103,15 @@ export default function UsersPage() {
   };
 
   const handleExport = (data: UserType[]) => {
-    // Simple CSV export
     const csv = [
       ['Name', 'Email', 'Roles', 'Status', 'Created', 'Last Login'],
-      ...data.map(user => [
-        user.name,
-        user.email,
-        user.roles?.join('; ') || '',
-        user.status,
-        new Date(user.createdAt).toLocaleDateString(),
-        'N/A' // lastLoginAt not in User interface
+      ...data.map(u => [
+        u.name,
+        u.email,
+        u.roles?.join('; ') || '',
+        u.status,
+        new Date(u.createdAt).toLocaleDateString(),
+        'N/A'
       ])
     ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
 
@@ -120,18 +133,19 @@ export default function UsersPage() {
     },
   ];
 
-
   const handleAdd = () => {
     setEditUser(null);
     setModalOpen(true);
   };
-  const handleEdit = (user: UserType) => {
-    setEditUser(user);
+
+  const handleEdit = (u: UserType) => {
+    setEditUser(u);
     setModalOpen(true);
   };
-  const handleDelete = async (user: UserType) => {
+
+  const handleDelete = async (u: UserType) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      await userService.deleteUser(user.id);
+      await userService.deleteUser(u.id);
       refetch();
     }
   };
@@ -142,12 +156,12 @@ export default function UsersPage() {
       header: 'User',
       cell: ({ row }: any) => (
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10">
-            <User className="h-5 w-5 text-primary" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+            <User className="h-4 w-4 text-primary" />
           </div>
           <div>
             <div className="font-medium">{row.original.name}</div>
-            <div className="text-sm text-muted-foreground">{row.original.email}</div>
+            <div className="text-xs text-muted-foreground">{row.original.email}</div>
           </div>
         </div>
       ),
@@ -158,18 +172,13 @@ export default function UsersPage() {
       cell: ({ row }: any) => (
         <div className="flex flex-wrap gap-1">
           {row.original.roles?.map((role: string) => (
-            <span
+            <Badge
               key={role}
-              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                role === 'ADMIN'
-                  ? 'bg-red-100 text-red-800'
-                  : role === 'MANAGER'
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-100 text-gray-800'
-              }`}
+              variant={roleVariantMap[role] || 'muted'}
+              className="text-xs"
             >
               {role}
-            </span>
+            </Badge>
           ))}
         </div>
       ),
@@ -178,30 +187,25 @@ export default function UsersPage() {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }: any) => (
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            row.original.status === 'ACTIVE'
-              ? 'bg-green-100 text-green-800'
-              : row.original.status === 'INACTIVE'
-              ? 'bg-gray-100 text-gray-800'
-              : 'bg-red-100 text-red-800'
-          }`}
-        >
+        <Badge variant={statusVariantMap[row.original.status] || 'secondary'}>
           {row.original.status}
-        </span>
+        </Badge>
       ),
     },
     {
       accessorKey: 'createdAt',
       header: 'Joined',
-      cell: ({ row }: any) => new Date(row.original.createdAt).toLocaleDateString(),
+      cell: ({ row }: any) => (
+        <span className="text-sm text-muted-foreground">
+          {new Date(row.original.createdAt).toLocaleDateString()}
+        </span>
+      ),
     },
     {
       id: 'actions',
       cell: ({ row }: any) => {
-        // Import helper functions (they're exported from action-menu)
         const { menuItem, menuSeparator, menuLabel } = require('@/components/ui/action-menu');
-        
+
         const items = [
           menuLabel({ label: 'Actions' }),
           menuItem({
@@ -212,7 +216,7 @@ export default function UsersPage() {
           }),
           menuSeparator(),
         ];
-        
+
         if (canAssignRoles) {
           items.push(
             menuItem({
@@ -236,7 +240,7 @@ export default function UsersPage() {
             })
           );
         }
-        
+
         items.push(
           menuItem({
             label: 'View details',
@@ -245,10 +249,10 @@ export default function UsersPage() {
             onClick: () => setDetailsUser(row.original)
           })
         );
-        
+
         return (
           <ActionMenu
-            trigger={{ icon: MoreVertical, variant: 'ghost', size: 'icon' }}
+            trigger={{ icon: MoreVertical, variant: 'ghost', size: 'icon-sm' }}
             items={items}
             align="end"
           />
@@ -257,23 +261,41 @@ export default function UsersPage() {
     },
   ];
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-          <p className="text-muted-foreground">
-            Manage system users, roles, and permissions
-          </p>
-        </div>
-        {canAssignRoles && (
-          <Button className="gap-2" onClick={handleAdd}>
-            <Plus className="h-4 w-4" />
-            Add User
-          </Button>
-        )}
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          icon={UsersIcon}
+          title="User Management"
+          description="Manage system users, roles, and permissions"
+        />
+        <ErrorState onRetry={refetch} />
       </div>
+    );
+  }
 
+  return (
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="space-y-6"
+    >
+      <motion.div variants={staggerItem}>
+        <PageHeader
+          icon={UsersIcon}
+          title="User Management"
+          description="Manage system users, roles, and permissions"
+          actions={
+            canAssignRoles ? (
+              <Button className="gap-2" onClick={handleAdd}>
+                <Plus className="h-4 w-4" />
+                Add User
+              </Button>
+            ) : undefined
+          }
+        />
+      </motion.div>
 
       <UserFormModal
         open={modalOpen}
@@ -295,95 +317,117 @@ export default function UsersPage() {
         onSuccess={refetch}
       />
 
-      <Card>
-        <CardContent className="p-6">
-          <DataTable
-            columns={columns}
-            data={usersData?.data || []}
-            searchKey="name"
-            searchPlaceholder="Search users by name or email..."
-            isLoading={isLoading}
-            error={error}
-            onRetry={refetch}
-            emptyState={{
-              icon: <User className="h-12 w-12 text-muted-foreground/50" />,
-              title: 'No users found',
-              description: 'There are no users to display at the moment.',
-            }}
-            bulkActions={bulkActions}
-            exportAction={{
-              label: 'Export CSV',
-              onClick: handleExport,
-            }}
-            density={density}
-            onDensityChange={setDensity}
-          />
-        </CardContent>
-      </Card>
+      <motion.div variants={staggerItem}>
+        <Card>
+          <CardContent className="p-6">
+            <DataTable
+              columns={columns}
+              data={usersData?.data || []}
+              searchKey="name"
+              searchPlaceholder="Search users by name or email..."
+              isLoading={isLoading}
+              error={error}
+              onRetry={refetch}
+              emptyState={{
+                icon: <User className="h-12 w-12 text-muted-foreground/50" />,
+                title: 'No users found',
+                description: 'There are no users to display at the moment.',
+              }}
+              bulkActions={bulkActions}
+              exportAction={{
+                label: 'Export CSV',
+                onClick: handleExport,
+              }}
+              density={density}
+              onDensityChange={setDensity}
+            />
+          </CardContent>
+        </Card>
+      </motion.div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{usersData?.data?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Active users: {usersData?.data?.filter((u: UserType) => u.status === 'ACTIVE').length || 0}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Role Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Admins</span>
-                <span className="font-medium">
-                  {usersData?.data?.filter((u: UserType) => u.roles?.includes('ADMIN')).length || 0}
+      <motion.div variants={staggerItem}>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Total Users
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{usersData?.data?.length || 0}</div>
+              <div className="flex items-center gap-1.5 mt-1">
+                <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="text-xs text-muted-foreground">
+                  Active: {usersData?.data?.filter((u: UserType) => u.status === 'ACTIVE').length || 0}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Managers</span>
-                <span className="font-medium">
-                  {usersData?.data?.filter((u: UserType) => u.roles?.includes('MANAGER')).length || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Staff</span>
-                <span className="font-medium">
-                  {usersData?.data?.filter((u: UserType) => u.roles?.includes('STAFF')).length || 0}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-green-500" />
-                <div className="flex-1">
-                  <p className="text-sm">2 new users this week</p>
-                  <p className="text-xs text-muted-foreground">+15% from last week</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Role Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-3.5 w-3.5 text-destructive" />
+                    <span className="text-sm">Admins</span>
+                  </div>
+                  <Badge variant="muted" className="font-mono text-xs">
+                    {usersData?.data?.filter((u: UserType) => u.roles?.includes('ADMIN')).length || 0}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-3.5 w-3.5 text-info" />
+                    <span className="text-sm">Managers</span>
+                  </div>
+                  <Badge variant="muted" className="font-mono text-xs">
+                    {usersData?.data?.filter((u: UserType) => u.roles?.includes('MANAGER')).length || 0}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-sm">Staff</span>
+                  </div>
+                  <Badge variant="muted" className="font-mono text-xs">
+                    {usersData?.data?.filter((u: UserType) => u.roles?.includes('STAFF')).length || 0}
+                  </Badge>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
-                <div className="flex-1">
-                  <p className="text-sm">5 active sessions</p>
-                  <p className="text-xs text-muted-foreground">Currently online</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Recent Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <div className="flex-1">
+                    <p className="text-sm">2 new users this week</p>
+                    <p className="text-xs text-muted-foreground">+15% from last week</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm">5 active sessions</p>
+                    <p className="text-xs text-muted-foreground">Currently online</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            </CardContent>
+          </Card>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

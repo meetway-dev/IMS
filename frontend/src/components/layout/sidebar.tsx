@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn, isAdmin, hasPermissions } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Package,
@@ -20,12 +20,36 @@ import {
   Settings,
   BarChart3,
   Shield,
+  type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useUIStore } from '@/store/ui-store';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
-const navigationGroups = [
+// ─── Navigation config ──────────────────────────────────────────────────────
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  description?: string;
+  permissions?: string[];
+  badge?: string;
+}
+
+interface NavGroup {
+  id: string;
+  title: string;
+  icon: LucideIcon;
+  href?: string;
+  type: 'single' | 'group';
+  defaultExpanded?: boolean;
+  items?: NavItem[];
+}
+
+const navigationGroups: NavGroup[] = [
   {
     id: 'dashboard',
     title: 'Dashboard',
@@ -35,140 +59,52 @@ const navigationGroups = [
   },
   {
     id: 'inventory',
-    title: 'Inventory Management',
+    title: 'Inventory',
     icon: Package,
     type: 'group',
     defaultExpanded: true,
     items: [
-      {
-        name: 'Products',
-        href: '/dashboard/products',
-        icon: Package,
-        description: 'Manage product catalog',
-        permissions: ['products.read']
-      },
-      {
-        name: 'Categories',
-        href: '/dashboard/categories',
-        icon: Tag,
-        description: 'Product categories & taxonomy',
-        permissions: ['categories.read']
-      },
-      {
-        name: 'Inventory',
-        href: '/dashboard/inventory',
-        icon: PackageOpen,
-        description: 'Stock levels & adjustments',
-        permissions: ['inventory.read']
-      },
-      {
-        name: 'Suppliers',
-        href: '/dashboard/suppliers',
-        icon: Truck,
-        description: 'Vendor & supplier management',
-        permissions: ['suppliers.read']
-      },
+      { name: 'Products', href: '/dashboard/products', icon: Package, description: 'Product catalog', permissions: ['products.read'] },
+      { name: 'Categories', href: '/dashboard/categories', icon: Tag, description: 'Product taxonomy', permissions: ['categories.read'] },
+      { name: 'Inventory', href: '/dashboard/inventory', icon: PackageOpen, description: 'Stock levels', permissions: ['inventory.read'] },
+      { name: 'Suppliers', href: '/dashboard/suppliers', icon: Truck, description: 'Vendor management', permissions: ['suppliers.read'] },
     ],
   },
   {
     id: 'sales',
-    title: 'Sales & Orders',
+    title: 'Sales',
     icon: ShoppingCart,
     type: 'group',
     defaultExpanded: true,
     items: [
-      {
-        name: 'Orders',
-        href: '/dashboard/orders',
-        icon: ShoppingCart,
-        description: 'Customer orders & transactions',
-        permissions: ['orders.read']
-      },
-      {
-        name: 'Customers',
-        href: '/dashboard/customers',
-        icon: Users,
-        description: 'Customer management',
-        permissions: ['customers.read'],
-        badge: 'Coming Soon'
-      },
-      {
-        name: 'Invoices',
-        href: '/dashboard/invoices',
-        icon: FileText,
-        description: 'Billing & invoicing',
-        permissions: ['invoices.read'],
-        badge: 'Coming Soon'
-      },
+      { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart, description: 'Customer orders', permissions: ['orders.read'] },
+      { name: 'Customers', href: '/dashboard/customers', icon: Users, description: 'Customer management', permissions: ['customers.read'], badge: 'Soon' },
+      { name: 'Invoices', href: '/dashboard/invoices', icon: FileText, description: 'Billing', permissions: ['invoices.read'], badge: 'Soon' },
     ],
   },
   {
     id: 'administration',
-    title: 'Administration',
-    icon: Settings,
+    title: 'Admin',
+    icon: Shield,
     type: 'group',
     defaultExpanded: true,
     items: [
-      {
-        name: 'Users',
-        href: '/dashboard/users',
-        icon: Users,
-        description: 'User accounts & access',
-        permissions: ['users.read']
-      },
-      {
-        name: 'Roles',
-        href: '/dashboard/roles',
-        icon: Shield,
-        description: 'Role-based access control',
-        permissions: ['roles.read']
-      },
-      {
-        name: 'Permissions',
-        href: '/dashboard/permissions',
-        icon: Settings,
-        description: 'System permissions',
-        permissions: ['permissions.read']
-      },
-      {
-        name: 'Companies',
-        href: '/dashboard/companies',
-        icon: Building,
-        description: 'Organization settings',
-        permissions: ['companies.read']
-      },
+      { name: 'Users', href: '/dashboard/users', icon: Users, description: 'User accounts', permissions: ['users.read'] },
+      { name: 'Roles', href: '/dashboard/roles', icon: Shield, description: 'Access control', permissions: ['roles.read'] },
+      { name: 'Permissions', href: '/dashboard/permissions', icon: Settings, description: 'System permissions', permissions: ['permissions.read'] },
+      { name: 'Companies', href: '/dashboard/companies', icon: Building, description: 'Organizations', permissions: ['companies.read'] },
     ],
   },
   {
     id: 'reports',
-    title: 'Reports & Analytics',
+    title: 'Reports',
     icon: BarChart3,
     type: 'group',
     defaultExpanded: false,
     items: [
-      {
-        name: 'Analytics',
-        href: '/dashboard/analytics',
-        icon: BarChart3,
-        description: 'Business intelligence',
-        permissions: ['analytics.read'],
-        badge: 'Beta'
-      },
-      {
-        name: 'Audit Logs',
-        href: '/dashboard/audit',
-        icon: FileText,
-        description: 'System activity logs',
-        permissions: ['audit.read']
-      },
-      {
-        name: 'Reports',
-        href: '/dashboard/reports',
-        icon: FileText,
-        description: 'Custom reports',
-        permissions: ['reports.read'],
-        badge: 'Coming Soon'
-      },
+      { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, description: 'Business intelligence', permissions: ['analytics.read'], badge: 'Beta' },
+      { name: 'Audit Logs', href: '/dashboard/audit', icon: FileText, description: 'Activity logs', permissions: ['audit.read'] },
+      { name: 'Reports', href: '/dashboard/reports', icon: FileText, description: 'Custom reports', permissions: ['reports.read'], badge: 'Soon' },
     ],
   },
   {
@@ -178,237 +114,159 @@ const navigationGroups = [
     type: 'group',
     defaultExpanded: false,
     items: [
-      {
-        name: 'Settings',
-        href: '/dashboard/settings',
-        icon: Settings,
-        description: 'System configuration',
-        permissions: ['settings.read'],
-        badge: 'Coming Soon'
-      },
-      {
-        name: 'Integrations',
-        href: '/dashboard/integrations',
-        icon: Settings,
-        description: 'Third-party integrations',
-        permissions: ['integrations.read'],
-        badge: 'Coming Soon'
-      },
-      {
-        name: 'Backup',
-        href: '/dashboard/backup',
-        icon: Settings,
-        description: 'Data backup & restore',
-        permissions: ['backup.read'],
-        badge: 'Coming Soon'
-      },
+      { name: 'Settings', href: '/dashboard/settings', icon: Settings, description: 'Configuration', permissions: ['settings.read'], badge: 'Soon' },
+      { name: 'Integrations', href: '/dashboard/integrations', icon: Settings, description: 'Third-party', permissions: ['integrations.read'], badge: 'Soon' },
     ],
   },
 ];
 
-// Helper component for collapsible navigation groups
+// ─── Navigation Group Component ─────────────────────────────────────────────
+
 function NavigationGroup({
   group,
   pathname,
   sidebarOpen,
   expandedGroups,
   toggleGroup,
-  user,
 }: {
-  group: any;
+  group: NavGroup;
   pathname: string;
   sidebarOpen: boolean;
   expandedGroups: Record<string, boolean>;
   toggleGroup: (groupId: string) => void;
-  user: any;
 }) {
   const isExpanded = expandedGroups[group.id] ?? group.defaultExpanded;
-  const userRoles = user?.roles || [];
-  
-  // Single item (non-group)
-  if (group.type === 'single') {
-    const isActive = pathname === group.href || pathname.startsWith(group.href + '/');
+
+  // Single link (Dashboard)
+  if (group.type === 'single' && group.href) {
+    const isActive = pathname === group.href;
     return (
-      <div className="space-y-1">
-        <Link
-          href={group.href}
+      <Link
+        href={group.href}
+        className={cn(
+          'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150',
+          isActive
+            ? 'bg-accent text-accent-foreground'
+            : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+        )}
+      >
+        <group.icon className={cn('h-4 w-4 shrink-0', isActive && 'text-foreground')} />
+        {sidebarOpen && <span>{group.title}</span>}
+        {sidebarOpen && isActive && (
+          <div className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground" />
+        )}
+      </Link>
+    );
+  }
+
+  // Collapsed sidebar — just the icon
+  if (!sidebarOpen) {
+    return (
+      <div className="flex flex-col items-center gap-1 py-1">
+        <button
+          onClick={() => toggleGroup(group.id)}
           className={cn(
-            'group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-            isActive
-              ? 'bg-primary/10 text-primary shadow-sm'
-              : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
+            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-150',
+            isExpanded ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
           )}
+          title={group.title}
         >
-          <div className="relative flex items-center justify-center">
-            <group.icon
-              className={cn(
-                'h-5 w-5 flex-shrink-0 transition-transform duration-200',
-                isActive
-                  ? 'text-primary'
-                  : 'text-muted-foreground group-hover:text-primary'
-              )}
-            />
-            {isActive && (
-              <div className="absolute -left-2 h-6 w-1 rounded-full bg-primary" />
-            )}
+          <group.icon className="h-4 w-4" />
+        </button>
+        {isExpanded && group.items && (
+          <div className="flex flex-col items-center gap-0.5 pt-1">
+            {group.items.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  title={item.name}
+                  className={cn(
+                    'flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150',
+                    isActive
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                  )}
+                >
+                  <item.icon className="h-3.5 w-3.5" />
+                </Link>
+              );
+            })}
           </div>
-          {sidebarOpen && (
-            <span
-              className={cn(
-                'ml-3 transition-all duration-200',
-                isActive ? 'font-semibold' : 'font-medium'
-              )}
-            >
-              {group.title}
-            </span>
-          )}
-          {sidebarOpen && isActive && (
-            <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
-          )}
-        </Link>
+        )}
       </div>
     );
   }
 
-  // Group with items
+  // Expanded sidebar — full group
   return (
-    <div className="space-y-1">
-      {sidebarOpen ? (
-        <>
-          <button
-            onClick={() => toggleGroup(group.id)}
-            className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground transition-all duration-200"
-          >
-            <div className="flex items-center">
-              <group.icon className="h-5 w-5 flex-shrink-0 mr-3" />
-              <span>{group.title}</span>
-            </div>
-            <ChevronRight
-              className={cn(
-                'h-4 w-4 transition-transform duration-200',
-                isExpanded ? 'rotate-90' : ''
-              )}
-            />
-          </button>
-          
-          {isExpanded && (
-            <div className="ml-7 space-y-1 border-l pl-3">
-              {group.items.map((item: any) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                
-                // Check permissions: For now, show all items to everyone
-                // ADMIN/SUPER_ADMIN already have backend permission overrides
-                // TODO: Implement proper permission checking for non-admin users
-                const hasPermission = true;
-                
-                if (!hasPermission) return null;
-                
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      'group flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all duration-200',
-                      isActive
-                        ? 'bg-primary/5 text-primary'
-                        : 'text-muted-foreground hover:bg-accent/30 hover:text-accent-foreground'
-                    )}
-                  >
-                    <div className="flex items-center">
-                      <item.icon className="h-4 w-4 flex-shrink-0 mr-3" />
-                      <div className="flex flex-col">
-                        <span className={cn('font-medium', isActive ? 'font-semibold' : '')}>
-                          {item.name}
-                        </span>
-                        {sidebarOpen && item.description && (
-                          <span className="text-xs text-muted-foreground truncate max-w-[160px]">
-                            {item.description}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {item.badge && (
-                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
+    <div className="space-y-0.5">
+      <button
+        onClick={() => toggleGroup(group.id)}
+        className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors duration-150"
+      >
+        <span>{group.title}</span>
+        <ChevronRight
+          className={cn(
+            'h-3 w-3 transition-transform duration-150',
+            isExpanded && 'rotate-90'
           )}
-        </>
-      ) : (
-        // Collapsed sidebar view
-        <div className="space-y-2">
-          <div className="flex justify-center">
-            <button
-              onClick={() => toggleGroup(group.id)}
-              className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
-            >
-              <group.icon className="h-5 w-5" />
-            </button>
-          </div>
-          {isExpanded && (
-            <div className="space-y-1">
-              {group.items.map((item: any) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                
-                // Check permissions: For now, show all items to everyone
-                // ADMIN/SUPER_ADMIN already have backend permission overrides
-                // TODO: Implement proper permission checking for non-admin users
-                const hasPermission = true;
-                
-                if (!hasPermission) return null;
-                
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className="flex justify-center"
-                    title={item.name}
-                  >
-                    <div className={cn(
-                      'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200',
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-accent/30 hover:text-accent-foreground'
-                    )}>
-                      <item.icon className="h-4 w-4" />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
+        />
+      </button>
+
+      {isExpanded && group.items && (
+        <div className="space-y-0.5 pl-2">
+          {group.items.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'group flex items-center justify-between rounded-lg px-3 py-1.5 text-sm transition-colors duration-150',
+                  isActive
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                )}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <item.icon className={cn('h-4 w-4 shrink-0', isActive && 'text-foreground')} />
+                  <span className="truncate">{item.name}</span>
+                </div>
+                {item.badge && (
+                  <span className="ml-2 inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
+// ─── Sidebar Component ──────────────────────────────────────────────────────
+
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
   const { user } = useAuthStore();
-  
-  // State for expanded/collapsed groups
+
   const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>(() => {
-    // Initialize with default expanded states
-    const initialState: Record<string, boolean> = {};
-    navigationGroups.forEach(group => {
+    const initial: Record<string, boolean> = {};
+    navigationGroups.forEach((group) => {
       if (group.type === 'group' && group.defaultExpanded !== undefined) {
-        initialState[group.id] = group.defaultExpanded;
+        initial[group.id] = group.defaultExpanded;
       }
     });
-    return initialState;
+    return initial;
   });
 
   const toggleGroup = (groupId: string) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [groupId]: !prev[groupId]
-    }));
+    setExpandedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
   return (
@@ -416,51 +274,53 @@ export function Sidebar() {
       {/* Mobile backdrop */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-background/95 backdrop-blur-sm transition-all duration-300 lg:static lg:inset-y-0',
-          sidebarOpen ? 'w-72' : 'w-20',
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-card transition-all duration-200 lg:static lg:inset-y-0',
+          sidebarOpen ? 'w-60' : 'w-[68px]',
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
-        {/* Logo */}
-        <div className="flex h-20 items-center justify-between border-b px-6">
+        {/* Logo area */}
+        <div className={cn('flex h-14 items-center border-b px-4', sidebarOpen ? 'justify-between' : 'justify-center')}>
           {sidebarOpen ? (
-            <Link href="/dashboard" className="flex items-center space-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg">
-                <span className="text-base font-bold text-primary-foreground">IMS</span>
+            <Link href="/dashboard" className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
+                <span className="text-xs font-bold text-background">IM</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-bold tracking-tight">Inventory</span>
-                <span className="text-xs text-muted-foreground">Management System</span>
+                <span className="text-sm font-semibold tracking-tight">Inventory</span>
+                <span className="text-[10px] text-muted-foreground leading-none">Management</span>
               </div>
             </Link>
           ) : (
-            <Link href="/dashboard" className="mx-auto">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg">
-                <span className="text-base font-bold text-primary-foreground">IMS</span>
+            <Link href="/dashboard">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
+                <span className="text-xs font-bold text-background">IM</span>
               </div>
             </Link>
           )}
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             className="lg:hidden"
             onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close menu"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-4">
+        <ScrollArea className="flex-1 px-3 py-3">
+          <div className="space-y-1">
             {navigationGroups.map((group) => (
               <NavigationGroup
                 key={group.id}
@@ -469,26 +329,50 @@ export function Sidebar() {
                 sidebarOpen={sidebarOpen}
                 expandedGroups={expandedGroups}
                 toggleGroup={toggleGroup}
-                user={user}
               />
             ))}
           </div>
-        </nav>
+        </ScrollArea>
 
-
-        {/* Collapse toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute -right-3 top-1/2 hidden h-6 w-6 rounded-full border bg-background shadow-md lg:flex"
-          onClick={toggleSidebar}
-        >
+        {/* Footer / collapse toggle */}
+        <div className="border-t p-3">
           {sidebarOpen ? (
-            <ChevronLeft className="h-4 w-4" />
+            <div className="flex items-center justify-between">
+              {user && (
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                    {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium truncate">{user.name?.split(' ')[0]}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{user.roles?.[0] || 'User'}</p>
+                  </div>
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={toggleSidebar}
+                aria-label="Collapse sidebar"
+                className="hidden lg:flex shrink-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </div>
           ) : (
-            <ChevronRight className="h-4 w-4" />
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={toggleSidebar}
+                aria-label="Expand sidebar"
+                className="hidden lg:flex"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           )}
-        </Button>
+        </div>
       </aside>
     </>
   );

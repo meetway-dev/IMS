@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Search,
   Filter,
@@ -53,6 +54,8 @@ import {
   AlertCircle,
   FileText,
   Settings,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -155,16 +158,16 @@ export function DataTable<TData, TValue>({
     switch (density) {
       case 'compact':
         return {
-          header: 'h-8 px-3 text-xs',
-          cell: 'p-2 text-sm',
-          row: 'h-10',
+          header: 'h-9 px-3 text-xs',
+          cell: 'px-3 py-2 text-sm',
+          row: '',
         };
       case 'comfortable':
       default:
         return {
-          header: 'h-12 px-4 text-sm',
-          cell: 'p-4 text-sm',
-          row: 'h-14',
+          header: 'h-11 px-4 text-xs',
+          cell: 'px-4 py-3 text-sm',
+          row: '',
         };
     }
   };
@@ -173,8 +176,8 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className={cn('w-full space-y-4', className)}>
-      {/* Modern Toolbar */}
-      <div className="flex items-center justify-between gap-4 rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm p-4 shadow-sm">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1">
           {/* Search Input */}
           <div className="relative flex-1 max-w-sm">
@@ -183,13 +186,13 @@ export function DataTable<TData, TValue>({
               placeholder={searchPlaceholder}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              className="pl-9 h-9 bg-background border-border/50 focus:border-primary/50 transition-colors"
+              className="pl-9 h-9 bg-muted/50 border-0 focus-visible:ring-1"
             />
             {searchValue && (
               <Button
                 variant="ghost"
-                size="sm"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-muted"
+                size="icon-sm"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6"
                 onClick={() => setSearchValue('')}
               >
                 <X className="h-3 w-3" />
@@ -206,16 +209,16 @@ export function DataTable<TData, TValue>({
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="flex items-center gap-2"
               >
-                <Badge variant="secondary" className="text-xs">
-                  {columnFilters.length + (searchValue ? 1 : 0)} filter{columnFilters.length + (searchValue ? 1 : 0) !== 1 ? 's' : ''} active
+                <Badge variant="muted" className="text-xs">
+                  {columnFilters.length + (searchValue ? 1 : 0)} active
                 </Badge>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={clearFilters}
-                  className="h-8 px-2 text-xs hover:bg-muted"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  Clear all
+                  Clear
                 </Button>
               </motion.div>
             )}
@@ -229,12 +232,12 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 border-border/50 hover:bg-muted/50"
+                className="h-9"
               >
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
                 {columnFilters.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
+                  <Badge variant="muted" className="ml-2 h-5 w-5 p-0 text-[10px] flex items-center justify-center">
                     {columnFilters.length}
                   </Badge>
                 )}
@@ -242,14 +245,14 @@ export function DataTable<TData, TValue>({
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="end">
               <div className="p-4">
-                <h4 className="font-medium text-sm mb-3">Column Filters</h4>
+                <h4 className="text-sm font-medium mb-3">Column Filters</h4>
                 <ScrollArea className="max-h-64">
                   <div className="space-y-3">
                     {table.getAllColumns()
                       .filter((column) => column.getCanFilter())
                       .map((column) => (
-                        <div key={column.id} className="space-y-2">
-                          <label className="text-sm font-medium capitalize">
+                        <div key={column.id} className="space-y-1.5">
+                          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             {column.id}
                           </label>
                           <Input
@@ -287,14 +290,14 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 border-border/50 hover:bg-muted/50"
+                className="h-9"
               >
                 <Columns className="h-4 w-4 mr-2" />
                 Columns
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-xs">Toggle columns</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {table
                 .getAllColumns()
@@ -303,7 +306,7 @@ export function DataTable<TData, TValue>({
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
-                      className="capitalize"
+                      className="capitalize text-sm"
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
@@ -323,7 +326,7 @@ export function DataTable<TData, TValue>({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-9 border-border/50 hover:bg-muted/50"
+                  className="h-9"
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Density
@@ -352,7 +355,7 @@ export function DataTable<TData, TValue>({
               variant="outline"
               size="sm"
               onClick={() => exportAction.onClick(data)}
-              className="h-9 border-border/50 hover:bg-muted/50"
+              className="h-9"
             >
               <Download className="h-4 w-4 mr-2" />
               {exportAction.label || 'Export'}
@@ -368,7 +371,7 @@ export function DataTable<TData, TValue>({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 backdrop-blur-sm p-4 shadow-sm"
+            className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-3"
           >
             <div className="flex items-center gap-3">
               <Badge variant="secondary" className="font-medium">
@@ -397,11 +400,11 @@ export function DataTable<TData, TValue>({
       </AnimatePresence>
 
       {/* Table Container */}
-      <div className="rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm shadow-sm overflow-hidden">
-        <ScrollArea className="w-full">
+      <div className="rounded-xl border shadow-soft overflow-hidden">
+        <ScrollArea className="w-full scrollbar-thin">
           <table className="w-full">
-            {/* Sticky Header */}
-            <thead className="sticky top-0 bg-background/80 backdrop-blur-sm border-b border-border/50 z-10">
+            {/* Header */}
+            <thead className="bg-muted/30 border-b">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
@@ -412,13 +415,13 @@ export function DataTable<TData, TValue>({
                       <th
                         key={header.id}
                         className={cn(
-                          'text-left align-middle font-medium text-muted-foreground border-r border-border/30 last:border-r-0',
+                          'text-left align-middle font-medium text-muted-foreground uppercase tracking-wider',
                           densityClasses.header,
-                          canSort && 'cursor-pointer select-none hover:bg-muted/30 transition-colors'
+                          canSort && 'cursor-pointer select-none hover:bg-muted/50 transition-colors'
                         )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           {header.isPlaceholder
                             ? null
                             : flexRender(
@@ -430,13 +433,13 @@ export function DataTable<TData, TValue>({
                               <ChevronUp
                                 className={cn(
                                   'h-3 w-3',
-                                  isSorted === 'asc' ? 'text-foreground' : 'text-muted-foreground/50'
+                                  isSorted === 'asc' ? 'text-foreground' : 'text-muted-foreground/40'
                                 )}
                               />
                               <ChevronDown
                                 className={cn(
-                                  'h-3 w-3 -mt-1',
-                                  isSorted === 'desc' ? 'text-foreground' : 'text-muted-foreground/50'
+                                  'h-3 w-3 -mt-0.5',
+                                  isSorted === 'desc' ? 'text-foreground' : 'text-muted-foreground/40'
                                 )}
                               />
                             </div>
@@ -449,7 +452,7 @@ export function DataTable<TData, TValue>({
               ))}
             </thead>
 
-            {/* Table Body */}
+            {/* Body */}
             <tbody>
               <AnimatePresence mode="wait">
                 {isLoading ? (
@@ -459,10 +462,15 @@ export function DataTable<TData, TValue>({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <td colSpan={columns.length} className="h-32">
-                      <div className="flex items-center justify-center gap-3 py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Loading data...</span>
+                    <td colSpan={columns.length} className="p-0">
+                      <div className="space-y-0">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-border/30 last:border-0">
+                            {Array.from({ length: Math.min(columns.length, 4) }).map((_, j) => (
+                              <Skeleton key={j} className="h-4 flex-1" />
+                            ))}
+                          </div>
+                        ))}
                       </div>
                     </td>
                   </motion.tr>
@@ -473,12 +481,14 @@ export function DataTable<TData, TValue>({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <td colSpan={columns.length} className="h-32">
+                    <td colSpan={columns.length} className="h-40">
                       <div className="flex flex-col items-center justify-center gap-3 py-8">
-                        <AlertCircle className="h-12 w-12 text-destructive/50" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                          <AlertCircle className="h-6 w-6 text-destructive" />
+                        </div>
                         <div className="text-center">
-                          <h3 className="font-medium text-sm mb-1">Failed to load data</h3>
-                          <p className="text-sm text-muted-foreground mb-3">
+                          <p className="font-medium text-sm">Failed to load data</p>
+                          <p className="text-sm text-muted-foreground mt-1 mb-3">
                             {error.message || 'Something went wrong while loading the data.'}
                           </p>
                           {onRetry && (
@@ -494,15 +504,15 @@ export function DataTable<TData, TValue>({
                   table.getRowModel().rows.map((row, index) => (
                     <motion.tr
                       key={row.id}
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ delay: index * 0.02 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ delay: index * 0.02, duration: 0.15 }}
                       data-state={row.getIsSelected() && 'selected'}
                       className={cn(
-                        'border-b border-border/30 transition-all duration-200 hover:bg-muted/30',
+                        'border-b border-border/40 transition-colors hover:bg-muted/40',
                         onRowClick && 'cursor-pointer',
-                        row.getIsSelected() && 'bg-primary/5 border-primary/20'
+                        row.getIsSelected() && 'bg-primary/5'
                       )}
                       onClick={() => onRowClick?.(row.original)}
                     >
@@ -510,7 +520,7 @@ export function DataTable<TData, TValue>({
                         <td
                           key={cell.id}
                           className={cn(
-                            'align-middle border-r border-border/20 last:border-r-0',
+                            'align-middle',
                             densityClasses.cell
                           )}
                         >
@@ -529,13 +539,13 @@ export function DataTable<TData, TValue>({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <td colSpan={columns.length} className="h-32">
-                      <div className="flex flex-col items-center justify-center gap-4 py-8">
+                    <td colSpan={columns.length} className="h-40">
+                      <div className="flex flex-col items-center justify-center gap-3 py-8">
                         {emptyState.icon}
                         <div className="text-center">
-                          <h3 className="font-medium text-sm mb-1">{emptyState.title}</h3>
+                          <p className="font-medium text-sm">{emptyState.title}</p>
                           {emptyState.description && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground mt-1">
                               {emptyState.description}
                             </p>
                           )}
@@ -552,52 +562,49 @@ export function DataTable<TData, TValue>({
 
       {/* Pagination */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>
-            Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
-            {Math.min(
-              (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-              table.getFilteredRowModel().rows.length
-            )}{' '}
-            of {table.getFilteredRowModel().rows.length} results
-          </span>
+        <div className="text-sm text-muted-foreground">
+          {table.getFilteredRowModel().rows.length} result{table.getFilteredRowModel().rows.length !== 1 ? 's' : ''}
         </div>
 
-        <div className="flex items-center gap-2">
-          <Select
-            value={table.getState().pagination.pageSize.toString()}
-            onValueChange={(value) => table.setPageSize(Number(value))}
-          >
-            <SelectTrigger className="w-20 h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[10, 20, 30, 40, 50].map((size) => (
-                <SelectItem key={size} value={size.toString()}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-muted-foreground">Rows</span>
+            <Select
+              value={table.getState().pagination.pageSize.toString()}
+              onValueChange={(value) => table.setPageSize(Number(value))}
+            >
+              <SelectTrigger className="w-16 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 20, 30, 40, 50].map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
-              size="sm"
+              size="icon-sm"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="h-8 px-3"
             >
-              Previous
+              <ChevronLeft className="h-4 w-4" />
             </Button>
+            <span className="text-sm text-muted-foreground px-2">
+              {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+            </span>
             <Button
               variant="outline"
-              size="sm"
+              size="icon-sm"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="h-8 px-3"
             >
-              Next
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

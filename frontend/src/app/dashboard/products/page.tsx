@@ -4,19 +4,31 @@ import * as React from 'react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { Plus, Edit, Trash2, MoreHorizontal } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  Plus,
+  Edit,
+  Trash2,
+  MoreHorizontal,
+  Package,
+  AlertTriangle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/tables/data-table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { FormModal } from '@/components/ui/responsive-modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageHeader } from '@/components/ui/page-header';
+import { ErrorState } from '@/components/ui/states';
 import { productService } from '@/services/product.service';
 import { categoryService } from '@/services/category.service';
 import { Product, Category } from '@/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 
 export default function ProductsPage() {
   const { toast } = useToast();
@@ -59,22 +71,35 @@ export default function ProductsPage() {
     {
       accessorKey: 'name',
       header: 'Name',
-      cell: ({ row }) => row.original.name,
-    },
-    {
-      accessorKey: 'sku',
-      header: 'SKU',
-      cell: ({ row }) => row.original.sku,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+            <Package className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <div className="font-medium">{row.original.name}</div>
+            <div className="text-xs text-muted-foreground">{row.original.sku}</div>
+          </div>
+        </div>
+      ),
     },
     {
       accessorKey: 'category',
       header: 'Category',
-      cell: ({ row }) => row.original.category?.name || '-',
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.category?.name || '-'}
+        </span>
+      ),
     },
     {
       accessorKey: 'price',
       header: 'Price',
-      cell: ({ row }) => formatCurrency(row.original.price),
+      cell: ({ row }) => (
+        <div className="text-sm font-medium">
+          {formatCurrency(row.original.price)}
+        </div>
+      ),
     },
     {
       accessorKey: 'stock',
@@ -82,10 +107,19 @@ export default function ProductsPage() {
       cell: ({ row }) => {
         const stock = row.original.stock ?? 0;
         const minStock = row.original.minStockLevel;
+        const isLow = stock < minStock;
         return (
-          <span className={stock < minStock ? 'text-red-600' : ''}>
-            {stock}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={cn('text-sm font-medium', isLow && 'text-destructive')}>
+              {stock}
+            </span>
+            {isLow && (
+              <Badge variant="warning" className="gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Low
+              </Badge>
+            )}
+          </div>
         );
       },
     },
@@ -93,35 +127,29 @@ export default function ProductsPage() {
       accessorKey: 'isActive',
       header: 'Status',
       cell: ({ row }) => (
-        <span
-          className={`rounded-full px-2 py-1 text-xs ${
-            row.original.isActive
-              ? 'bg-green-100 text-green-800'
-              : 'bg-red-100 text-red-800'
-          }`}
-        >
+        <Badge variant={row.original.isActive ? 'success' : 'secondary'}>
           {row.original.isActive ? 'Active' : 'Inactive'}
-        </span>
+        </Badge>
       ),
     },
     {
       id: 'actions',
       cell: ({ row }) => (
         <ActionMenu
-          trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon' }}
+          trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon-sm' }}
           items={[
             {
               label: 'Edit',
               icon: Edit,
               iconPosition: 'start',
-              onClick: () => handleEditProduct(row.original)
+              onClick: () => handleEditProduct(row.original),
             },
             {
               label: 'Delete',
               icon: Trash2,
               iconPosition: 'start',
               variant: 'destructive',
-              onClick: () => handleDeleteProduct(row.original.id)
+              onClick: () => handleDeleteProduct(row.original.id),
             },
           ]}
           align="end"
@@ -131,12 +159,17 @@ export default function ProductsPage() {
   ];
 
   // Fetch products
-  const { data: productsData, isLoading } = useQuery({
+  const {
+    data: productsData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['products'],
     queryFn: () => productService.getProducts({ page: 1, limit: 100 }),
   });
 
-  // Fetch categories
+  // Fetch categories for the form
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.getCategories({ page: 1, limit: 100 }),
@@ -146,10 +179,7 @@ export default function ProductsPage() {
   const createProductMutation = useMutation({
     mutationFn: productService.createProduct,
     onSuccess: () => {
-      toast({
-        title: 'Success',
-        description: 'Product created successfully.',
-      });
+      toast({ title: 'Success', description: 'Product created successfully.' });
       setIsDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
@@ -164,12 +194,10 @@ export default function ProductsPage() {
 
   // Update product mutation
   const updateProductMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => productService.updateProduct(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      productService.updateProduct(id, data),
     onSuccess: () => {
-      toast({
-        title: 'Success',
-        description: 'Product updated successfully.',
-      });
+      toast({ title: 'Success', description: 'Product updated successfully.' });
       setIsDialogOpen(false);
       setEditingProduct(null);
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -187,10 +215,7 @@ export default function ProductsPage() {
   const deleteProductMutation = useMutation({
     mutationFn: productService.deleteProduct,
     onSuccess: () => {
-      toast({
-        title: 'Success',
-        description: 'Product deleted successfully.',
-      });
+      toast({ title: 'Success', description: 'Product deleted successfully.' });
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error: any) => {
@@ -202,143 +227,196 @@ export default function ProductsPage() {
     },
   });
 
+  const isMutating = createProductMutation.isPending || updateProductMutation.isPending;
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          icon={Package}
+          title="Products"
+          description="Manage your product inventory"
+        />
+        <ErrorState
+          title="Failed to load products"
+          description="There was an error loading your products. Please try again."
+          onRetry={() => refetch()}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-          <p className="text-muted-foreground">
-            Manage your product inventory
-          </p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) setEditingProduct(null);
-        }}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingProduct(null)}>
+    <motion.div
+      variants={staggerContainer}
+      initial="initial"
+      animate="animate"
+      className="space-y-6"
+    >
+      <motion.div variants={staggerItem}>
+        <PageHeader
+          icon={Package}
+          title="Products"
+          description="Manage your product inventory"
+          actions={
+            <Button
+              onClick={() => {
+                setEditingProduct(null);
+                setIsDialogOpen(true);
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add Product
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
-            </DialogHeader>
-            <form key={editingProduct?.id || 'create'} onSubmit={handleSubmitProduct} className="space-y-4">
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Product Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    placeholder="Enter product name"
-                    defaultValue={editingProduct?.name || ''}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sku">SKU</Label>
-                  <Input
-                    id="sku"
-                    name="sku"
-                    placeholder="Enter SKU"
-                    defaultValue={editingProduct?.sku || ''}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="categoryId">Category</Label>
-                  <Select name="categoryId" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categoriesData?.data.map((category: Category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Price</Label>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      defaultValue={editingProduct?.price || ''}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cost">Cost</Label>
-                    <Input
-                      id="cost"
-                      name="cost"
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      defaultValue={editingProduct?.cost || ''}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="unit">Unit</Label>
-                    <Input
-                      id="unit"
-                      name="unit"
-                      placeholder="pcs, kg, etc."
-                      defaultValue={editingProduct?.unit || ''}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="minStockLevel">Min Stock Level</Label>
-                    <Input
-                      id="minStockLevel"
-                      name="minStockLevel"
-                      type="number"
-                      placeholder="10"
-                      defaultValue={editingProduct?.minStockLevel || ''}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createProductMutation.isPending}
-                >
-                  {createProductMutation.isPending ? 'Creating...' : 'Create Product'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+          }
+        />
+      </motion.div>
 
-      <DataTable
-        columns={columns}
-        data={productsData?.data || []}
-        searchKey="name"
-        searchPlaceholder="Search products..."
-        isLoading={isLoading}
-      />
-    </div>
+      <motion.div variants={staggerItem}>
+        <DataTable
+          columns={columns}
+          data={productsData?.data || []}
+          searchKey="name"
+          searchPlaceholder="Search products..."
+          isLoading={isLoading}
+          emptyState={{
+            icon: <Package className="h-12 w-12 text-muted-foreground/50" />,
+            title: 'No products found',
+            description: 'Get started by adding your first product.',
+          }}
+        />
+      </motion.div>
+
+      <FormModal
+        open={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setEditingProduct(null);
+        }}
+        title={editingProduct ? 'Edit Product' : 'Add New Product'}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsDialogOpen(false);
+                setEditingProduct(null);
+              }}
+              disabled={isMutating}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="product-form"
+              loading={isMutating}
+            >
+              {editingProduct ? 'Update Product' : 'Create Product'}
+            </Button>
+          </div>
+        }
+      >
+        <form
+          id="product-form"
+          key={editingProduct?.id || 'create'}
+          onSubmit={handleSubmitProduct}
+          className="space-y-4"
+        >
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Product Name</Label>
+              <Input
+                id="name"
+                name="name"
+                placeholder="Enter product name"
+                defaultValue={editingProduct?.name || ''}
+                required
+                disabled={isMutating}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sku">SKU</Label>
+              <Input
+                id="sku"
+                name="sku"
+                placeholder="Enter SKU"
+                defaultValue={editingProduct?.sku || ''}
+                required
+                disabled={isMutating}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="categoryId">Category</Label>
+              <Select name="categoryId" required disabled={isMutating}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoriesData?.data.map((category: Category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  defaultValue={editingProduct?.price || ''}
+                  required
+                  disabled={isMutating}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cost">Cost</Label>
+                <Input
+                  id="cost"
+                  name="cost"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  defaultValue={editingProduct?.cost || ''}
+                  required
+                  disabled={isMutating}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="unit">Unit</Label>
+                <Input
+                  id="unit"
+                  name="unit"
+                  placeholder="pcs, kg, etc."
+                  defaultValue={editingProduct?.unit || ''}
+                  required
+                  disabled={isMutating}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="minStockLevel">Min Stock Level</Label>
+                <Input
+                  id="minStockLevel"
+                  name="minStockLevel"
+                  type="number"
+                  placeholder="10"
+                  defaultValue={editingProduct?.minStockLevel || ''}
+                  required
+                  disabled={isMutating}
+                />
+              </div>
+            </div>
+          </div>
+        </form>
+      </FormModal>
+    </motion.div>
   );
 }

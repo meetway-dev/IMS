@@ -1,10 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { useAuthStore } from '@/store/auth-store';
+import { LoadingState } from '@/components/ui/states';
 
 export default function DashboardLayout({
   children,
@@ -12,37 +13,32 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, isLoading: authLoading, initializeAuth } = useAuthStore();
   const [isCheckingAuth, setIsCheckingAuth] = React.useState(true);
+  const [hasRedirected, setHasRedirected] = React.useState(false);
 
   // Initialize auth state from localStorage on mount
   React.useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
-  // Check authentication status on mount
+  // Check authentication status
   React.useEffect(() => {
-    // If not authenticated and not loading, redirect to login
-    if (!isAuthenticated && !authLoading) {
+    if (!isAuthenticated && !authLoading && !hasRedirected) {
+      setHasRedirected(true);
       router.push('/login');
-    } else {
+    } else if (isAuthenticated && !authLoading) {
       setIsCheckingAuth(false);
     }
-  }, [isAuthenticated, authLoading, router]);
+  }, [isAuthenticated, authLoading, router, hasRedirected]);
 
-  // Show loading state while checking auth
+  // Loading state while checking auth
   if (isCheckingAuth || authLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-          <p className="mt-4 text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState text="Loading dashboard..." className="h-screen" />;
   }
 
-  // Don't render layout if not authenticated
+  // Don't render if not authenticated
   if (!isAuthenticated) {
     return null;
   }
@@ -52,11 +48,9 @@ export default function DashboardLayout({
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="animate-fade-in">
-              {children}
-            </div>
+        <main className="flex-1 overflow-y-auto scrollbar-thin">
+          <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            {children}
           </div>
         </main>
       </div>

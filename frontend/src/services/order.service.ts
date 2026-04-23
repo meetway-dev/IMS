@@ -49,7 +49,7 @@ export const orderService = {
    * Update order
    */
   async updateOrder(id: string, data: UpdateOrderData): Promise<Order> {
-    const response = await apiClient.put<Order>(API_ENDPOINTS.ORDERS.UPDATE(id), data);
+    const response = await apiClient.patch<Order>(API_ENDPOINTS.ORDERS.UPDATE(id), data);
     return response.data;
   },
 

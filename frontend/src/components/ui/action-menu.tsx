@@ -121,7 +121,7 @@ export const ActionMenu = React.forwardRef<HTMLDivElement, ActionMenuProps>(
       }
       // Default trigger: a simple button with ellipsis icon
       return (
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon-sm">
           <span className="sr-only">Open menu</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"

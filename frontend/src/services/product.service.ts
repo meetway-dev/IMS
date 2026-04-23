@@ -50,7 +50,7 @@ export const productService = {
    * Update product
    */
   async updateProduct(id: string, data: UpdateProductData): Promise<Product> {
-    const response = await apiClient.put<Product>(API_ENDPOINTS.PRODUCTS.UPDATE(id), data);
+    const response = await apiClient.patch<Product>(API_ENDPOINTS.PRODUCTS.UPDATE(id), data);
     return response.data;
   },
 

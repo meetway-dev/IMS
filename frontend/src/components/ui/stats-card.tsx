@@ -1,7 +1,10 @@
+'use client';
+
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { Card, CardContent } from './card';
-import { LucideIcon } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { type LucideIcon, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export interface StatsCardProps {
@@ -14,115 +17,79 @@ export interface StatsCardProps {
     isPositive: boolean;
     label?: string;
   };
-  className?: string;
-  gradient?: string;
-  loading?: boolean;
+  /** Optional gradient class for the icon container background (e.g. "from-blue-500 to-cyan-500") */
   color?: string;
-  trendUp?: boolean;
+  className?: string;
+  loading?: boolean;
 }
 
 const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
-  ({ 
-    title, 
-    value, 
-    description, 
-    icon: Icon, 
-    trend, 
-    className, 
-    gradient, 
-    loading = false, 
-    color = 'from-blue-500 to-cyan-500',
-    trendUp = true,
-    ...props 
-  }, ref) => {
+  ({ title, value, description, icon: Icon, trend, color, className, loading = false }, ref) => {
     if (loading) {
       return (
-        <Card ref={ref} className={cn('overflow-hidden border-0 shadow-lg animate-pulse', className)} {...props}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-3">
-                <div className="h-4 bg-muted rounded w-24"></div>
-                <div className="h-8 bg-muted rounded w-32"></div>
-                <div className="h-3 bg-muted rounded w-40"></div>
-              </div>
-              <div className="h-12 w-12 rounded-xl bg-muted"></div>
+        <Card ref={ref} className={cn('p-6', className)}>
+          <div className="flex items-center justify-between">
+            <div className="space-y-3">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-7 w-28" />
+              <Skeleton className="h-3 w-32" />
             </div>
-          </CardContent>
+            <Skeleton className="h-10 w-10 rounded-xl" />
+          </div>
         </Card>
       );
     }
 
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.2 }}
       >
         <Card
           ref={ref}
           className={cn(
-            'group relative overflow-hidden rounded-2xl border bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 p-6 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1',
-            gradient && `bg-gradient-to-br ${gradient}`,
+            'group p-6 transition-shadow duration-200 hover:shadow-medium',
             className
           )}
-          {...props}
         >
-          {/* Background gradient accent */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-5 group-hover:opacity-10 transition-opacity duration-300`} />
-          
-          {/* Animated border effect */}
-          <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-white/20 transition-colors duration-300" />
-          
-          <div className="relative z-10">
-            <CardContent className="p-0">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{title}</p>
-                  <p className="text-2xl font-bold mt-2">{value}</p>
-                  
-                  {(description || trend) && (
-                    <div className="flex items-center mt-2 space-x-2">
-                      {trend && (
-                        <>
-                          <div className={cn(
-                            'flex items-center text-sm font-medium',
-                            trend.isPositive ? 'text-green-600' : 'text-red-600'
-                          )}>
-                            <span>{trend.isPositive ? '↗' : '↘'}</span>
-                            <span className="ml-1">{trend.value}</span>
-                          </div>
-                          {trend.label && (
-                            <span className="text-xs text-muted-foreground">{trend.label}</span>
-                          )}
-                        </>
-                      )}
-                      {description && !trend && (
-                        <span className="text-xs text-muted-foreground">{description}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                
-                {Icon && (
-                  <div className={cn(
-                    'h-12 w-12 rounded-xl flex items-center justify-center shadow-md',
-                    gradient 
-                      ? 'bg-white/20 backdrop-blur-sm' 
-                      : `bg-gradient-to-br ${color}`
-                  )}>
-                    <Icon className={cn(
-                      'h-6 w-6',
-                      gradient ? 'text-white' : 'text-white'
-                    )} />
-                  </div>
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {title}
+              </p>
+              <p className="text-2xl font-bold tracking-tight">{value}</p>
+              <div className="flex items-center gap-2">
+                {trend && (
+                  <span
+                    className={cn(
+                      'inline-flex items-center text-xs font-semibold',
+                      trend.isPositive ? 'text-success' : 'text-destructive'
+                    )}
+                  >
+                    {trend.isPositive ? (
+                      <ArrowUpRight className="mr-0.5 h-3 w-3" />
+                    ) : (
+                      <ArrowDownRight className="mr-0.5 h-3 w-3" />
+                    )}
+                    {trend.value}
+                  </span>
+                )}
+                {(description || trend?.label) && (
+                  <span className="text-xs text-muted-foreground">
+                    {trend?.label || description}
+                  </span>
                 )}
               </div>
-            </CardContent>
-          </div>
-          
-          {/* Animated shimmer effect */}
-          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000">
-            <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            </div>
+            {Icon && (
+              <div className={cn(
+                'flex h-10 w-10 items-center justify-center rounded-xl',
+                color ? `bg-gradient-to-br ${color}` : 'bg-muted'
+              )}>
+                <Icon className={cn('h-5 w-5', color ? 'text-white' : 'text-muted-foreground')} />
+              </div>
+            )}
           </div>
         </Card>
       </motion.div>
@@ -134,7 +101,8 @@ StatsCard.displayName = 'StatsCard';
 
 export { StatsCard };
 
-// StatsGrid component for layout
+// ─── Stats Grid ─────────────────────────────────────────────────────────────
+
 interface StatsGridProps {
   children: React.ReactNode;
   className?: string;
@@ -142,7 +110,7 @@ interface StatsGridProps {
 
 export function StatsGrid({ children, className }: StatsGridProps) {
   return (
-    <div className={cn('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6', className)}>
+    <div className={cn('grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4', className)}>
       {children}
     </div>
   );

@@ -68,9 +68,19 @@ export function SimpleAssignRolesModal({
       for (const role of rolesRes.data) {
         try {
           const roleDetail = await roleService.getRole(role.id);
-          const rolePermissions = ((roleDetail as any).permissions || []).map((permId: string) => {
-            const perm = permissionsMap.get(permId);
-            return perm || { key: permId, name: permId, description: 'Permission details not available' };
+          // Ensure roleDetail exists and has permissions
+          if (!roleDetail) {
+            throw new Error('Role detail not found');
+          }
+          const rolePermissions = ((roleDetail as any)?.permissions || []).map((perm: any) => {
+            // perm could be a permission object with id, or just an ID string
+            const permId = typeof perm === 'string' ? perm : perm?.id;
+            const permDetail = permissionsMap.get(permId);
+            return permDetail || {
+              key: permId || 'unknown',
+              name: perm?.name || permId || 'Unknown Permission',
+              description: perm?.description || 'Permission details not available'
+            };
           });
           
           rolesWithPermissions.push({
@@ -252,7 +262,7 @@ export function SimpleAssignRolesModal({
                             variant="outline"
                             className={`text-xs ${getRoleColor(role.name)}`}
                           >
-                            {role.permissions.length} permission{role.permissions.length !== 1 ? 's' : ''}
+                            {role.permissions?.length ?? 0} permission{role.permissions?.length !== 1 ? 's' : ''}
                           </Badge>
                         </div>
                         {role.description && (
@@ -278,14 +288,14 @@ export function SimpleAssignRolesModal({
                   </div>
 
                   {/* Expanded Permissions View */}
-                  {isExpanded && role.permissions.length > 0 && (
+                  {isExpanded && role.permissions?.length > 0 && (
                     <div className="mt-4 pl-7 border-t pt-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Key className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-medium">Included Permissions</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {role.permissions.map(permission => (
+                        {role.permissions?.map(permission => (
                           <div
                             key={permission.key}
                             className="flex items-center gap-2 p-2 rounded-md bg-muted/50 text-sm"

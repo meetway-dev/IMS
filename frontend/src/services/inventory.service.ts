@@ -49,7 +49,7 @@ export const inventoryService = {
    * Update inventory item
    */
   async updateInventory(id: string, data: UpdateInventoryData): Promise<Inventory> {
-    const response = await apiClient.put<Inventory>(API_ENDPOINTS.INVENTORY.UPDATE(id), data);
+    const response = await apiClient.patch<Inventory>(API_ENDPOINTS.INVENTORY.UPDATE(id), data);
     return response.data;
   },
 

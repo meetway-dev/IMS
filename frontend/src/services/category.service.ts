@@ -50,7 +50,7 @@ export const categoryService = {
    * Update category
    */
   async updateCategory(id: string, data: UpdateCategoryData): Promise<Category> {
-    const response = await apiClient.put<Category>(API_ENDPOINTS.CATEGORIES.UPDATE(id), data);
+    const response = await apiClient.patch<Category>(API_ENDPOINTS.CATEGORIES.UPDATE(id), data);
     return response.data;
   },
 

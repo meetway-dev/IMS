@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DetailModal } from '@/components/ui/responsive-modal';
 import { User } from '@/types';
 
 interface UserDetailsModalProps {
@@ -11,19 +11,32 @@ interface UserDetailsModalProps {
 export function UserDetailsModal({ open, onClose, user }: UserDetailsModalProps) {
   if (!user) return null;
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>User Details</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2">
-          <div><span className="font-semibold">Name:</span> {user.name}</div>
-          <div><span className="font-semibold">Email:</span> {user.email}</div>
-          <div><span className="font-semibold">Status:</span> {user.status}</div>
-          <div><span className="font-semibold">Roles:</span> {user.roles?.join(', ')}</div>
-          {/* Add more fields as needed */}
+    <DetailModal
+      open={open}
+      onClose={onClose}
+      title="User Details"
+    >
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="text-sm font-medium text-muted-foreground">Name</div>
+            <div className="text-base">{user.name}</div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-muted-foreground">Email</div>
+            <div className="text-base">{user.email}</div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-muted-foreground">Status</div>
+            <div className="text-base">{user.status}</div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-muted-foreground">Roles</div>
+            <div className="text-base">{user.roles?.join(', ') || 'No roles assigned'}</div>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+        {/* Add more fields as needed */}
+      </div>
+    </DetailModal>
   );
 }
