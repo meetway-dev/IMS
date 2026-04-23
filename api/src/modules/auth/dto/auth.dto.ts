@@ -36,3 +36,26 @@ export class RefreshDto {
   @IsString()
   refreshToken!: string;
 }
+
+export class UpdateProfileDto {
+  @ApiProperty({ description: 'User full name', required: false })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiProperty({ description: 'User email address', required: false })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+}
+
+export class ChangePasswordDto {
+  @ApiProperty({ description: 'Current password' })
+  @IsString()
+  currentPassword!: string;
+
+  @ApiProperty({ description: 'New password', minLength: 8 })
+  @IsString()
+  @MinLength(8)
+  newPassword!: string;
+}

@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import argon2 from 'argon2';
@@ -137,6 +142,95 @@ export class AuthService {
       lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
       roles: user.roles.map((ur) => ur.role.name),
+    };
+  }
+
+  async updateProfile(
+    userId: string,
+    input: { name?: string; email?: string },
+  ) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+    });
+    if (!user) throw new UnauthorizedException();
+
+    if (input.email && input.email.toLowerCase() !== user.email) {
+      const existing = await this.prisma.user.findFirst({
+        where: {
+          email: input.email.toLowerCase(),
+          deletedAt: null,
+          NOT: { id: userId },
+        },
+      });
+      if (existing) throw new ConflictException('Email already in use');
+    }
+
+    const updateData: any = {};
+    if (input.name !== undefined) updateData.name = input.name;
+    if (input.email) updateData.email = input.email.toLowerCase();
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    return this.getProfile(userId);
+  }
+
+  async changePassword(
+    userId: string,
+    input: { currentPassword: string; newPassword: string },
+  ) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+    });
+    if (!user?.passwordHash) throw new UnauthorizedException();
+
+    const ok = await argon2.verify(user.passwordHash, input.currentPassword);
+    if (!ok)
+      throw new BadRequestException('Current password is incorrect');
+
+    const newHash = await argon2.hash(input.newPassword);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: newHash,
+        lastPasswordChangeAt: new Date(),
+      },
+    });
+
+    return { message: 'Password changed successfully' };
+  }
+
+  async getUserActivity(
+    userId: string,
+    options: { page?: number; limit?: number; action?: string },
+  ) {
+    const page = options.page || 1;
+    const limit = options.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = { actorUserId: userId };
+    if (options.action) where.action = options.action;
+
+    const [data, total] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.auditLog.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 

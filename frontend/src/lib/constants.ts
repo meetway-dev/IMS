@@ -7,6 +7,9 @@ export const API_ENDPOINTS = {
     REFRESH: '/auth/refresh',
     LOGOUT: '/auth/logout',
     ME: '/auth/me',
+    UPDATE_PROFILE: '/auth/profile',
+    CHANGE_PASSWORD: '/auth/change-password',
+    ACTIVITY: '/auth/activity',
   },
   // Products
   PRODUCTS: {

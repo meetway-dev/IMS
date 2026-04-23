@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Search,
   Bell,
@@ -35,6 +35,7 @@ import { getInitials } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -50,6 +51,10 @@ const pageTitles: Record<string, string> = {
   '/dashboard/security': 'Security',
   '/dashboard/roles': 'Roles',
   '/dashboard/permissions': 'Permissions',
+  '/dashboard/profile': 'Profile',
+  '/dashboard/profile/settings': 'Settings',
+  '/dashboard/profile/security': 'Security',
+  '/dashboard/profile/activity': 'Activity Log',
 };
 
 export function Topbar() {
@@ -59,6 +64,7 @@ export function Topbar() {
   const logout = useLogout();
   const { toast } = useToast();
 
+  const router = useRouter();
   const pageTitle = pageTitles[pathname] || 'Dashboard';
 
   const handleLogout = async () => {
@@ -115,6 +121,9 @@ export function Topbar() {
         <Button variant="ghost" size="icon-sm" className="md:hidden" aria-label="Search">
           <Search className="h-4 w-4" />
         </Button>
+
+        {/* Theme toggle */}
+        <ThemeToggle />
 
         {/* Help */}
         <Button variant="ghost" size="icon-sm" className="hidden sm:flex" aria-label="Help">
@@ -203,16 +212,16 @@ export function Topbar() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer py-2 text-sm">
+              <DropdownMenuItem onClick={() => router.push('/dashboard/profile')} className="cursor-pointer py-2 text-sm">
                 <User className="mr-2 h-4 w-4" /> Profile
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer py-2 text-sm">
+              <DropdownMenuItem onClick={() => router.push('/dashboard/profile/settings')} className="cursor-pointer py-2 text-sm">
                 <Settings className="mr-2 h-4 w-4" /> Settings
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer py-2 text-sm">
+              <DropdownMenuItem onClick={() => router.push('/dashboard/profile/security')} className="cursor-pointer py-2 text-sm">
                 <Shield className="mr-2 h-4 w-4" /> Security
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer py-2 text-sm">
+              <DropdownMenuItem onClick={() => router.push('/dashboard/profile/activity')} className="cursor-pointer py-2 text-sm">
                 <Calendar className="mr-2 h-4 w-4" /> Activity Log
               </DropdownMenuItem>
               <DropdownMenuSeparator />

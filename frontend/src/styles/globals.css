@@ -106,12 +106,28 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color-scheme: light dark;
+  }
+
+  /* Smooth theme transitions for specific properties */
+  *,
+  *::before,
+  *::after {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, fill 0.3s ease, stroke 0.3s ease;
+  }
+
+  /* Disable transitions during theme changes to prevent flash */
+  .disable-transitions *,
+  .disable-transitions *::before,
+  .disable-transitions *::after {
+    transition: none !important;
   }
 
   /* Focus ring standardization */
@@ -122,6 +138,15 @@
   /* Remove default focus for mouse users */
   :focus:not(:focus-visible) {
     outline: none;
+  }
+
+  /* Better selection colors for themes */
+  ::selection {
+    @apply bg-primary/30 text-foreground;
+  }
+
+  .dark ::selection {
+    @apply bg-primary/40 text-foreground;
   }
 }
 

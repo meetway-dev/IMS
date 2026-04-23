@@ -3,6 +3,7 @@ import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth-store';
 import { STORAGE_KEYS } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/use-toast';
 import * as React from 'react';
 
 export function useLogin(options?: { redirect?: string }) {
@@ -103,13 +104,65 @@ export function useProfile() {
   });
 
   // Update store when profile data changes
-  if (query.data) {
-    setUser(query.data);
-    // Store user in localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(query.data));
+  React.useEffect(() => {
+    if (query.data) {
+      setUser(query.data);
+      // Store user in localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(query.data));
+      }
     }
-  }
+  }, [query.data, setUser]);
 
   return query;
+}
+
+export function useUpdateProfile() {
+  const { setUser } = useAuthStore();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: authService.updateProfile,
+    onSuccess: (data) => {
+      setUser(data);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data));
+      }
+      queryClient.invalidateQueries({ queryKey: ['user', 'profile'] });
+      toast({ title: 'Success', description: 'Profile updated successfully.' });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to update profile.',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useChangePassword() {
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: authService.changePassword,
+    onSuccess: () => {
+      toast({ title: 'Success', description: 'Password changed successfully.' });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to change password.',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useActivity(params?: { page?: number; limit?: number; action?: string }) {
+  return useQuery({
+    queryKey: ['user', 'activity', params],
+    queryFn: () => authService.getActivity(params),
+  });
 }

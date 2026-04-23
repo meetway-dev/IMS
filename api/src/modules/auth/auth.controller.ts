@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Ip, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Ip, Patch, Post, Query, Req } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -9,7 +9,13 @@ import type { Request } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../types/express';
-import { LoginDto, RefreshDto, SignupDto } from './dto/auth.dto';
+import {
+  LoginDto,
+  RefreshDto,
+  SignupDto,
+  UpdateProfileDto,
+  ChangePasswordDto,
+} from './dto/auth.dto';
 import { AuthService } from './auth.service';
 
 @ApiTags('Auth')
@@ -99,5 +105,44 @@ export class AuthController {
   })
   async me(@CurrentUser() user: AuthUser) {
     return await this.auth.getProfile(user.id);
+  }
+
+  @Patch('profile')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Update current user profile' })
+  @ApiResponse({ status: 200, description: 'Updated profile' })
+  async updateProfile(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return await this.auth.updateProfile(user.id, dto);
+  }
+
+  @Post('change-password')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Change current user password' })
+  @ApiResponse({ status: 200, description: 'Password changed' })
+  async changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return await this.auth.changePassword(user.id, dto);
+  }
+
+  @Get('activity')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Get current user activity log' })
+  @ApiResponse({ status: 200, description: 'Paginated activity logs' })
+  async activity(
+    @CurrentUser() user: AuthUser,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('action') action?: string,
+  ) {
+    return await this.auth.getUserActivity(user.id, {
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+      action,
+    });
   }
 }
