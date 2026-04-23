@@ -11,7 +11,6 @@
 
 // Base services
 export { CrudServiceBase } from './base/crud.service.base';
-export { ServiceFactory } from './base/service.factory';
 
 // Feature services
 export { authService } from './auth.service';

@@ -20,9 +20,8 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 
-// Import new modern components
-import { InventoryDashboard } from '@/components/inventory/InventoryDashboard';
-import { AdvancedDataTable } from '@/components/inventory/AdvancedDataTable';
+import { InventoryDashboard } from '@/components/ui/inventory-dashboard';
+import { AdvancedDataTable } from '@/components/tables/advanced-data-table';
 import { StockBadge } from '@/components/ui/inventory/StockBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

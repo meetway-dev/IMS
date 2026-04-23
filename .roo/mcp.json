@@ -1,8 +1,13 @@
 {
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-filesystem"]
-    }
-  }
+	"mcpServers": {
+		"filesystem": {
+			"command": "npx",
+			"args": [
+				"@modelcontextprotocol/server-filesystem"
+			],
+			"alwaysAllow": [
+				"read_multiple_files"
+			]
+		}
+	}
 }

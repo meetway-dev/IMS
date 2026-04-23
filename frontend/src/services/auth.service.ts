@@ -1,4 +1,4 @@
-import axiosInstance from '@/lib/axios';
+import { axiosInstance } from '@/lib/api-client';
 import { API_ENDPOINTS } from '@/lib/constants';
 import { User, TokenResponse } from '@/types';
 

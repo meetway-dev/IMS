@@ -1,143 +1,91 @@
 ﻿# IMS — Inventory Management System
 
-A full-stack inventory management system with NestJS backend, Next.js frontend, PostgreSQL database, Redis cache, and local development support.
+A full-stack inventory management system built with NestJS, Next.js, and PostgreSQL.
 
-## Quick Start (Local Development)
+## Architecture
 
-### 1. Clone the repository
+```
+ims/
+├── api/          NestJS backend (Prisma + PostgreSQL)
+├── frontend/     Next.js frontend (Tailwind + shadcn/ui)
+├── shared/       Shared types, constants, and utilities
+└── docker-compose.yml
+```
+
+## Quick Start
+
+### First-Time Setup
+
+Run one of these from the repo root:
 
 ```powershell
-git clone <repository-url>
-cd ims
+# PowerShell (recommended)
+.\setup.ps1
+
+# Command Prompt
+setup.bat
+
+# Or via npm
+npm run setup
 ```
 
-### 2. Install backend dependencies
+This will:
+1. Install & build the `shared` package
+2. Install API dependencies
+3. Create `api/.env` from `.env.local.example`
+4. Run Prisma generate + migrate + seed
+5. Install frontend dependencies
+6. Create `frontend/.env.local` from `.env.local.example`
+
+> **Note:** Make sure PostgreSQL is running locally before setup. Default connection: `postgresql://ims:ims@localhost:5432/ims`
+
+### Daily Development
+
+Start both servers with:
 
 ```powershell
-cd api
-npm install
+# PowerShell (opens separate windows)
+.\dev.ps1
+
+# Command Prompt
+dev.bat
 ```
 
-### 3. Install frontend dependencies
+Or start individually:
 
-```powershell
-cd ..\frontend
-npm install
+```bash
+# Terminal 1 — API (http://localhost:8080)
+npm run dev:api
+
+# Terminal 2 — Frontend (http://localhost:3001)
+npm run dev:frontend
 ```
 
-### 3.1 Install and build the shared package
+### Docker
 
-The `shared/` folder contains shared types, constants, and utilities used by the backend and frontend.
-
-```powershell
-cd ..\shared
-npm install
-npm run build
+```bash
+cp .env.local.example .env
+npm run docker:up
 ```
 
-### 4. Configure the backend database
+## NPM Scripts
 
-Copy the backend example env file and edit it:
+| Command              | Description                          |
+|----------------------|--------------------------------------|
+| `npm run setup`      | First-time install, migrate, seed    |
+| `npm run dev:api`    | Start API in watch mode              |
+| `npm run dev:frontend` | Start frontend dev server          |
+| `npm run build`      | Build all packages                   |
+| `npm run db:migrate` | Run Prisma migrations                |
+| `npm run db:seed`    | Seed the database                    |
+| `npm run docker:up`  | Start all Docker containers          |
+| `npm run docker:down`| Stop all Docker containers           |
 
-```powershell
-cd ..\api
-copy .env.local.example .env
-```
+## Tech Stack
 
-Open `api/.env` and update the database settings for your local PostgreSQL instance.
-
-Example:
-
-```env
-DATABASE_URL="postgresql://ims:ims@localhost:5432/ims?schema=public&sslmode=disable"
-REDIS_URL=redis://localhost:6379
-```
-
-If you use a different password, update `DATABASE_URL` accordingly.
-
-### 5. Run Prisma setup
-
-```powershell
-cd api
-npx prisma generate
-npx prisma migrate deploy
-npx prisma db seed
-```
-
-### 6. Start the backend server
-
-```powershell
-cd api
-npm run start:dev
-```
-
-The API will run at `http://localhost:8080`.
-
-### 7. Start the frontend server
-
-```powershell
-cd ..\frontend
-copy .env.local.example .env.local
-npm run dev
-```
-
-The frontend will run at `http://localhost:3001`.
-
-## Optional: Start both services with scripts
-
-From the repo root, you can start both servers with:
-
-```powershell
-cd C:\Users\LENOVO\Desktop\ims
-.\start-ims.ps1
-```
-
-Stop them with:
-
-```powershell
-.\stop-ims.ps1
-```
-
-## Database setup notes
-
-For a local PostgreSQL database, create the database and user, then grant permissions:
-
-```sql
-CREATE USER ims WITH PASSWORD 'ims';
-CREATE DATABASE ims;
-GRANT ALL PRIVILEGES ON DATABASE ims TO ims;
-\c ims;
-GRANT ALL PRIVILEGES ON SCHEMA public TO ims;
-ALTER SCHEMA public OWNER TO ims;
-```
-
-If your `ims` user has a different password, update `api/.env` accordingly.
-
-## Project structure
-
-- `api/` — NestJS backend
-- `frontend/` — Next.js frontend
-- `shared/` — shared types, constants, and utilities
-- `docker/` — Docker configuration and nginx files
-- `start-ims.ps1`, `stop-ims.ps1` — local start/stop scripts
-
-## Run with Docker (optional)
-
-If you prefer Docker, use:
-
-```powershell
-docker compose up -d --build
-```
-
-Stop with:
-
-```powershell
-docker compose down
-```
-
-## Useful URLs
-
-- Frontend: `http://localhost:3001`
-- Backend API: `http://localhost:8080`
-- Swagger docs: `http://localhost:8080/docs`
-"# IMS" 
+| Layer    | Technology                          |
+|----------|-------------------------------------|
+| Backend  | NestJS, Prisma, PostgreSQL, JWT     |
+| Frontend | Next.js 14, Tailwind CSS, shadcn/ui |
+| Shared   | TypeScript types and constants      |
+| Infra    | Docker, Docker Compose              |
