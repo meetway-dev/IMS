@@ -20,6 +20,8 @@ import {
   Settings,
   BarChart3,
   Shield,
+  Type,
+  Ruler,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
@@ -66,6 +68,8 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: 'Products', href: '/dashboard/products', icon: Package, description: 'Product catalog', permissions: ['products.read'] },
       { name: 'Categories', href: '/dashboard/categories', icon: Tag, description: 'Product taxonomy', permissions: ['categories.read'] },
+      { name: 'Product Types', href: '/dashboard/product-types', icon: Type, description: 'Product classification', permissions: ['product-types.read'] },
+      { name: 'Units of Measure', href: '/dashboard/unit-of-measures', icon: Ruler, description: 'Measurement units', permissions: ['unit-of-measures.read'] },
       { name: 'Inventory', href: '/dashboard/inventory', icon: PackageOpen, description: 'Stock levels', permissions: ['inventory.read'] },
       { name: 'Suppliers', href: '/dashboard/suppliers', icon: Truck, description: 'Vendor management', permissions: ['suppliers.read'] },
     ],

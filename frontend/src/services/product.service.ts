@@ -88,7 +88,12 @@ export const productService = {
    */
   async getProduct(id: string): Promise<Product> {
     const response = await apiClient.get<any>(API_ENDPOINTS.PRODUCTS.DETAIL(id));
-    return toFrontendFormat(response.data);
+    // Determine if response is wrapped (has data property)
+    const data = response.data !== undefined ? response.data : response;
+    if (data === null || data === undefined) {
+      throw new Error('API response data is null or undefined. Product may not exist.');
+    }
+    return toFrontendFormat(data);
   },
 
   /**
@@ -101,12 +106,13 @@ export const productService = {
     try {
       const response = await apiClient.post<any>(API_ENDPOINTS.PRODUCTS.CREATE, backendData);
       console.log('API response (body):', response);
-      console.log('Response data property:', response.data);
-      console.log('Response data type:', typeof response.data);
-      if (response.data === null || response.data === undefined) {
+      // Determine if response is wrapped (has data property)
+      const data = response.data !== undefined ? response.data : response;
+      console.log('Data to transform:', data);
+      if (data === null || data === undefined) {
         throw new Error('API response data is null or undefined. Check backend validation and permissions.');
       }
-      return toFrontendFormat(response.data);
+      return toFrontendFormat(data);
     } catch (error) {
       console.error('Error in createProduct:', error);
       throw error;
@@ -119,7 +125,12 @@ export const productService = {
   async updateProduct(id: string, data: UpdateProductData): Promise<Product> {
     const backendData = toBackendFormat(data);
     const response = await apiClient.patch<any>(API_ENDPOINTS.PRODUCTS.UPDATE(id), backendData);
-    return toFrontendFormat(response.data);
+    // Determine if response is wrapped (has data property)
+    const responseData = response.data !== undefined ? response.data : response;
+    if (responseData === null || responseData === undefined) {
+      throw new Error('API response data is null or undefined. Update may have failed.');
+    }
+    return toFrontendFormat(responseData);
   },
 
   /**
@@ -137,6 +148,13 @@ export const productService = {
       search: query,
       limit: 20,
     });
-    return response.data.map(toFrontendFormat);
+    // Determine if response is wrapped (has data property)
+    const data = response.data !== undefined ? response.data : response;
+    if (data === null || data === undefined) {
+      return [];
+    }
+    // Handle both array and object responses
+    const items = Array.isArray(data) ? data : (data.data || []);
+    return items.map(toFrontendFormat);
   },
 };

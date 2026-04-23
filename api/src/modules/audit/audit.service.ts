@@ -63,6 +63,8 @@ export class AuditService {
       return auditLog.id;
     } catch (error) {
       this.logger.error('Failed to log audit event', error);
+      console.error('Audit log error details:', error);
+      console.error('Audit log input:', input);
       throw error;
     }
   }
