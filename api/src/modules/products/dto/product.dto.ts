@@ -1,9 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductType, UnitOfMeasure } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -65,13 +63,19 @@ export class CreateProductDto {
   @MaxLength(128)
   barcode?: string;
 
-  @ApiProperty({ enum: ProductType, example: ProductType.SANITARY })
-  @IsEnum(ProductType)
-  type!: ProductType;
+  @ApiProperty({
+    description: 'Product type ID (references ProductType table)',
+    example: 'a1b2c3d4-e5f6-7890-abcd-123456789012',
+  })
+  @IsUUID()
+  typeId!: string;
 
-  @ApiProperty({ enum: UnitOfMeasure, example: UnitOfMeasure.METER })
-  @IsEnum(UnitOfMeasure)
-  unit!: UnitOfMeasure;
+  @ApiProperty({
+    description: 'Unit of measure ID (references UnitOfMeasure table)',
+    example: 'b2c3d4e5-f6a7-8901-bcde-234567890123',
+  })
+  @IsUUID()
+  unitId!: string;
 
   @ApiProperty({ example: '50.00' })
   @IsString()
@@ -119,15 +123,15 @@ export class UpdateProductDto {
   @MaxLength(128)
   barcode?: string;
 
-  @ApiPropertyOptional({ enum: ProductType })
+  @ApiPropertyOptional({ description: 'Product type ID' })
   @IsOptional()
-  @IsEnum(ProductType)
-  type?: ProductType;
+  @IsUUID()
+  typeId?: string;
 
-  @ApiPropertyOptional({ enum: UnitOfMeasure })
+  @ApiPropertyOptional({ description: 'Unit of measure ID' })
   @IsOptional()
-  @IsEnum(UnitOfMeasure)
-  unit?: UnitOfMeasure;
+  @IsUUID()
+  unitId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

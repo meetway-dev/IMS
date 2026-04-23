@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AdvancedDataTable } from '@/components/tables/advanced-data-table';
+import { DataTable } from '@/components/tables/data-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -430,14 +430,17 @@ export default function CategoriesPage() {
           </CardHeader>
 
           <CardContent>
-            <AdvancedDataTable
+            <DataTable
               columns={columns}
               data={categoriesData?.data || []}
               searchPlaceholder="Search categories by name..."
-              searchColumn="name"
+              searchKey="name"
               enableSelection={true}
               enableBulkActions={selectedRows.length > 0}
-              bulkActions={bulkActions}
+              bulkActions={bulkActions?.map(action => ({
+                label: action.label,
+                onClick: action.action,
+              }))}
               isLoading={isLoading}
               pagination={{
                 pageSize: 10,

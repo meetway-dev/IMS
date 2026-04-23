@@ -20,10 +20,10 @@ export const queryClient = new QueryClient({
       refetchOnMount: true,
     },
     mutations: {
-      // Number of times to retry failed mutations
-      retry: 1,
-      // Retry delay
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Mutations must NOT auto-retry — they have side effects (e.g. creating records).
+      // A retry after a successful-but-misinterpreted call creates duplicates or
+      // hits uniqueness constraints ("first success, second reject").
+      retry: false,
     },
   },
 });

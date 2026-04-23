@@ -89,6 +89,10 @@ export const inventoryService = {
     const response = await apiClient.get<Inventory[]>(API_ENDPOINTS.INVENTORY.LIST, {
       lowStock: true,
     });
+    // Handle both wrapped and direct array responses
+    if (Array.isArray(response)) {
+      return response;
+    }
     return response.data;
   },
 };

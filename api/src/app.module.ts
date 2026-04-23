@@ -20,6 +20,8 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
+import { ProductTypesModule } from './modules/product-types/product-types.module';
+import { UnitOfMeasuresModule } from './modules/unit-of-measures/unit-of-measures.module';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
     AuditModule,
     CompaniesModule,
     CategoriesModule,
+    ProductTypesModule,
+    UnitOfMeasuresModule,
     ProductsModule,
     InventoryModule,
     OrdersModule,

@@ -10,10 +10,17 @@ export const productSchema = yup.object().shape({
     .min(2, 'SKU must be at least 2 characters')
     .required('SKU is required'),
   barcode: yup.string().optional(),
-  description: yup.string().optional(),
   categoryId: yup
     .string()
     .required('Category is required'),
+  typeId: yup
+    .string()
+    .uuid('Product type must be a valid UUID')
+    .required('Product type is required'),
+  unitId: yup
+    .string()
+    .uuid('Unit of measure must be a valid UUID')
+    .required('Unit of measure is required'),
   price: yup
     .number()
     .positive('Price must be positive')
@@ -22,9 +29,6 @@ export const productSchema = yup.object().shape({
     .number()
     .positive('Cost must be positive')
     .required('Cost is required'),
-  unit: yup
-    .string()
-    .required('Unit is required'),
   minStockLevel: yup
     .number()
     .min(0, 'Minimum stock level must be 0 or greater')

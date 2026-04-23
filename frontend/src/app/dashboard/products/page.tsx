@@ -24,7 +24,11 @@ import { PageHeader } from '@/components/ui/page-header';
 import { ErrorState } from '@/components/ui/states';
 import { productService } from '@/services/product.service';
 import { categoryService } from '@/services/category.service';
+import { productTypeService } from '@/services/product-type.service';
+import { unitOfMeasureService } from '@/services/unit-of-measure.service';
 import { Product, Category } from '@/types';
+import type { ProductType } from '@/services/product-type.service';
+import type { UnitOfMeasure } from '@/services/unit-of-measure.service';
 import { formatCurrency, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
@@ -53,10 +57,12 @@ export default function ProductsPage() {
     const data = {
       name: formData.get('name') as string,
       sku: formData.get('sku') as string,
+      barcode: formData.get('barcode') as string || undefined,
       categoryId: formData.get('categoryId') as string,
+      typeId: formData.get('typeId') as string,
+      unitId: formData.get('unitId') as string,
       price: Number(formData.get('price')),
       cost: Number(formData.get('cost')),
-      unit: formData.get('unit') as string,
       minStockLevel: Number(formData.get('minStockLevel')),
     };
 
@@ -89,6 +95,24 @@ export default function ProductsPage() {
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
           {row.original.category?.name || '-'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'type',
+      header: 'Type',
+      cell: ({ row }) => (
+        <Badge variant="outline" className="text-xs">
+          {row.original.type}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'unit',
+      header: 'Unit',
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.unit}
         </span>
       ),
     },
@@ -173,6 +197,18 @@ export default function ProductsPage() {
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.getCategories({ page: 1, limit: 100 }),
+  });
+
+  // Fetch product types for the form
+  const { data: productTypesData } = useQuery({
+    queryKey: ['product-types', 'active'],
+    queryFn: () => productTypeService.getActiveProductTypes(),
+  });
+
+  // Fetch units of measure for the form
+  const { data: unitOfMeasuresData } = useQuery({
+    queryKey: ['unit-of-measures', 'active'],
+    queryFn: () => unitOfMeasureService.getActiveUnitOfMeasures(),
   });
 
   // Create product mutation
@@ -347,8 +383,18 @@ export default function ProductsPage() {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="barcode">Barcode (Optional)</Label>
+              <Input
+                id="barcode"
+                name="barcode"
+                placeholder="Enter barcode"
+                defaultValue={editingProduct?.barcode || ''}
+                disabled={isMutating}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="categoryId">Category</Label>
-              <Select name="categoryId" required disabled={isMutating}>
+              <Select name="categoryId" required disabled={isMutating} defaultValue={editingProduct?.categoryId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -363,7 +409,39 @@ export default function ProductsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="price">Price</Label>
+                <Label htmlFor="typeId">Product Type</Label>
+                <Select name="typeId" required disabled={isMutating} defaultValue={editingProduct?.typeId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {productTypesData?.map((type: ProductType) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="unitId">Unit of Measure</Label>
+                <Select name="unitId" required disabled={isMutating} defaultValue={editingProduct?.unitId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unitOfMeasuresData?.map((unit: UnitOfMeasure) => (
+                      <SelectItem key={unit.id} value={unit.id}>
+                        {unit.name} ({unit.symbol})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="price">Sale Price</Label>
                 <Input
                   id="price"
                   name="price"
@@ -376,7 +454,7 @@ export default function ProductsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cost">Cost</Label>
+                <Label htmlFor="cost">Purchase Cost</Label>
                 <Input
                   id="cost"
                   name="cost"
@@ -389,30 +467,17 @@ export default function ProductsPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="unit">Unit</Label>
-                <Input
-                  id="unit"
-                  name="unit"
-                  placeholder="pcs, kg, etc."
-                  defaultValue={editingProduct?.unit || ''}
-                  required
-                  disabled={isMutating}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="minStockLevel">Min Stock Level</Label>
-                <Input
-                  id="minStockLevel"
-                  name="minStockLevel"
-                  type="number"
-                  placeholder="10"
-                  defaultValue={editingProduct?.minStockLevel || ''}
-                  required
-                  disabled={isMutating}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="minStockLevel">Min Stock Level</Label>
+              <Input
+                id="minStockLevel"
+                name="minStockLevel"
+                type="number"
+                placeholder="10"
+                defaultValue={editingProduct?.minStockLevel || ''}
+                required
+                disabled={isMutating}
+              />
             </div>
           </div>
         </form>

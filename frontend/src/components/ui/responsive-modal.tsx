@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './dialog';
-import { ScrollArea } from './scroll-area';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 
@@ -74,28 +73,10 @@ export function ResponsiveModal({
     ? maxHeight
     : heightClasses[maxHeight as keyof typeof heightClasses];
 
-  const renderContent = () => {
-    const content = (
-      <div className={cn('flex flex-col h-full', bodyClassName)}>
-        {children}
-      </div>
-    );
-
-    if (scrollable) {
-      return (
-        <ScrollArea className={cn('flex-1 pr-4 -mr-4', heightClass !== 'auto' && heightClass)}>
-          {content}
-        </ScrollArea>
-      );
-    }
-
-    return content;
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className={cn(sizeClasses[size], 'flex flex-col p-0 gap-0', className)}
+        className={cn(sizeClasses[size], 'flex flex-col p-0 gap-0 overflow-hidden max-h-[90vh]', className)}
       >
         {showCloseButton && (
           <button
@@ -123,11 +104,13 @@ export function ResponsiveModal({
         )}
 
         <div className={cn(
-          'flex-1 px-6 py-5',
+          'flex-1 min-h-0 overflow-y-auto px-6 py-5',
           contentClassName,
-          !scrollable && heightClass !== 'auto' && heightClass
+          heightClass !== 'auto' && heightClass
         )}>
-          {renderContent()}
+          <div className={cn('flex flex-col', bodyClassName)}>
+            {children}
+          </div>
         </div>
 
         {footer && (
@@ -183,8 +166,8 @@ export function FormModal({
       title={title}
       description={description}
       size="lg"
-      maxHeight="auto"
-      scrollable={false}
+      maxHeight="xl"
+      scrollable={true}
       footer={footer}
       {...props}
     >

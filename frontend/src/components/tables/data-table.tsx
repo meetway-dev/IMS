@@ -82,10 +82,22 @@ interface DataTableProps<TData, TValue> {
   exportAction?: {
     label?: string;
     onClick: (data: TData[]) => void;
+    enableCsvExport?: boolean;
   };
   density?: 'compact' | 'comfortable';
   onDensityChange?: (density: 'compact' | 'comfortable') => void;
   className?: string;
+  filters?: Array<{
+    column: string;
+    label: string;
+    options: Array<{ label: string; value: string }>;
+  }>;
+  enableSelection?: boolean;
+  enableBulkActions?: boolean;
+  pagination?: {
+    pageSize?: number;
+    pageSizeOptions?: number[];
+  };
 }
 
 export function DataTable<TData, TValue>({
@@ -107,6 +119,13 @@ export function DataTable<TData, TValue>({
   density = 'comfortable',
   onDensityChange,
   className,
+  filters = [],
+  enableSelection = false,
+  enableBulkActions = false,
+  pagination = {
+    pageSize: 10,
+    pageSizeOptions: [10, 20, 30, 40, 50],
+  },
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -125,12 +144,17 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: enableSelection ? setRowSelection : undefined,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-      rowSelection,
+      rowSelection: enableSelection ? rowSelection : {},
+    },
+    initialState: {
+      pagination: {
+        pageSize: pagination.pageSize || 10,
+      },
     },
   });
 
@@ -173,6 +197,67 @@ export function DataTable<TData, TValue>({
   };
 
   const densityClasses = getDensityClasses();
+
+  // CSV Export function
+  const exportToCsv = () => {
+    const exportRows = hasSelection ? selectedRows.map(row => row.original) : data;
+    
+    if (exportRows.length === 0) return;
+    
+    // Get headers from first row
+    const firstRow = exportRows[0] as Record<string, any>;
+    const headers = Object.keys(firstRow).filter(key =>
+      typeof firstRow[key] !== 'object' && firstRow[key] !== null
+    );
+    
+    const rows = exportRows.map(row => {
+      const rowData = row as Record<string, any>;
+      return headers.map(header => {
+        const value = rowData[header];
+        // Handle CSV escaping
+        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value?.toString() || '';
+      }).join(',');
+    });
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
+
+  // Handle filter change for custom filters
+  const [activeFilters, setActiveFilters] = React.useState<Record<string, string>>({});
+
+  const handleFilterChange = (column: string, value: string) => {
+    if (value === 'all') {
+      const newFilters = { ...activeFilters };
+      delete newFilters[column];
+      setActiveFilters(newFilters);
+      table.getColumn(column)?.setFilterValue(undefined);
+    } else {
+      setActiveFilters(prev => ({ ...prev, [column]: value }));
+      table.getColumn(column)?.setFilterValue(value);
+    }
+  };
+
+  const clearAllFilters = () => {
+    setActiveFilters({});
+    setColumnFilters([]);
+    setSearchValue('');
+    table.resetColumnFilters();
+  };
+
+  const hasActiveCustomFilters = Object.keys(activeFilters).length > 0;
 
   return (
     <div className={cn('w-full space-y-4', className)}>
@@ -226,7 +311,61 @@ export function DataTable<TData, TValue>({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Filters Popover */}
+          {/* Custom Filters Dropdown */}
+          {filters.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                  {hasActiveCustomFilters && (
+                    <Badge variant="secondary" className="ml-2">
+                      {Object.keys(activeFilters).length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {filters.map((filter) => (
+                  <div key={filter.column} className="p-2">
+                    <label className="text-sm font-medium mb-2 block">
+                      {filter.label}
+                    </label>
+                    <Select
+                      value={activeFilters[filter.column] || 'all'}
+                      onValueChange={(value) => handleFilterChange(filter.column, value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        {filter.options.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+                {hasActiveCustomFilters && (
+                  <div className="p-2 border-t">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="w-full justify-center"
+                    >
+                      Clear All Filters
+                    </Button>
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* Column Filters Popover */}
           <Popover open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -234,8 +373,8 @@ export function DataTable<TData, TValue>({
                 size="sm"
                 className="h-9"
               >
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
+                <Settings className="h-4 w-4 mr-2" />
+                Advanced
                 {columnFilters.length > 0 && (
                   <Badge variant="muted" className="ml-2 h-5 w-5 p-0 text-[10px] flex items-center justify-center">
                     {columnFilters.length}
@@ -349,20 +488,54 @@ export function DataTable<TData, TValue>({
             </DropdownMenu>
           )}
 
-          {/* Export Action */}
-          {exportAction && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => exportAction.onClick(data)}
-              className="h-9"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {exportAction.label || 'Export'}
-            </Button>
-          )}
+          {/* Export Action - Always show export button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (exportAction?.onClick) {
+                const exportData = hasSelection ? selectedRows.map(row => row.original) : data;
+                exportAction.onClick(exportData);
+              } else {
+                exportToCsv();
+              }
+            }}
+            className="h-9"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {exportAction?.label || 'Export'}
+          </Button>
         </div>
       </div>
+
+      {/* Active custom filters display */}
+      {hasActiveCustomFilters && (
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(activeFilters).map(([column, value]) => {
+            const filter = filters.find(f => f.column === column);
+            const option = filter?.options.find(o => o.value === value);
+            return (
+              <Badge key={column} variant="secondary" className="gap-1">
+                {filter?.label}: {option?.label || value}
+                <button
+                  onClick={() => handleFilterChange(column, 'all')}
+                  className="ml-1 hover:text-destructive"
+                >
+                  ×
+                </button>
+              </Badge>
+            );
+          })}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearAllFilters}
+            className="h-6 px-2 text-xs"
+          >
+            Clear All
+          </Button>
+        </div>
+      )}
 
       {/* Bulk Actions Bar */}
       <AnimatePresence>
@@ -577,7 +750,7 @@ export function DataTable<TData, TValue>({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[10, 20, 30, 40, 50].map((size) => (
+                {(pagination.pageSizeOptions || [10, 20, 30, 40, 50]).map((size) => (
                   <SelectItem key={size} value={size.toString()}>
                     {size}
                   </SelectItem>

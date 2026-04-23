@@ -94,6 +94,24 @@ export const API_ENDPOINTS = {
     LIST: '/audit-logs',
     DETAIL: (id: string) => `/audit-logs/${id}`,
   },
+  // Product Types
+  PRODUCT_TYPES: {
+    LIST: '/product-types',
+    ACTIVE: '/product-types/active',
+    DETAIL: (id: string) => `/product-types/${id}`,
+    CREATE: '/product-types',
+    UPDATE: (id: string) => `/product-types/${id}`,
+    DELETE: (id: string) => `/product-types/${id}`,
+  },
+  // Units of Measure
+  UNIT_OF_MEASURES: {
+    LIST: '/unit-of-measures',
+    ACTIVE: '/unit-of-measures/active',
+    DETAIL: (id: string) => `/unit-of-measures/${id}`,
+    CREATE: '/unit-of-measures',
+    UPDATE: (id: string) => `/unit-of-measures/${id}`,
+    DELETE: (id: string) => `/unit-of-measures/${id}`,
+  },
   // Health
   HEALTH: '/health',
 } as const;

@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 import { InventoryDashboard } from '@/components/ui/inventory-dashboard';
-import { AdvancedDataTable } from '@/components/tables/advanced-data-table';
+import { DataTable } from '@/components/tables/data-table';
 import { StockBadge } from '@/components/ui/inventory/StockBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -299,21 +299,21 @@ export default function InventoryPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <AdvancedDataTable
+          <DataTable
             columns={columns}
             data={inventoryItems}
             searchPlaceholder="Search products, SKU, or category..."
-            searchColumn="product.name"
-            enableSelection
-            enableBulkActions
+            searchKey="product.name"
+            enableSelection={true}
+            enableBulkActions={true}
             bulkActions={[
               {
                 label: 'Update Selected',
-                action: handleBulkUpdate,
+                onClick: handleBulkUpdate,
               },
               {
                 label: 'Export Selected',
-                action: handleBulkExport,
+                onClick: handleBulkExport,
               },
             ]}
             isLoading={isLoading}
@@ -339,6 +339,10 @@ export default function InventoryPage() {
                 ],
               },
             ]}
+            pagination={{
+              pageSize: 10,
+              pageSizeOptions: [10, 25, 50, 100],
+            }}
           />
         </CardContent>
       </Card>

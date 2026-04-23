@@ -130,7 +130,7 @@ export function PermissionFormModal({ open, onClose, onSuccess, permission }: Pe
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{permission ? 'Edit Permission' : 'Create New Permission'}</DialogTitle>
         </DialogHeader>

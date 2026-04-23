@@ -102,11 +102,13 @@ export interface Product {
   name: string;
   sku: string;
   barcode?: string;
-  description?: string;
   categoryId: string;
+  typeId: string;
+  unitId: string;
   price: number;
   cost: number;
-  unit: string;
+  unit: string; // Display name from UnitOfMeasure relation
+  type: string; // Display name from ProductType relation
   minStockLevel: number;
   stock?: number;
   isActive: boolean;

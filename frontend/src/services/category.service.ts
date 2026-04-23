@@ -27,6 +27,10 @@ export const categoryService = {
    */
   async getCategoryTree(): Promise<Category[]> {
     const response = await apiClient.get<Category[]>(API_ENDPOINTS.CATEGORIES.TREE);
+    // Handle both wrapped and direct array responses
+    if (Array.isArray(response)) {
+      return response;
+    }
     return response.data;
   },
 

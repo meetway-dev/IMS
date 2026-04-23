@@ -70,6 +70,10 @@ export const permissionService = {
 
   async getPermissionsByModule(module: string): Promise<Permission[]> {
     const res = await apiClient.get<Permission[]>(API_ENDPOINTS.PERMISSIONS.BY_MODULE(module));
+    // Handle both wrapped and direct array responses
+    if (Array.isArray(res)) {
+      return res;
+    }
     return res.data;
   },
 

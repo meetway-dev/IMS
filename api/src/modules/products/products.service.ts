@@ -12,6 +12,8 @@ import { AuditService } from '../audit/audit.service';
 import type { CreateProductDto, UpdateProductDto } from './dto/product.dto';
 
 const productInclude = {
+  type: true,
+  unit: true,
   category: true,
   company: true,
   inventory: true,
@@ -37,6 +39,19 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto, actorUserId?: string) {
+    // Validate typeId references an existing ProductType
+    const productType = await this.prisma.productType.findFirst({
+      where: { id: dto.typeId, deletedAt: null },
+    });
+    if (!productType) throw new BadRequestException('Product type not found');
+
+    // Validate unitId references an existing UnitOfMeasure
+    const unitOfMeasure = await this.prisma.unitOfMeasure.findFirst({
+      where: { id: dto.unitId, deletedAt: null },
+    });
+    if (!unitOfMeasure)
+      throw new BadRequestException('Unit of measure not found');
+
     if (dto.categoryId) {
       const c = await this.prisma.category.findFirst({
         where: { id: dto.categoryId, deletedAt: null },
@@ -57,8 +72,8 @@ export class ProductsService {
             name: dto.name,
             sku: dto.sku,
             barcode: dto.barcode,
-            type: dto.type,
-            unit: dto.unit,
+            typeId: dto.typeId,
+            unitId: dto.unitId,
             purchasePrice: new Prisma.Decimal(dto.purchasePrice),
             salePrice: new Prisma.Decimal(dto.salePrice),
             minStockAlert: dto.minStockAlert ?? 0,
@@ -138,6 +153,19 @@ export class ProductsService {
 
   async update(id: string, dto: UpdateProductDto, actorUserId?: string) {
     await this.requireProduct(id);
+
+    if (dto.typeId) {
+      const pt = await this.prisma.productType.findFirst({
+        where: { id: dto.typeId, deletedAt: null },
+      });
+      if (!pt) throw new BadRequestException('Product type not found');
+    }
+    if (dto.unitId) {
+      const uom = await this.prisma.unitOfMeasure.findFirst({
+        where: { id: dto.unitId, deletedAt: null },
+      });
+      if (!uom) throw new BadRequestException('Unit of measure not found');
+    }
     if (dto.categoryId) {
       const c = await this.prisma.category.findFirst({
         where: { id: dto.categoryId, deletedAt: null },
@@ -157,8 +185,8 @@ export class ProductsService {
         data: {
           ...(dto.name != null ? { name: dto.name } : {}),
           ...(dto.barcode !== undefined ? { barcode: dto.barcode } : {}),
-          ...(dto.type != null ? { type: dto.type } : {}),
-          ...(dto.unit != null ? { unit: dto.unit } : {}),
+          ...(dto.typeId != null ? { typeId: dto.typeId } : {}),
+          ...(dto.unitId != null ? { unitId: dto.unitId } : {}),
           ...(dto.purchasePrice != null
             ? { purchasePrice: new Prisma.Decimal(dto.purchasePrice) }
             : {}),

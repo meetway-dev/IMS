@@ -36,8 +36,8 @@ export class ProductsController {
         value: {
           name: 'PVC Pipe',
           sku: 'PVC-PIPE-001',
-          type: 'SANITARY',
-          unit: 'METER',
+          typeId: 'a1b2c3d4-e5f6-7890-abcd-123456789012',
+          unitId: 'b2c3d4e5-f6a7-8901-bcde-234567890123',
           purchasePrice: '50.00',
           salePrice: '75.00',
           minStockAlert: 20,
@@ -48,8 +48,8 @@ export class ProductsController {
         value: {
           name: 'Cable',
           sku: 'CAB-001',
-          type: 'ELECTRICAL',
-          unit: 'METER',
+          typeId: 'a1b2c3d4-e5f6-7890-abcd-123456789012',
+          unitId: 'b2c3d4e5-f6a7-8901-bcde-234567890123',
           purchasePrice: '10.00',
           salePrice: '15.00',
           variants: [{ size: '1.5mm', sku: 'CAB-001-15' }],

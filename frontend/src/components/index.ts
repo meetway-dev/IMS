@@ -6,7 +6,7 @@
  */
 
 // Tables
-export { AdvancedDataTable } from './tables/advanced-data-table';
+export { DataTable } from './tables/data-table';
 
 // UI - Inventory
 export { StockBadge, StockLevelIndicator } from './ui/inventory/StockBadge';

@@ -57,7 +57,7 @@ export function RoleDetailsModal({ open, onClose, role }: RoleDetailsModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/10">
@@ -70,7 +70,7 @@ export function RoleDetailsModal({ open, onClose, role }: RoleDetailsModalProps)
           </DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-[70vh] overflow-y-auto pr-4">
+        <div>
           <div className="space-y-6">
             {/* Basic Information */}
             <Card>

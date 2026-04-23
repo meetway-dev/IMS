@@ -3,8 +3,6 @@ import argon2 from 'argon2';
 import { PrismaPg } from '@prisma/adapter-pg';
 import {
   PrismaClient,
-  ProductType,
-  UnitOfMeasure,
   OrderStatus,
 } from '@prisma/client';
 import { Pool } from 'pg';
@@ -776,6 +774,69 @@ async function main() {
     console.log(`✅ Created supplier: ${supplier.name}`);
   }
 
+  // Product Types
+  console.log('Creating product types...');
+  const productTypes = [
+    {
+      name: 'Sanitary',
+      slug: 'sanitary',
+      description: 'Sanitary products and supplies',
+      isActive: true,
+    },
+    {
+      name: 'Electrical',
+      slug: 'electrical',
+      description: 'Electrical products and components',
+      isActive: true,
+    },
+  ];
+  const createdProductTypes = [];
+  for (const typeData of productTypes) {
+    const productType = await prisma.productType.upsert({
+      where: { slug: typeData.slug },
+      update: {},
+      create: typeData,
+    });
+    createdProductTypes.push(productType);
+    console.log(`✅ Created product type: ${productType.name}`);
+  }
+
+  // Unit of Measures
+  console.log('Creating units of measure...');
+  const unitOfMeasures = [
+    {
+      name: 'Piece',
+      slug: 'piece',
+      symbol: 'pcs',
+      description: 'Individual piece/item',
+      isActive: true,
+    },
+    {
+      name: 'Meter',
+      slug: 'meter',
+      symbol: 'm',
+      description: 'Length in meters',
+      isActive: true,
+    },
+    {
+      name: 'Box',
+      slug: 'box',
+      symbol: 'box',
+      description: 'Box of items',
+      isActive: true,
+    },
+  ];
+  const createdUnitOfMeasures = [];
+  for (const unitData of unitOfMeasures) {
+    const unitOfMeasure = await prisma.unitOfMeasure.upsert({
+      where: { slug: unitData.slug },
+      update: {},
+      create: unitData,
+    });
+    createdUnitOfMeasures.push(unitOfMeasure);
+    console.log(`✅ Created unit of measure: ${unitOfMeasure.name}`);
+  }
+
   // Products
   console.log('Creating products...');
   const products = [
@@ -783,8 +844,8 @@ async function main() {
       name: 'Toilet Paper',
       sku: 'TP001',
       barcode: '123456789012',
-      type: ProductType.SANITARY,
-      unit: UnitOfMeasure.PIECE,
+      typeId: createdProductTypes[0].id, // Sanitary
+      unitId: createdUnitOfMeasures[0].id, // Piece
       purchasePrice: 5.99,
       salePrice: 9.99,
       minStockAlert: 10,
@@ -795,8 +856,8 @@ async function main() {
       name: 'Hand Soap',
       sku: 'HS002',
       barcode: '123456789013',
-      type: ProductType.SANITARY,
-      unit: UnitOfMeasure.PIECE,
+      typeId: createdProductTypes[0].id, // Sanitary
+      unitId: createdUnitOfMeasures[0].id, // Piece
       purchasePrice: 2.5,
       salePrice: 4.99,
       minStockAlert: 20,
@@ -807,8 +868,8 @@ async function main() {
       name: 'Light Bulb',
       sku: 'LB003',
       barcode: '123456789014',
-      type: ProductType.ELECTRICAL,
-      unit: UnitOfMeasure.PIECE,
+      typeId: createdProductTypes[1].id, // Electrical
+      unitId: createdUnitOfMeasures[0].id, // Piece
       purchasePrice: 1.99,
       salePrice: 3.99,
       minStockAlert: 30,
@@ -819,8 +880,8 @@ async function main() {
       name: 'Extension Cord',
       sku: 'EC004',
       barcode: '123456789015',
-      type: ProductType.ELECTRICAL,
-      unit: UnitOfMeasure.METER,
+      typeId: createdProductTypes[1].id, // Electrical
+      unitId: createdUnitOfMeasures[1].id, // Meter
       purchasePrice: 8.0,
       salePrice: 15.0,
       minStockAlert: 5,
@@ -831,8 +892,8 @@ async function main() {
       name: 'Pipe Fitting',
       sku: 'PF005',
       barcode: '123456789016',
-      type: ProductType.SANITARY,
-      unit: UnitOfMeasure.PIECE,
+      typeId: createdProductTypes[0].id, // Sanitary
+      unitId: createdUnitOfMeasures[0].id, // Piece
       purchasePrice: 3.25,
       salePrice: 6.5,
       minStockAlert: 15,
@@ -843,8 +904,8 @@ async function main() {
       name: 'Faucet',
       sku: 'FC006',
       barcode: '123456789017',
-      type: ProductType.SANITARY,
-      unit: UnitOfMeasure.PIECE,
+      typeId: createdProductTypes[0].id, // Sanitary
+      unitId: createdUnitOfMeasures[0].id, // Piece
       purchasePrice: 12.0,
       salePrice: 24.99,
       minStockAlert: 8,
@@ -855,8 +916,8 @@ async function main() {
       name: 'Wire Roll',
       sku: 'WR007',
       barcode: '123456789018',
-      type: ProductType.ELECTRICAL,
-      unit: UnitOfMeasure.METER,
+      typeId: createdProductTypes[1].id, // Electrical
+      unitId: createdUnitOfMeasures[1].id, // Meter
       purchasePrice: 4.75,
       salePrice: 9.5,
       minStockAlert: 12,
@@ -867,8 +928,8 @@ async function main() {
       name: 'Disinfectant Spray',
       sku: 'DS008',
       barcode: '123456789019',
-      type: ProductType.SANITARY,
-      unit: UnitOfMeasure.BOX,
+      typeId: createdProductTypes[0].id, // Sanitary
+      unitId: createdUnitOfMeasures[2].id, // Box
       purchasePrice: 7.8,
       salePrice: 14.99,
       minStockAlert: 6,
@@ -879,8 +940,8 @@ async function main() {
       name: 'Circuit Breaker',
       sku: 'CB009',
       barcode: '123456789020',
-      type: ProductType.ELECTRICAL,
-      unit: UnitOfMeasure.PIECE,
+      typeId: createdProductTypes[1].id, // Electrical
+      unitId: createdUnitOfMeasures[0].id, // Piece
       purchasePrice: 18.5,
       salePrice: 35.0,
       minStockAlert: 4,
@@ -891,8 +952,8 @@ async function main() {
       name: 'Plunger',
       sku: 'PL010',
       barcode: '123456789021',
-      type: ProductType.SANITARY,
-      unit: UnitOfMeasure.PIECE,
+      typeId: createdProductTypes[0].id, // Sanitary
+      unitId: createdUnitOfMeasures[0].id, // Piece
       purchasePrice: 3.99,
       salePrice: 7.99,
       minStockAlert: 25,
