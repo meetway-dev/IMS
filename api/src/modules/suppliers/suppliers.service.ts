@@ -77,10 +77,30 @@ export class SuppliersService {
       ];
     }
 
+    // Build orderBy based on sort parameters
+    let orderBy: Prisma.SupplierOrderByWithRelationInput = { name: 'asc' }; // Default
+    if (query.sortBy) {
+      // Validate sortBy field to prevent SQL injection
+      const validSortFields = [
+        'name',
+        'email',
+        'phone',
+        'contactPerson',
+        'createdAt',
+        'updatedAt',
+      ];
+      if (validSortFields.includes(query.sortBy)) {
+        // Create orderBy object dynamically
+        orderBy = {
+          [query.sortBy]: query.sortOrder || 'asc',
+        } as Prisma.SupplierOrderByWithRelationInput;
+      }
+    }
+
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.supplier.findMany({
         where,
-        orderBy: { name: 'asc' },
+        orderBy,
         skip,
         take: limit,
       }),

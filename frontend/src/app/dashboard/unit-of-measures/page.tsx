@@ -33,7 +33,18 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function UnitOfMeasuresPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    sortBy,
+    sortOrder,
+    setSort,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+  } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<UnitOfMeasure | null>(null);
 
@@ -152,15 +163,30 @@ export default function UnitOfMeasuresPage() {
     },
   ];
 
-  // Fetch units of measure
+  // Fetch units of measure with pagination and sorting
   const {
     data: unitsData,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['unit-of-measures', { search: debouncedSearch }],
-    queryFn: () => unitOfMeasureService.getUnitOfMeasures({ page: 1, limit: 100, search: debouncedSearch || undefined }),
+    queryKey: [
+      'unit-of-measures',
+      {
+        search: debouncedSearch,
+        sortBy,
+        sortOrder,
+        page,
+        pageSize,
+      },
+    ],
+    queryFn: () => unitOfMeasureService.getUnitOfMeasures({
+      page,
+      limit: pageSize,
+      search: debouncedSearch || undefined,
+      sortBy: sortBy || undefined,
+      sortOrder: sortOrder || undefined,
+    }),
   });
 
   // Create unit mutation
@@ -268,8 +294,15 @@ export default function UnitOfMeasuresPage() {
           onSearchChange={setSearch}
           searchValue={search}
           totalCount={unitsData?.meta.total}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={setSort}
+          currentPage={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
           pagination={{
-            pageSize: 10,
+            pageSize: pageSize,
             pageSizeOptions: [10, 25, 50, 100],
           }}
         />

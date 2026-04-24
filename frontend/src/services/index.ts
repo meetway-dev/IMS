@@ -24,3 +24,6 @@ export { inventoryService } from './inventory.service';
 export { orderService } from './order.service';
 export { dashboardService } from './dashboard.service';
 export { auditService } from './audit.service';
+export { warehouseService } from './warehouse.service';
+export { purchaseOrderService } from './purchase-order.service';
+export { stockLevelService } from './stock-level.service';

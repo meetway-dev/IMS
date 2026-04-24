@@ -9,6 +9,10 @@ interface UseServerSearchOptions {
   initialPageSize?: number;
   /** Initial page number (default: 1) */
   initialPage?: number;
+  /** Initial sort field */
+  initialSortBy?: string | null;
+  /** Initial sort order */
+  initialSortOrder?: 'asc' | 'desc' | null;
 }
 
 /**
@@ -41,10 +45,14 @@ export function useServerSearch(options?: UseServerSearchOptions) {
   const debounceMs = options?.debounceMs ?? 400;
   const initialPageSize = options?.initialPageSize ?? DEFAULT_PAGE_SIZE;
   const initialPage = options?.initialPage ?? 1;
+  const initialSortBy = options?.initialSortBy ?? null;
+  const initialSortOrder = options?.initialSortOrder ?? null;
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(initialPage);
   const [pageSize, setPageSize] = useState(initialPageSize);
+  const [sortBy, setSortBy] = useState<string | null>(initialSortBy);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(initialSortOrder);
   
   const debouncedSearch = useDebounce(search, debounceMs);
 
@@ -62,10 +70,18 @@ export function useServerSearch(options?: UseServerSearchOptions) {
     setPage(1); // Reset to first page when changing page size
   }, []);
 
+  const handleSortChange = useCallback((newSortBy: string | null, newSortOrder: 'asc' | 'desc' | null) => {
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+    setPage(1); // Reset to first page when changing sort
+  }, []);
+
   const resetPagination = useCallback(() => {
     setPage(1);
     setPageSize(initialPageSize);
-  }, [initialPageSize]);
+    setSortBy(initialSortBy);
+    setSortOrder(initialSortOrder);
+  }, [initialPageSize, initialSortBy, initialSortOrder]);
 
   return {
     // Search state
@@ -79,6 +95,12 @@ export function useServerSearch(options?: UseServerSearchOptions) {
     pageSize,
     setPage: handlePageChange,
     setPageSize: handlePageSizeChange,
+    
+    // Sorting state
+    sortBy,
+    sortOrder,
+    setSort: handleSortChange,
+    
     resetPagination,
     
     // Combined query params for API calls
@@ -86,6 +108,8 @@ export function useServerSearch(options?: UseServerSearchOptions) {
       search: debouncedSearch || undefined,
       page,
       limit: pageSize,
+      sortBy: sortBy || undefined,
+      sortOrder: sortOrder || undefined,
     },
   } as const;
 }

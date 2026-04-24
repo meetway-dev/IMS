@@ -41,6 +41,9 @@ export default function CompaniesPage() {
     pageSize,
     setPage,
     setPageSize,
+    sortBy,
+    sortOrder,
+    setSort,
     queryParams,
     resetPagination,
   } = useServerSearch();
@@ -59,6 +62,8 @@ export default function CompaniesPage() {
       page: queryParams.page,
       limit: queryParams.limit,
       search: queryParams.search || undefined,
+      sortBy: queryParams.sortBy,
+      sortOrder: queryParams.sortOrder,
     }),
   });
 
@@ -269,6 +274,10 @@ export default function CompaniesPage() {
           pageSize={pageSize}
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
+          // Server-side sorting props
+          onSortChange={setSort}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
           emptyState={{
             icon: <Building className="h-12 w-12 text-muted-foreground/50" />,
             title: 'No companies found',

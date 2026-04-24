@@ -48,7 +48,19 @@ const staggerItem = {
 };
 
 export default function RolesPage() {
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    sortBy,
+    sortOrder,
+    setSort,
+    queryParams,
+  } = useServerSearch();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editRole, setEditRole] = React.useState<Role | null>(null);
   const { user, initializeAuth } = useAuthStore();
@@ -71,8 +83,14 @@ export default function RolesPage() {
   }, [isSuperAdmin]);
 
   const { data: rolesData, isLoading, refetch, error } = useQuery({
-    queryKey: ['roles', { search: debouncedSearch }],
-    queryFn: () => roleService.getAllRoles({ search: debouncedSearch || undefined }),
+    queryKey: ['roles', queryParams],
+    queryFn: () => roleService.getAllRoles({
+      page: queryParams.page,
+      limit: queryParams.limit,
+      search: queryParams.search || undefined,
+      sortBy: queryParams.sortBy || undefined,
+      sortOrder: queryParams.sortOrder || undefined,
+    }),
     enabled: !!user,
   });
 
@@ -347,7 +365,7 @@ export default function RolesPage() {
           <CardContent className="p-6">
             <DataTable
               columns={columns}
-              data={roles}
+              data={rolesData?.data || []}
               searchKey="name"
               searchPlaceholder="Search roles by name..."
               onSearchChange={setSearch}
@@ -356,6 +374,15 @@ export default function RolesPage() {
               isLoading={isLoading}
               error={error}
               onRetry={refetch}
+              // Server-side pagination props
+              currentPage={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              // Server-side sorting props
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSortChange={setSort}
               emptyState={{
                 icon: <Shield className="h-12 w-12 text-muted-foreground/50" />,
                 title: 'No roles found',

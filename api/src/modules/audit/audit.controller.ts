@@ -71,10 +71,24 @@ export class AuditController {
       if (endDate) where.createdAt.lte = new Date(endDate);
     }
 
+    // Build orderBy clause based on sortBy and sortOrder
+    let orderBy: Prisma.AuditLogOrderByWithRelationInput = {
+      createdAt: 'desc',
+    };
+
+    if (query.sortBy) {
+      const validSortFields = ['createdAt', 'action', 'entityType', 'entityId'];
+      if (validSortFields.includes(query.sortBy)) {
+        orderBy = {
+          [query.sortBy]: query.sortOrder || 'asc',
+        } as Prisma.AuditLogOrderByWithRelationInput;
+      }
+    }
+
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.auditLog.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip,
         take: limit,
         include: {

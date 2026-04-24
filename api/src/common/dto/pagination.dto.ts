@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 // Pagination constants
 export const DEFAULT_PAGE_SIZE = 20;
@@ -11,6 +11,7 @@ export class PaginationQueryDto {
   @ApiPropertyOptional({ description: 'Search term', required: false })
   @IsOptional()
   search?: string;
+
   @ApiPropertyOptional({ example: 1, minimum: 1, default: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -30,6 +31,25 @@ export class PaginationQueryDto {
   @Min(1)
   @Max(MAX_PAGE_SIZE)
   limit?: number = DEFAULT_PAGE_SIZE;
+
+  @ApiPropertyOptional({
+    description: 'Field to sort by',
+    example: 'name',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sort order',
+    enum: ['asc', 'desc'],
+    example: 'asc',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
 }
 
 export type PaginatedMeta = {

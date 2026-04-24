@@ -32,7 +32,18 @@ import { PermissionDetailsModal } from './PermissionDetailsModal';
 import { useServerSearch } from '@/hooks/use-server-search';
 
 export default function PermissionsPage() {
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    sortBy,
+    sortOrder,
+    setSort,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+  } = useServerSearch();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editPermission, setEditPermission] = React.useState<Permission | null>(null);
   const { user, initializeAuth } = useAuthStore();
@@ -47,8 +58,23 @@ export default function PermissionsPage() {
   const [detailsPermission, setDetailsPermission] = React.useState<Permission | null>(null);
 
   const { data: permissionsData, isLoading, refetch, error } = useQuery({
-    queryKey: ['permissions', { search: debouncedSearch }],
-    queryFn: () => permissionService.getAllPermissions({ search: debouncedSearch || undefined }),
+    queryKey: [
+      'permissions',
+      {
+        search: debouncedSearch,
+        sortBy,
+        sortOrder,
+        page,
+        pageSize,
+      },
+    ],
+    queryFn: () => permissionService.getAllPermissions({
+      search: debouncedSearch || undefined,
+      sortBy: sortBy || undefined,
+      sortOrder: sortOrder || undefined,
+      page,
+      limit: pageSize,
+    }),
     enabled: !!user,
   });
 
@@ -323,6 +349,13 @@ export default function PermissionsPage() {
             onSearchChange={setSearch}
             searchValue={search}
             totalCount={permissionsData?.meta?.total}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortChange={setSort}
+            currentPage={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
             isLoading={isLoading}
             error={error}
             onRetry={refetch}
@@ -338,6 +371,10 @@ export default function PermissionsPage() {
             }}
             density={density}
             onDensityChange={setDensity}
+            pagination={{
+              pageSize: pageSize,
+              pageSizeOptions: [10, 25, 50, 100],
+            }}
           />
         </CardContent>
       </Card>

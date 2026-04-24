@@ -12,17 +12,43 @@ import { auditService, AuditLog } from '@/services/audit.service';
 import { useServerSearch } from '@/hooks/use-server-search';
 
 export default function AuditPage() {
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    sortBy,
+    sortOrder,
+    setSort,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+  } = useServerSearch();
   const [entityFilter, setEntityFilter] = React.useState('all');
   const [actionFilter, setActionFilter] = React.useState('all');
 
-  // Use real API call with debounced search
+  // Use real API call with debounced search and sorting
   const { data: auditData, isLoading } = useQuery({
-    queryKey: ['audit-logs', { search: debouncedSearch, entityFilter, actionFilter }],
+    queryKey: [
+      'audit-logs',
+      {
+        search: debouncedSearch,
+        entityFilter,
+        actionFilter,
+        sortBy,
+        sortOrder,
+        page,
+        pageSize,
+      },
+    ],
     queryFn: () => auditService.getAuditLogs({
       search: debouncedSearch || undefined,
       entityType: entityFilter !== 'all' ? entityFilter : undefined,
       action: actionFilter !== 'all' ? actionFilter : undefined,
+      sortBy: sortBy || undefined,
+      sortOrder: sortOrder || undefined,
+      page,
+      limit: pageSize,
     }),
   });
 
@@ -144,6 +170,13 @@ export default function AuditPage() {
             onSearchChange={setSearch}
             searchValue={search}
             totalCount={auditData?.meta?.total}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortChange={setSort}
+            currentPage={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
           />
         </CardContent>
       </Card>

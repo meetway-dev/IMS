@@ -42,6 +42,9 @@ export default function SuppliersPage() {
     pageSize,
     setPage,
     setPageSize,
+    sortBy,
+    sortOrder,
+    setSort,
     queryParams,
     resetPagination,
   } = useServerSearch();
@@ -60,6 +63,8 @@ export default function SuppliersPage() {
       page: queryParams.page,
       limit: queryParams.limit,
       search: queryParams.search || undefined,
+      sortBy: queryParams.sortBy,
+      sortOrder: queryParams.sortOrder,
     }),
   });
 
@@ -279,6 +284,10 @@ export default function SuppliersPage() {
           pageSize={pageSize}
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
+          // Server-side sorting props
+          onSortChange={setSort}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
           emptyState={{
             icon: <Truck className="h-12 w-12 text-muted-foreground/50" />,
             title: 'No suppliers found',

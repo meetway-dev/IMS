@@ -112,6 +112,51 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/unit-of-measures/${id}`,
     DELETE: (id: string) => `/unit-of-measures/${id}`,
   },
+  // Warehouses
+  WAREHOUSES: {
+    LIST: '/warehouses',
+    DETAIL: (id: string) => `/warehouses/${id}`,
+    CREATE: '/warehouses',
+    UPDATE: (id: string) => `/warehouses/${id}`,
+    DELETE: (id: string) => `/warehouses/${id}`,
+    ARCHIVE: (id: string) => `/warehouses/${id}/archive`,
+    STATISTICS: (id: string) => `/warehouses/${id}/statistics`,
+  },
+  // Locations (nested under warehouses)
+  LOCATIONS: {
+    LIST: (warehouseId: string) => `/warehouses/${warehouseId}/locations`,
+    DETAIL: (warehouseId: string, id: string) => `/warehouses/${warehouseId}/locations/${id}`,
+    CREATE: (warehouseId: string) => `/warehouses/${warehouseId}/locations`,
+    UPDATE: (warehouseId: string, id: string) => `/warehouses/${warehouseId}/locations/${id}`,
+    DELETE: (warehouseId: string, id: string) => `/warehouses/${warehouseId}/locations/${id}`,
+  },
+  // Purchase Orders
+  PURCHASE_ORDERS: {
+    LIST: '/purchase-orders',
+    DETAIL: (id: string) => `/purchase-orders/${id}`,
+    CREATE: '/purchase-orders',
+    UPDATE: (id: string) => `/purchase-orders/${id}`,
+    DELETE: (id: string) => `/purchase-orders/${id}`,
+    APPROVE: (id: string) => `/purchase-orders/${id}/approve`,
+    REJECT: (id: string) => `/purchase-orders/${id}/reject`,
+    CANCEL: (id: string) => `/purchase-orders/${id}/cancel`,
+  },
+  // Goods Receipt Notes
+  GOODS_RECEIPTS: {
+    LIST: '/goods-receipts',
+    DETAIL: (id: string) => `/goods-receipts/${id}`,
+    CREATE: '/goods-receipts',
+    UPDATE: (id: string) => `/goods-receipts/${id}`,
+    COMPLETE: (id: string) => `/goods-receipts/${id}/complete`,
+    CANCEL: (id: string) => `/goods-receipts/${id}/cancel`,
+  },
+  // Stock Levels
+  STOCK_LEVELS: {
+    LIST: '/stock-levels',
+    DETAIL: (id: string) => `/stock-levels/${id}`,
+    BY_WAREHOUSE: (warehouseId: string) => `/stock-levels?warehouseId=${warehouseId}`,
+    LOW_STOCK: '/stock-levels/low-stock',
+  },
   // Health
   HEALTH: '/health',
 } as const;

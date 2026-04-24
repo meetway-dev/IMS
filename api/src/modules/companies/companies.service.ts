@@ -70,10 +70,23 @@ export class CompaniesService {
       ];
     }
 
+    // Build orderBy based on sort parameters
+    let orderBy: Prisma.CompanyOrderByWithRelationInput = { name: 'asc' }; // Default
+    if (query.sortBy) {
+      // Validate sortBy field to prevent SQL injection
+      const validSortFields = ['name', 'code', 'createdAt', 'updatedAt'];
+      if (validSortFields.includes(query.sortBy)) {
+        // Create orderBy object dynamically
+        orderBy = {
+          [query.sortBy]: query.sortOrder || 'asc',
+        } as Prisma.CompanyOrderByWithRelationInput;
+      }
+    }
+
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.company.findMany({
         where,
-        orderBy: { name: 'asc' },
+        orderBy,
         skip,
         take: limit,
       }),

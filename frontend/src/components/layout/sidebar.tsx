@@ -22,6 +22,8 @@ import {
   Shield,
   Type,
   Ruler,
+  Warehouse,
+  PackageCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
@@ -71,7 +73,10 @@ const navigationGroups: NavGroup[] = [
       { name: 'Product Types', href: '/dashboard/product-types', icon: Type, description: 'Product classification', permissions: ['product-types.read'] },
       { name: 'Units of Measure', href: '/dashboard/unit-of-measures', icon: Ruler, description: 'Measurement units', permissions: ['unit-of-measures.read'] },
       { name: 'Inventory', href: '/dashboard/inventory', icon: PackageOpen, description: 'Stock levels', permissions: ['inventory.read'] },
+      { name: 'Warehouses', href: '/dashboard/warehouses', icon: Warehouse, description: 'Storage locations', permissions: ['warehouses.read'] },
       { name: 'Suppliers', href: '/dashboard/suppliers', icon: Truck, description: 'Vendor management', permissions: ['suppliers.read'] },
+      { name: 'Purchase Orders', href: '/dashboard/purchase-orders', icon: FileText, description: 'Procurement orders', permissions: ['purchase-orders.read'] },
+      { name: 'Goods Receipts', href: '/dashboard/goods-receipts', icon: PackageCheck, description: 'Incoming shipments', permissions: ['goods-receipts.read'] },
     ],
   },
   {

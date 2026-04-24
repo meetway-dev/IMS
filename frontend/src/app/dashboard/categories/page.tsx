@@ -47,6 +47,9 @@ export default function CategoriesPage() {
     pageSize,
     setPage,
     setPageSize,
+    sortBy,
+    sortOrder,
+    setSort,
     queryParams,
     resetPagination,
   } = useServerSearch();
@@ -67,6 +70,8 @@ export default function CategoriesPage() {
       page: queryParams.page,
       limit: queryParams.limit,
       search: queryParams.search || undefined,
+      sortBy: queryParams.sortBy || undefined,
+      sortOrder: queryParams.sortOrder || undefined,
     }),
   });
 
@@ -466,6 +471,10 @@ export default function CategoriesPage() {
               pageSize={pageSize}
               onPageChange={setPage}
               onPageSizeChange={setPageSize}
+              // Server-side sorting props
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSortChange={setSort}
               filters={filters}
             />
           </CardContent>

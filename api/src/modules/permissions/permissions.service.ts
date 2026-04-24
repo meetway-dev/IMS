@@ -71,8 +71,8 @@ export class PermissionsService {
     page: number;
     limit: number;
   }> {
-    const { page = 1, limit = 10 } = pagination;
-    const search = (pagination as any).search;
+    const { page = 1, limit = 10, sortBy, sortOrder } = pagination;
+    const search = (pagination as any).search as string | undefined;
     const skip = (page - 1) * limit;
 
     const where: Prisma.PermissionWhereInput = {
@@ -88,12 +88,32 @@ export class PermissionsService {
       ];
     }
 
+    // Define valid sortable fields for permissions
+    const validSortFields = [
+      'key',
+      'name',
+      'module',
+      'type',
+      'effect',
+      'createdAt',
+      'updatedAt',
+    ];
+    let orderBy: Prisma.PermissionOrderByWithRelationInput = {
+      createdAt: 'desc',
+    };
+
+    if (sortBy && validSortFields.includes(sortBy)) {
+      orderBy = {
+        [sortBy]: sortOrder || 'asc',
+      } as Prisma.PermissionOrderByWithRelationInput;
+    }
+
     const [permissions, total] = await Promise.all([
       this.prisma.permission.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         include: {
           _count: {
             select: { roles: true, userPermissions: true },

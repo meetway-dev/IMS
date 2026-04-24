@@ -80,6 +80,12 @@ interface DataTableProps<TData, TValue> {
   onPageChange?: (page: number) => void;
   /** Server-side pagination: callback when page size changes */
   onPageSizeChange?: (pageSize: number) => void;
+  /** Server-side sorting: callback when sorting changes */
+  onSortChange?: (sortBy: string | null, sortOrder: 'asc' | 'desc' | null) => void;
+  /** Current sort field for controlled server-side sorting */
+  sortBy?: string | null;
+  /** Current sort order for controlled server-side sorting */
+  sortOrder?: 'asc' | 'desc' | null;
   onRowClick?: (row: TData) => void;
   isLoading?: boolean;
   error?: Error | null;
@@ -128,6 +134,9 @@ export function DataTable<TData, TValue>({
   pageSize = 20,
   onPageChange,
   onPageSizeChange,
+  onSortChange,
+  sortBy: controlledSortBy,
+  sortOrder: controlledSortOrder,
   onRowClick,
   isLoading = false,
   error = null,
@@ -151,7 +160,10 @@ export function DataTable<TData, TValue>({
   },
 }: DataTableProps<TData, TValue>) {
   const isServerSideSearch = !!onSearchChange;
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const isServerSideSort = !!onSortChange;
+  
+  // Handle sorting state
+  const [internalSorting, setInternalSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
@@ -166,15 +178,43 @@ export function DataTable<TData, TValue>({
     ? (value: string) => onSearchChange!(value)
     : setInternalSearchValue;
 
+  // Use controlled sorting for server-side, internal for client-side
+  const sorting = isServerSideSort
+    ? (controlledSortBy && controlledSortOrder
+        ? [{ id: controlledSortBy, desc: controlledSortOrder === 'desc' }]
+        : [])
+    : internalSorting;
+
+  const handleSortingChange = React.useCallback(
+    (updaterOrValue: React.SetStateAction<SortingState>) => {
+      const newSorting =
+        typeof updaterOrValue === 'function'
+          ? updaterOrValue(sorting)
+          : updaterOrValue;
+
+      if (isServerSideSort && onSortChange) {
+        if (newSorting.length > 0) {
+          const sort = newSorting[0];
+          onSortChange(sort.id, sort.desc ? 'desc' : 'asc');
+        } else {
+          onSortChange(null, null);
+        }
+      } else {
+        setInternalSorting(newSorting);
+      }
+    },
+    [isServerSideSort, onSortChange, sorting],
+  );
+
   const table = useReactTable({
     data,
     columns,
-    onSortingChange: setSorting,
+    onSortingChange: handleSortingChange,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     // Skip client-side pagination when server-side search is active
     getPaginationRowModel: isServerSideSearch ? undefined : getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    getSortedRowModel: isServerSideSort ? undefined : getSortedRowModel(),
     // Skip client-side filtering when server-side search is active
     getFilteredRowModel: isServerSideSearch ? undefined : getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,

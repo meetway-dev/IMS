@@ -41,12 +41,38 @@ export default function InventoryPage() {
   const queryClient = useQueryClient();
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string>('');
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    sortBy,
+    sortOrder,
+    setSort,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+  } = useServerSearch();
 
-  // Fetch inventory with pagination
+  // Fetch inventory with pagination and sorting
   const { data: inventoryData, isLoading } = useQuery({
-    queryKey: ['inventory', { search: debouncedSearch }],
-    queryFn: () => inventoryService.getInventory({ page: 1, limit: 100, search: debouncedSearch || undefined }),
+    queryKey: [
+      'inventory',
+      {
+        search: debouncedSearch,
+        sortBy,
+        sortOrder,
+        page,
+        pageSize,
+      },
+    ],
+    queryFn: () => inventoryService.getInventory({
+      page,
+      limit: pageSize,
+      search: debouncedSearch || undefined,
+      sortBy: sortBy || undefined,
+      sortOrder: sortOrder || undefined,
+    }),
   });
 
   // Fetch low stock items
@@ -348,6 +374,13 @@ export default function InventoryPage() {
               pageSize: 10,
               pageSizeOptions: [10, 25, 50, 100],
             }}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortChange={setSort}
+            currentPage={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
           />
         </CardContent>
       </Card>

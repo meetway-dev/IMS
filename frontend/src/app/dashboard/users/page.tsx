@@ -48,7 +48,19 @@ const statusVariantMap: Record<string, 'success' | 'secondary' | 'destructive'> 
 };
 
 export default function UsersPage() {
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    sortBy,
+    sortOrder,
+    setSort,
+    queryParams,
+  } = useServerSearch();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editUser, setEditUser] = React.useState<UserType | null>(null);
   const { user, initializeAuth } = useAuthStore();
@@ -87,8 +99,14 @@ export default function UsersPage() {
   }, [canAssignRoles]);
 
   const { data: usersData, isLoading, refetch, error } = useQuery({
-    queryKey: ['users', { search: debouncedSearch }],
-    queryFn: () => userService.getUsers({ search: debouncedSearch || undefined }),
+    queryKey: ['users', queryParams],
+    queryFn: () => userService.getUsers({
+      page: queryParams.page,
+      limit: queryParams.limit,
+      search: queryParams.search || undefined,
+      sortBy: queryParams.sortBy || undefined,
+      sortOrder: queryParams.sortOrder || undefined,
+    }),
     enabled: !!user,
   });
 
@@ -332,6 +350,15 @@ export default function UsersPage() {
               isLoading={isLoading}
               error={error}
               onRetry={refetch}
+              // Server-side pagination props
+              currentPage={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              // Server-side sorting props
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSortChange={setSort}
               emptyState={{
                 icon: <User className="h-12 w-12 text-muted-foreground/50" />,
                 title: 'No users found',

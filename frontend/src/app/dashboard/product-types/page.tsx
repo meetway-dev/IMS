@@ -41,6 +41,9 @@ export default function ProductTypesPage() {
     pageSize,
     setPage,
     setPageSize,
+    sortBy,
+    sortOrder,
+    setSort,
     queryParams,
     resetPagination,
   } = useServerSearch();
@@ -164,7 +167,9 @@ export default function ProductTypesPage() {
       page: queryParams.page,
       limit: queryParams.limit,
       search: queryParams.search || undefined,
-    } ),
+      sortBy: queryParams.sortBy,
+      sortOrder: queryParams.sortOrder,
+    }),
   });
 
   // Create product type mutation
@@ -277,6 +282,10 @@ export default function ProductTypesPage() {
           pageSize={pageSize}
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
+          // Server-side sorting props
+          onSortChange={setSort}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
         />
 
         {/* <DataTable

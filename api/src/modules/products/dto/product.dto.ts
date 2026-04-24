@@ -120,6 +120,13 @@ export class UpdateProductDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MinLength(1)
+  @MaxLength(128)
+  sku?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   @MaxLength(128)
   barcode?: string;
 

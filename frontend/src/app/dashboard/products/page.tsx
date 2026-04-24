@@ -46,6 +46,9 @@ export default function ProductsPage() {
     pageSize,
     setPage,
     setPageSize,
+    sortBy,
+    sortOrder,
+    setSort,
     queryParams,
     resetPagination,
   } = useServerSearch();
@@ -206,6 +209,8 @@ export default function ProductsPage() {
       page: queryParams.page,
       limit: queryParams.limit,
       search: queryParams.search || undefined,
+      sortBy: queryParams.sortBy || undefined,
+      sortOrder: queryParams.sortOrder || undefined,
     }),
   });
 
@@ -339,6 +344,10 @@ export default function ProductsPage() {
           pageSize={pageSize}
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
+          // Server-side sorting props
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={setSort}
           emptyState={{
             icon: <Package className="h-12 w-12 text-muted-foreground/50" />,
             title: 'No products found',

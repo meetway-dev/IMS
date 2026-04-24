@@ -83,10 +83,29 @@ export class ProductTypesService {
       ];
     }
 
+    // Build orderBy based on sort parameters
+    let orderBy: Prisma.ProductTypeOrderByWithRelationInput = { name: 'asc' }; // Default
+    if (query.sortBy) {
+      // Validate sortBy field to prevent SQL injection
+      const validSortFields = [
+        'name',
+        'slug',
+        'isActive',
+        'createdAt',
+        'updatedAt',
+      ];
+      if (validSortFields.includes(query.sortBy)) {
+        // Create orderBy object dynamically
+        orderBy = {
+          [query.sortBy]: query.sortOrder || 'asc',
+        } as Prisma.ProductTypeOrderByWithRelationInput;
+      }
+    }
+
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.productType.findMany({
         where,
-        orderBy: { name: 'asc' },
+        orderBy,
         skip,
         take: limit,
         include: { _count: { select: { products: { where: { deletedAt: null } } } } },

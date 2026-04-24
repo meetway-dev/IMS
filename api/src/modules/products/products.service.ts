@@ -193,6 +193,7 @@ export class ProductsService {
         where: { id },
         data: {
           ...(dto.name != null ? { name: dto.name } : {}),
+          ...(dto.sku !== undefined ? { sku: dto.sku } : {}),
           ...(dto.barcode !== undefined ? { barcode: dto.barcode } : {}),
           ...(dto.typeId != null ? { typeId: dto.typeId } : {}),
           ...(dto.unitId != null ? { unitId: dto.unitId } : {}),

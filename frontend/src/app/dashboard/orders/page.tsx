@@ -28,7 +28,18 @@ const statusVariantMap: Record<string, 'success' | 'info' | 'warning' | 'destruc
 };
 
 export default function OrdersPage() {
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    sortBy,
+    sortOrder,
+    setSort,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+  } = useServerSearch();
 
   const {
     data: ordersResponse,
@@ -36,8 +47,23 @@ export default function OrdersPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['orders', { search: debouncedSearch }],
-    queryFn: () => orderService.getOrders({ search: debouncedSearch || undefined }),
+    queryKey: [
+      'orders',
+      {
+        search: debouncedSearch,
+        sortBy,
+        sortOrder,
+        page,
+        pageSize,
+      },
+    ],
+    queryFn: () => orderService.getOrders({
+      search: debouncedSearch || undefined,
+      sortBy: sortBy || undefined,
+      sortOrder: sortOrder || undefined,
+      page,
+      limit: pageSize,
+    }),
   });
 
   const orders = ordersResponse?.data || [];
@@ -147,6 +173,13 @@ export default function OrdersPage() {
               onSearchChange={setSearch}
               searchValue={search}
               totalCount={ordersResponse?.meta?.total}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSortChange={setSort}
+              currentPage={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
               emptyState={{
                 icon: <ShoppingCart className="h-12 w-12 text-muted-foreground/50" />,
                 title: 'No orders found',

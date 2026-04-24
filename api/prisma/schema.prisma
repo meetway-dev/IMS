@@ -7,32 +7,36 @@ datasource db {
 }
 
 model User {
-  id                      String                 @id @default(uuid()) @db.Uuid
-  email                   String                 @unique
-  passwordHash            String?
-  googleSubject           String?                @unique
-  name                    String?
-  status                  UserStatus             @default(ACTIVE)
-  isEmailVerified         Boolean                @default(false)
-  lastLoginAt             DateTime?
-  lastPasswordChangeAt    DateTime?
-  failedLoginAttempts     Int                    @default(0)
-  lockedUntil             DateTime?
-  createdAt               DateTime               @default(now())
-  updatedAt               DateTime               @updatedAt
-  deletedAt               DateTime?
-  archivedAt              DateTime?
-  auditLogs               AuditLog[]             @relation("AuditActorUser")
-  inventoryTransactions   InventoryTransaction[]
-  orders                  Order[]
-  passwordResets          PasswordResetToken[]
-  refreshTokens           RefreshToken[]
-  createdRoles            Role[]                 @relation("RoleCreator")
-  assignedRolePermissions RolePermission[]       @relation("RolePermissionAssigner")
-  assignedUserPermissions UserPermission[]       @relation("UserPermissionAssigner")
-  directPermissions       UserPermission[]
-  assignedUserRoles       UserRole[]             @relation("UserRoleAssigner")
-  roles                   UserRole[]
+  id                       String                 @id @default(uuid()) @db.Uuid
+  email                    String                 @unique
+  passwordHash             String?
+  googleSubject            String?                @unique
+  name                     String?
+  status                   UserStatus             @default(ACTIVE)
+  isEmailVerified          Boolean                @default(false)
+  lastLoginAt              DateTime?
+  lastPasswordChangeAt     DateTime?
+  failedLoginAttempts      Int                    @default(0)
+  lockedUntil              DateTime?
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  deletedAt                DateTime?
+  archivedAt               DateTime?
+  auditLogs                AuditLog[]             @relation("AuditActorUser")
+  inventoryTransactions    InventoryTransaction[]
+  orders                   Order[]
+  passwordResets           PasswordResetToken[]
+  refreshTokens            RefreshToken[]
+  createdRoles             Role[]                 @relation("RoleCreator")
+  assignedRolePermissions  RolePermission[]       @relation("RolePermissionAssigner")
+  assignedUserPermissions  UserPermission[]       @relation("UserPermissionAssigner")
+  directPermissions        UserPermission[]
+  assignedUserRoles        UserRole[]             @relation("UserRoleAssigner")
+  roles                    UserRole[]
+  managedWarehouses        Warehouse[]            @relation("WarehouseManager")
+  createdPurchaseOrders    PurchaseOrder[]        @relation("PurchaseOrderCreator")
+  approvedPurchaseOrders   PurchaseOrder[]        @relation("PurchaseOrderApprover")
+  createdGoodsReceiptNotes GoodsReceiptNote[]
 
   @@index([status])
   @@index([deletedAt])
@@ -207,41 +211,42 @@ model Category {
 }
 
 model Supplier {
-  id            String    @id @default(uuid()) @db.Uuid
-  name          String
-  email         String?   @unique
-  phone         String?
-  address       String?
-  contactPerson String?
-  notes         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String
+  email          String?         @unique
+  phone          String?
+  address        String?
+  contactPerson  String?
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  purchaseOrders PurchaseOrder[]
 
   @@index([deletedAt])
 }
 
 model Product {
-  id            String        @id @default(uuid()) @db.Uuid
+  id            String           @id @default(uuid()) @db.Uuid
   name          String
-  sku           String        @unique
-  barcode       String?       @unique
-  typeId        String        @db.Uuid
-  unitId        String        @db.Uuid
-  purchasePrice Decimal       @db.Decimal(12, 2)
-  salePrice     Decimal       @db.Decimal(12, 2)
-  minStockAlert Int           @default(0)
-  categoryId    String?       @db.Uuid
-  companyId     String?       @db.Uuid
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  sku           String           @unique
+  barcode       String?          @unique
+  typeId        String           @db.Uuid
+  unitId        String           @db.Uuid
+  purchasePrice Decimal          @db.Decimal(12, 2)
+  salePrice     Decimal          @db.Decimal(12, 2)
+  minStockAlert Int              @default(0)
+  categoryId    String?          @db.Uuid
+  companyId     String?          @db.Uuid
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
   deletedAt     DateTime?
   inventory     InventoryItem?
   orderItems    OrderItem[]
-  type          ProductType   @relation(fields: [typeId], references: [id], onDelete: Restrict)
-  unit          UnitOfMeasure @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  category      Category?     @relation(fields: [categoryId], references: [id])
-  company       Company?      @relation(fields: [companyId], references: [id])
+  type          ProductType      @relation(fields: [typeId], references: [id], onDelete: Restrict)
+  unit          UnitOfMeasure    @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  category      Category?        @relation(fields: [categoryId], references: [id])
+  company       Company?         @relation(fields: [companyId], references: [id])
   variants      ProductVariant[]
 
   @@index([categoryId])
@@ -252,36 +257,40 @@ model Product {
 }
 
 model ProductVariant {
-  id         String         @id @default(uuid()) @db.Uuid
-  productId  String         @db.Uuid
-  size       String?
-  color      String?
-  material   String?
-  sku        String?        @unique
-  barcode    String?        @unique
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  deletedAt  DateTime?
-  inventory  InventoryItem?
-  orderItems OrderItem[]
-  product    Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id                 String              @id @default(uuid()) @db.Uuid
+  productId          String              @db.Uuid
+  size               String?
+  color              String?
+  material           String?
+  sku                String?             @unique
+  barcode            String?             @unique
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  deletedAt          DateTime?
+  inventory          InventoryItem?
+  orderItems         OrderItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+  product            Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@index([deletedAt])
 }
 
 model InventoryItem {
-  id               String                 @id @default(uuid()) @db.Uuid
-  productId        String?                @unique @db.Uuid
-  variantId        String?                @unique @db.Uuid
-  stockQuantity    Int                    @default(0)
-  reservedQuantity Int                    @default(0)
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
-  deletedAt        DateTime?
-  product          Product?               @relation(fields: [productId], references: [id], onDelete: Cascade)
-  variant          ProductVariant?        @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  transactions     InventoryTransaction[]
+  id                String                 @id @default(uuid()) @db.Uuid
+  productId         String?                @unique @db.Uuid
+  variantId         String?                @unique @db.Uuid
+  stockQuantity     Int                    @default(0)
+  reservedQuantity  Int                    @default(0)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  deletedAt         DateTime?
+  product           Product?               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant           ProductVariant?        @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  transactions      InventoryTransaction[]
+  stockLevels       StockLevel[]
+  purchaseOrders    PurchaseOrder[]
+  goodsReceiptNotes GoodsReceiptNote[]
 
   @@index([deletedAt])
 }
@@ -471,15 +480,16 @@ enum OrderStatus {
 }
 
 model ProductType {
-  id          String    @id @default(uuid()) @db.Uuid
-  name        String    @unique
-  slug        String    @unique
-  description String?
-  isActive    Boolean   @default(true)
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String          @unique
+  slug           String          @unique
+  description    String?
+  isActive       Boolean         @default(true)
+  products       Product[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  purchaseOrders PurchaseOrder[]
 
   @@index([deletedAt])
   @@index([isActive])
@@ -501,4 +511,231 @@ model UnitOfMeasure {
   @@index([deletedAt])
   @@index([isActive])
   @@index([slug])
+}
+
+enum WarehouseType {
+  MAIN
+  DISTRIBUTION
+  RETAIL
+  COLD_STORAGE
+  BONDED
+}
+
+model Warehouse {
+  id                String             @id @default(uuid()) @db.Uuid
+  name              String             @unique
+  code              String?            @unique
+  type              WarehouseType      @default(MAIN)
+  address           String?
+  city              String?
+  state             String?
+  country           String?
+  postalCode        String?
+  phone             String?
+  email             String?
+  managerId         String?            @db.Uuid
+  isActive          Boolean            @default(true)
+  capacity          Int?
+  notes             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+  manager           User?              @relation("WarehouseManager", fields: [managerId], references: [id])
+  locations         Location[]
+  stockLevels       StockLevel[]
+  purchaseOrders    PurchaseOrder[]
+  goodsReceiptNotes GoodsReceiptNote[]
+
+  @@index([deletedAt])
+  @@index([isActive])
+  @@index([type])
+  @@index([managerId])
+}
+
+enum LocationType {
+  SHELF
+  BIN
+  PALLET
+  RACK
+  FLOOR
+  COLD_ROOM
+}
+
+model Location {
+  id          String       @id @default(uuid()) @db.Uuid
+  warehouseId String       @db.Uuid
+  name        String
+  code        String       @unique
+  type        LocationType @default(SHELF)
+  aisle       String?
+  row         String?
+  section     String?
+  level       String?
+  position    String?
+  capacity    Int?
+  isActive    Boolean      @default(true)
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  warehouse   Warehouse    @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  stockLevels StockLevel[]
+
+  @@unique([warehouseId, code])
+  @@index([deletedAt])
+  @@index([warehouseId])
+  @@index([isActive])
+  @@index([type])
+}
+
+model StockLevel {
+  id              String        @id @default(uuid()) @db.Uuid
+  inventoryItemId String        @db.Uuid
+  warehouseId     String        @db.Uuid
+  locationId      String?       @db.Uuid
+  quantity        Int           @default(0)
+  reserved        Int           @default(0)
+  minQuantity     Int           @default(0)
+  maxQuantity     Int?
+  reorderPoint    Int?
+  lastCountedAt   DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  warehouse       Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  location        Location?     @relation(fields: [locationId], references: [id])
+
+  @@unique([inventoryItemId, warehouseId, locationId])
+  @@index([deletedAt])
+  @@index([inventoryItemId])
+  @@index([warehouseId])
+  @@index([locationId])
+  @@index([quantity])
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  PARTIALLY_RECEIVED
+  COMPLETED
+  CANCELLED
+}
+
+enum PurchaseOrderItemStatus {
+  PENDING
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+model PurchaseOrder {
+  id                   String              @id @default(uuid()) @db.Uuid
+  poNumber             String              @unique
+  supplierId           String              @db.Uuid
+  warehouseId          String              @db.Uuid
+  status               PurchaseOrderStatus @default(DRAFT)
+  expectedDeliveryDate DateTime?
+  totalAmount          Decimal             @db.Decimal(12, 2)
+  notes                String?
+  createdByUserId      String?             @db.Uuid
+  approvedByUserId     String?             @db.Uuid
+  approvedAt           DateTime?
+  completedAt          DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  deletedAt            DateTime?
+  createdByUser        User?               @relation("PurchaseOrderCreator", fields: [createdByUserId], references: [id])
+  approvedByUser       User?               @relation("PurchaseOrderApprover", fields: [approvedByUserId], references: [id])
+  supplier             Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  warehouse            Warehouse           @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  items                PurchaseOrderItem[]
+  receipts             GoodsReceiptNote[]
+  inventoryItem        InventoryItem?      @relation(fields: [inventoryItemId], references: [id])
+  inventoryItemId      String?             @db.Uuid
+  productType          ProductType?        @relation(fields: [productTypeId], references: [id])
+  productTypeId        String?             @db.Uuid
+
+  @@index([deletedAt])
+  @@index([status])
+  @@index([supplierId])
+  @@index([warehouseId])
+  @@index([createdAt])
+  @@index([poNumber])
+}
+
+model PurchaseOrderItem {
+  id                String                  @id @default(uuid()) @db.Uuid
+  purchaseOrderId   String                  @db.Uuid
+  variantId         String                  @db.Uuid
+  quantity          Int
+  unitPrice         Decimal                 @db.Decimal(12, 2)
+  lineTotal         Decimal                 @db.Decimal(12, 2)
+  status            PurchaseOrderItemStatus @default(PENDING)
+  receivedQuantity  Int                     @default(0)
+  notes             String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  deletedAt         DateTime?
+  purchaseOrder     PurchaseOrder           @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  variant           ProductVariant          @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  goodsReceiptItems GoodsReceiptItem[]
+
+  @@index([deletedAt])
+  @@index([purchaseOrderId])
+  @@index([variantId])
+  @@index([status])
+}
+
+enum GoodsReceiptStatus {
+  DRAFT
+  COMPLETED
+  CANCELLED
+}
+
+model GoodsReceiptNote {
+  id              String             @id @default(uuid()) @db.Uuid
+  grnNumber       String             @unique
+  purchaseOrderId String             @db.Uuid
+  warehouseId     String             @db.Uuid
+  status          GoodsReceiptStatus @default(DRAFT)
+  receiptDate     DateTime           @default(now())
+  notes           String?
+  createdByUserId String?            @db.Uuid
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  deletedAt       DateTime?
+  createdByUser   User?              @relation(fields: [createdByUserId], references: [id])
+  purchaseOrder   PurchaseOrder      @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict)
+  warehouse       Warehouse          @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  items           GoodsReceiptItem[]
+  inventoryItem   InventoryItem?     @relation(fields: [inventoryItemId], references: [id])
+  inventoryItemId String?            @db.Uuid
+
+  @@index([deletedAt])
+  @@index([purchaseOrderId])
+  @@index([warehouseId])
+  @@index([grnNumber])
+  @@index([receiptDate])
+}
+
+model GoodsReceiptItem {
+  id                  String            @id @default(uuid()) @db.Uuid
+  goodsReceiptNoteId  String            @db.Uuid
+  purchaseOrderItemId String            @db.Uuid
+  quantity            Int
+  unitPrice           Decimal           @db.Decimal(12, 2)
+  lineTotal           Decimal           @db.Decimal(12, 2)
+  batchNumber         String?
+  expiryDate          DateTime?
+  notes               String?
+  createdAt           DateTime          @default(now())
+  goodsReceiptNote    GoodsReceiptNote  @relation(fields: [goodsReceiptNoteId], references: [id], onDelete: Cascade)
+  purchaseOrderItem   PurchaseOrderItem @relation(fields: [purchaseOrderItemId], references: [id], onDelete: Restrict)
+
+  @@index([goodsReceiptNoteId])
+  @@index([purchaseOrderItemId])
+  @@index([batchNumber])
 }
