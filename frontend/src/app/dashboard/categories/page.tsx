@@ -39,7 +39,17 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function CategoriesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    queryParams,
+    resetPagination,
+  } = useServerSearch();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -52,8 +62,12 @@ export default function CategoriesPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['categories', { search: debouncedSearch }],
-    queryFn: () => categoryService.getCategories({ page: 1, limit: 100, search: debouncedSearch || undefined }),
+    queryKey: ['categories', queryParams],
+    queryFn: () => categoryService.getCategories({
+      page: queryParams.page,
+      limit: queryParams.limit,
+      search: queryParams.search || undefined,
+    }),
   });
 
   // Create category mutation
@@ -447,10 +461,11 @@ export default function CategoriesPage() {
                 onClick: action.action,
               }))}
               isLoading={isLoading}
-              pagination={{
-                pageSize: 10,
-                pageSizeOptions: [10, 25, 50, 100],
-              }}
+              // Server-side pagination props
+              currentPage={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
               filters={filters}
             />
           </CardContent>

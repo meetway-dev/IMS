@@ -38,7 +38,17 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function ProductsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    queryParams,
+    resetPagination,
+  } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -191,8 +201,12 @@ export default function ProductsPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['products', { search: debouncedSearch }],
-    queryFn: () => productService.getProducts({ page: 1, limit: 100, search: debouncedSearch || undefined }),
+    queryKey: ['products', queryParams],
+    queryFn: () => productService.getProducts({
+      page: queryParams.page,
+      limit: queryParams.limit,
+      search: queryParams.search || undefined,
+    }),
   });
 
   // Fetch categories for the form
@@ -320,6 +334,11 @@ export default function ProductsPage() {
           searchValue={search}
           totalCount={productsData?.meta.total}
           isLoading={isLoading}
+          // Server-side pagination props
+          currentPage={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
           emptyState={{
             icon: <Package className="h-12 w-12 text-muted-foreground/50" />,
             title: 'No products found',

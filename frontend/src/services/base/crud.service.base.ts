@@ -5,6 +5,7 @@ import type {
   PaginationParams,
 } from '@/types';
 import { ErrorHandler } from '@/lib/error-handler';
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/lib/constants';
 
 export interface CrudServiceOptions {
   endpoint: string;
@@ -20,11 +21,11 @@ export abstract class CrudServiceBase<T, TCreateDto, TUpdateDto> {
   constructor(options: CrudServiceOptions | string) {
     if (typeof options === 'string') {
       this.endpoint = options;
-      this.defaultLimit = 20;
+      this.defaultLimit = DEFAULT_PAGE_SIZE;
       this.maxLimit = 100;
     } else {
       this.endpoint = options.endpoint;
-      this.defaultLimit = options.defaultLimit || 20;
+      this.defaultLimit = options.defaultLimit || DEFAULT_PAGE_SIZE;
       this.maxLimit = options.maxLimit || 100;
     }
   }

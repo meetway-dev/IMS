@@ -34,7 +34,17 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function SuppliersPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    queryParams,
+    resetPagination,
+  } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
@@ -45,8 +55,12 @@ export default function SuppliersPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['suppliers', { search: debouncedSearch }],
-    queryFn: () => supplierService.getSuppliers({ page: 1, limit: 100, search: debouncedSearch || undefined }),
+    queryKey: ['suppliers', queryParams],
+    queryFn: () => supplierService.getSuppliers({
+      page: queryParams.page,
+      limit: queryParams.limit,
+      search: queryParams.search || undefined,
+    }),
   });
 
   // Create supplier mutation
@@ -55,12 +69,32 @@ export default function SuppliersPage() {
     onSuccess: () => {
       toast({ title: 'Success', description: 'Supplier created successfully.' });
       setIsDialogOpen(false);
+      setEditingSupplier(null);
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create supplier.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update supplier mutation
+  const updateSupplierMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      supplierService.updateSupplier(id, data),
+    onSuccess: () => {
+      toast({ title: 'Success', description: 'Supplier updated successfully.' });
+      setIsDialogOpen(false);
+      setEditingSupplier(null);
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update supplier.',
         variant: 'destructive',
       });
     },
@@ -82,7 +116,7 @@ export default function SuppliersPage() {
     },
   });
 
-  const isMutating = createSupplierMutation.isPending;
+  const isMutating = createSupplierMutation.isPending || updateSupplierMutation.isPending;
 
   const handleEditSupplier = (supplier: Supplier) => {
     setEditingSupplier(supplier);
@@ -95,7 +129,7 @@ export default function SuppliersPage() {
     }
   };
 
-  const handleCreateSupplier = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitSupplier = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -106,7 +140,12 @@ export default function SuppliersPage() {
       contactPerson: formData.get('contactPerson') as string | undefined,
       notes: formData.get('notes') as string | undefined,
     };
-    await createSupplierMutation.mutateAsync(data);
+
+    if (editingSupplier) {
+      await updateSupplierMutation.mutateAsync({ id: editingSupplier.id, data });
+    } else {
+      await createSupplierMutation.mutateAsync(data);
+    }
   };
 
   const columns: ColumnDef<Supplier>[] = [
@@ -235,6 +274,11 @@ export default function SuppliersPage() {
           searchValue={search}
           totalCount={suppliersData?.meta.total}
           isLoading={isLoading}
+          // Server-side pagination props
+          currentPage={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
           emptyState={{
             icon: <Truck className="h-12 w-12 text-muted-foreground/50" />,
             title: 'No suppliers found',
@@ -273,7 +317,7 @@ export default function SuppliersPage() {
           </div>
         }
       >
-        <form id="supplier-form" onSubmit={handleCreateSupplier} className="space-y-4">
+        <form id="supplier-form" onSubmit={handleSubmitSupplier} className="space-y-4">
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Supplier Name *</Label>

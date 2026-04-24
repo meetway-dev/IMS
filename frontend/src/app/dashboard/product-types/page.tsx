@@ -33,7 +33,17 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function ProductTypesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    queryParams,
+    resetPagination,
+  } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProductType, setEditingProductType] = useState<ProductType | null>(null);
 
@@ -149,8 +159,12 @@ export default function ProductTypesPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['product-types', { search: debouncedSearch }],
-    queryFn: () => productTypeService.getProductTypes({ page: 1, limit: 100, search: debouncedSearch || undefined }),
+    queryKey: ['product-types', queryParams],
+    queryFn: () => productTypeService.getProductTypes({
+      page: queryParams.page,
+      limit: queryParams.limit,
+      search: queryParams.search || undefined,
+    } ),
   });
 
   // Create product type mutation
@@ -258,11 +272,33 @@ export default function ProductTypesPage() {
           onSearchChange={setSearch}
           searchValue={search}
           totalCount={productTypesData?.meta.total}
-          pagination={{
-            pageSize: 10,
-            pageSizeOptions: [10, 25, 50, 100],
-          }}
+          // Server-side pagination props
+          currentPage={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
         />
+
+        {/* <DataTable
+          columns={columns}
+          data={productsData?.data || []}
+          searchKey="name"
+          searchPlaceholder="Search products..."
+          onSearchChange={setSearch}
+          searchValue={search}
+          totalCount={productsData?.meta.total}
+          isLoading={isLoading}
+          // Server-side pagination props
+          currentPage={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          emptyState={{
+            icon: <Package className="h-12 w-12 text-muted-foreground/50" />,
+            title: 'No products found',
+            description: 'Get started by adding your first product.',
+          }}
+        /> */}
       </motion.div>
 
       <FormModal

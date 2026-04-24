@@ -33,7 +33,17 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function CompaniesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { search, debouncedSearch, setSearch } = useServerSearch();
+  const {
+    search,
+    debouncedSearch,
+    setSearch,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
+    queryParams,
+    resetPagination,
+  } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
 
@@ -44,8 +54,12 @@ export default function CompaniesPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['companies', { search: debouncedSearch }],
-    queryFn: () => companyService.getCompanies({ page: 1, limit: 100, search: debouncedSearch || undefined }),
+    queryKey: ['companies', queryParams],
+    queryFn: () => companyService.getCompanies({
+      page: queryParams.page,
+      limit: queryParams.limit,
+      search: queryParams.search || undefined,
+    }),
   });
 
   // Create company mutation
@@ -54,12 +68,32 @@ export default function CompaniesPage() {
     onSuccess: () => {
       toast({ title: 'Success', description: 'Company created successfully.' });
       setIsDialogOpen(false);
+      setEditingCompany(null);
       queryClient.invalidateQueries({ queryKey: ['companies'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create company.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update company mutation
+  const updateCompanyMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      companyService.updateCompany(id, data),
+    onSuccess: () => {
+      toast({ title: 'Success', description: 'Company updated successfully.' });
+      setIsDialogOpen(false);
+      setEditingCompany(null);
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update company.',
         variant: 'destructive',
       });
     },
@@ -81,9 +115,9 @@ export default function CompaniesPage() {
     },
   });
 
-  const isMutating = createCompanyMutation.isPending;
+  const isMutating = createCompanyMutation.isPending || updateCompanyMutation.isPending;
 
-  const handleCreateCompany = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitCompany = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -92,7 +126,12 @@ export default function CompaniesPage() {
       phone: formData.get('phone') as string,
       address: formData.get('address') as string,
     };
-    await createCompanyMutation.mutateAsync(data);
+
+    if (editingCompany) {
+      await updateCompanyMutation.mutateAsync({ id: editingCompany.id, data });
+    } else {
+      await createCompanyMutation.mutateAsync(data);
+    }
   };
 
   const handleEditCompany = (company: Company) => {
@@ -225,6 +264,11 @@ export default function CompaniesPage() {
           searchValue={search}
           totalCount={companiesData?.meta.total}
           isLoading={isLoading}
+          // Server-side pagination props
+          currentPage={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
           emptyState={{
             icon: <Building className="h-12 w-12 text-muted-foreground/50" />,
             title: 'No companies found',
@@ -263,7 +307,7 @@ export default function CompaniesPage() {
           </div>
         }
       >
-        <form id="company-form" onSubmit={handleCreateCompany} className="space-y-4">
+        <form id="company-form" onSubmit={handleSubmitCompany} className="space-y-4">
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Company Name *</Label>

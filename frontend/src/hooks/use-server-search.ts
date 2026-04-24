@@ -1,40 +1,91 @@
 import { useState, useCallback } from 'react';
 import { useDebounce } from './use-debounce';
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/lib/constants';
 
 interface UseServerSearchOptions {
   /** Debounce delay in ms (default: 400) */
   debounceMs?: number;
+  /** Initial page size (default: 20) */
+  initialPageSize?: number;
+  /** Initial page number (default: 1) */
+  initialPage?: number;
 }
 
 /**
- * Reusable hook for server-side search with debounce.
+ * Reusable hook for server-side search and pagination with debounce.
  *
  * Returns the raw search value (for the controlled input), the debounced
- * value (to feed into React Query key), and a setter.
+ * value (to feed into React Query key), pagination state, and setters.
  *
  * @example
  * ```tsx
- * const { search, debouncedSearch, setSearch } = useServerSearch();
+ * const { search, debouncedSearch, setSearch, page, pageSize, setPage, setPageSize } = useServerSearch();
  *
  * const { data } = useQuery({
- *   queryKey: ['products', { search: debouncedSearch }],
- *   queryFn: () => productService.getProducts({ search: debouncedSearch }),
+ *   queryKey: ['products', { search: debouncedSearch, page, pageSize }],
+ *   queryFn: () => productService.getProducts({ search: debouncedSearch, page, limit: pageSize }),
  * });
  *
  * <DataTable
  *   onSearchChange={setSearch}
  *   searchValue={search}
  *   totalCount={data?.meta.total}
+ *   currentPage={page}
+ *   pageSize={pageSize}
+ *   onPageChange={setPage}
+ *   onPageSizeChange={setPageSize}
  * />
  * ```
  */
 export function useServerSearch(options?: UseServerSearchOptions) {
   const debounceMs = options?.debounceMs ?? 400;
+  const initialPageSize = options?.initialPageSize ?? DEFAULT_PAGE_SIZE;
+  const initialPage = options?.initialPage ?? 1;
 
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(initialPage);
+  const [pageSize, setPageSize] = useState(initialPageSize);
+  
   const debouncedSearch = useDebounce(search, debounceMs);
 
-  const clearSearch = useCallback(() => setSearch(''), []);
+  const clearSearch = useCallback(() => {
+    setSearch('');
+    setPage(1); // Reset to first page when clearing search
+  }, []);
 
-  return { search, debouncedSearch, setSearch, clearSearch } as const;
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(Math.max(1, newPage));
+  }, []);
+
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1); // Reset to first page when changing page size
+  }, []);
+
+  const resetPagination = useCallback(() => {
+    setPage(1);
+    setPageSize(initialPageSize);
+  }, [initialPageSize]);
+
+  return {
+    // Search state
+    search,
+    debouncedSearch,
+    setSearch,
+    clearSearch,
+    
+    // Pagination state
+    page,
+    pageSize,
+    setPage: handlePageChange,
+    setPageSize: handlePageSizeChange,
+    resetPagination,
+    
+    // Combined query params for API calls
+    queryParams: {
+      search: debouncedSearch || undefined,
+      page,
+      limit: pageSize,
+    },
+  } as const;
 }

@@ -72,6 +72,14 @@ interface DataTableProps<TData, TValue> {
   searchValue?: string;
   /** Total count of records for server-side pagination display */
   totalCount?: number;
+  /** Server-side pagination: current page (1-indexed) */
+  currentPage?: number;
+  /** Server-side pagination: page size (items per page) */
+  pageSize?: number;
+  /** Server-side pagination: callback when page changes */
+  onPageChange?: (page: number) => void;
+  /** Server-side pagination: callback when page size changes */
+  onPageSizeChange?: (pageSize: number) => void;
   onRowClick?: (row: TData) => void;
   isLoading?: boolean;
   error?: Error | null;
@@ -116,6 +124,10 @@ export function DataTable<TData, TValue>({
   onSearchChange,
   searchValue: controlledSearchValue,
   totalCount,
+  currentPage = 1,
+  pageSize = 20,
+  onPageChange,
+  onPageSizeChange,
   onRowClick,
   isLoading = false,
   error = null,
@@ -771,6 +783,7 @@ export function DataTable<TData, TValue>({
           }
         </div>
 
+        {/* Client-side pagination */}
         {!isServerSideSearch && (
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
@@ -813,6 +826,56 @@ export function DataTable<TData, TValue>({
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Server-side pagination */}
+        {isServerSideSearch && (onPageChange || onPageSizeChange) && (
+          <div className="flex items-center gap-3">
+            {onPageSizeChange && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm text-muted-foreground">Rows</span>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => onPageSizeChange(Number(value))}
+                >
+                  <SelectTrigger className="w-16 h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(pagination.pageSizeOptions || [10, 20, 30, 50]).map((size) => (
+                      <SelectItem key={size} value={size.toString()}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {onPageChange && totalCount && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => onPageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground px-2">
+                  {currentPage} / {Math.max(1, Math.ceil(totalCount / pageSize))}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => onPageChange(currentPage + 1)}
+                  disabled={currentPage >= Math.ceil(totalCount / pageSize)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
