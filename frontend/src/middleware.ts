@@ -8,8 +8,9 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Check for access token in both cookies and localStorage (via header)
+  const authHeader = request.headers.get('authorization');
   const accessToken = request.cookies.get('access_token')?.value ||
-                      request.headers.get('authorization')?.replace('Bearer ', '');
+                      (authHeader ? authHeader.replace('Bearer ', '') : '');
 
   // Check if user is trying to access protected route without token
   const isProtectedRoute = protectedRoutes.some(route => {

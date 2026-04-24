@@ -29,9 +29,10 @@ import { Permission } from '@/types';
 import { useAuthStore } from '@/store/auth-store';
 import { PermissionFormModal } from './PermissionFormModal';
 import { PermissionDetailsModal } from './PermissionDetailsModal';
+import { useServerSearch } from '@/hooks/use-server-search';
 
 export default function PermissionsPage() {
-  const [search, setSearch] = React.useState('');
+  const { search, debouncedSearch, setSearch } = useServerSearch();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editPermission, setEditPermission] = React.useState<Permission | null>(null);
   const { user, initializeAuth } = useAuthStore();
@@ -46,8 +47,8 @@ export default function PermissionsPage() {
   const [detailsPermission, setDetailsPermission] = React.useState<Permission | null>(null);
 
   const { data: permissionsData, isLoading, refetch, error } = useQuery({
-    queryKey: ['permissions', { search }],
-    queryFn: () => permissionService.getAllPermissions({ search }),
+    queryKey: ['permissions', { search: debouncedSearch }],
+    queryFn: () => permissionService.getAllPermissions({ search: debouncedSearch || undefined }),
     enabled: !!user,
   });
 
@@ -319,6 +320,9 @@ export default function PermissionsPage() {
             data={permissions}
             searchKey="key"
             searchPlaceholder="Search permissions by key, name, or module..."
+            onSearchChange={setSearch}
+            searchValue={search}
+            totalCount={permissionsData?.meta?.total}
             isLoading={isLoading}
             error={error}
             onRetry={refetch}

@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useServerSearch } from '@/hooks/use-server-search';
 import { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import {
@@ -32,6 +33,7 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function UnitOfMeasuresPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { search, debouncedSearch, setSearch } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<UnitOfMeasure | null>(null);
 
@@ -157,8 +159,8 @@ export default function UnitOfMeasuresPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['unit-of-measures'],
-    queryFn: () => unitOfMeasureService.getUnitOfMeasures({ page: 1, limit: 100 }),
+    queryKey: ['unit-of-measures', { search: debouncedSearch }],
+    queryFn: () => unitOfMeasureService.getUnitOfMeasures({ page: 1, limit: 100, search: debouncedSearch || undefined }),
   });
 
   // Create unit mutation
@@ -263,6 +265,9 @@ export default function UnitOfMeasuresPage() {
           isLoading={isLoading}
           searchPlaceholder="Search units of measure..."
           searchKey="name"
+          onSearchChange={setSearch}
+          searchValue={search}
+          totalCount={unitsData?.meta.total}
           pagination={{
             pageSize: 10,
             pageSizeOptions: [10, 25, 50, 100],

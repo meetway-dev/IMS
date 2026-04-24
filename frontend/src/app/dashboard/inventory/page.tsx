@@ -4,11 +4,11 @@ import * as React from 'react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { 
-  Package, 
-  TrendingUp, 
-  Filter, 
-  Download, 
+import {
+  Package,
+  TrendingUp,
+  Filter,
+  Download,
   Plus,
   Edit,
   Eye,
@@ -34,17 +34,19 @@ import { ResponsiveModal } from '@/components/ui/responsive-modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useServerSearch } from '@/hooks/use-server-search';
 
 export default function InventoryPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string>('');
+  const { search, debouncedSearch, setSearch } = useServerSearch();
 
   // Fetch inventory with pagination
   const { data: inventoryData, isLoading } = useQuery({
-    queryKey: ['inventory'],
-    queryFn: () => inventoryService.getInventory({ page: 1, limit: 100 }),
+    queryKey: ['inventory', { search: debouncedSearch }],
+    queryFn: () => inventoryService.getInventory({ page: 1, limit: 100, search: debouncedSearch || undefined }),
   });
 
   // Fetch low stock items
@@ -304,6 +306,9 @@ export default function InventoryPage() {
             data={inventoryItems}
             searchPlaceholder="Search products, SKU, or category..."
             searchKey="product.name"
+            onSearchChange={setSearch}
+            searchValue={search}
+            totalCount={inventoryData?.meta?.total}
             enableSelection={true}
             enableBulkActions={true}
             bulkActions={[

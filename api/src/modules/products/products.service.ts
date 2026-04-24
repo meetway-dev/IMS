@@ -127,9 +127,18 @@ export class ProductsService {
     }
   }
 
-  async findPage(page: number, limit: number) {
+  async findPage(page: number, limit: number, search?: string) {
     const skip = (page - 1) * limit;
     const where: Prisma.ProductWhereInput = { deletedAt: null };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } },
+        { barcode: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
     const [total, rows] = await Promise.all([
       this.prisma.product.count({ where }),
       this.prisma.product.findMany({

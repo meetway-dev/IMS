@@ -76,10 +76,10 @@ export class ProductTypesService {
       where.isActive = query.isActive;
     }
 
-    if (query.q) {
+    if (query.search) {
       where.OR = [
-        { name: { contains: query.q, mode: 'insensitive' } },
-        { slug: { contains: query.q, mode: 'insensitive' } },
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { slug: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 

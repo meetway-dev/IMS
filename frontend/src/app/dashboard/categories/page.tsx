@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useServerSearch } from '@/hooks/use-server-search';
 import { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import {
@@ -38,6 +39,7 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function CategoriesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { search, debouncedSearch, setSearch } = useServerSearch();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -50,8 +52,8 @@ export default function CategoriesPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => categoryService.getCategories({ page: 1, limit: 100 }),
+    queryKey: ['categories', { search: debouncedSearch }],
+    queryFn: () => categoryService.getCategories({ page: 1, limit: 100, search: debouncedSearch || undefined }),
   });
 
   // Create category mutation
@@ -435,6 +437,9 @@ export default function CategoriesPage() {
               data={categoriesData?.data || []}
               searchPlaceholder="Search categories by name..."
               searchKey="name"
+              onSearchChange={setSearch}
+              searchValue={search}
+              totalCount={categoriesData?.meta.total}
               enableSelection={true}
               enableBulkActions={selectedRows.length > 0}
               bulkActions={bulkActions?.map(action => ({

@@ -83,8 +83,4 @@ export class UnitOfMeasureListQueryDto extends PaginationQueryDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  q?: string;
 }

@@ -14,7 +14,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isLoading: authLoading, initializeAuth } = useAuthStore();
+  const { isAuthenticated, isLoading: authLoading, isInitialized, initializeAuth } = useAuthStore();
   const [isCheckingAuth, setIsCheckingAuth] = React.useState(true);
   const [hasRedirected, setHasRedirected] = React.useState(false);
 
@@ -25,16 +25,28 @@ export default function DashboardLayout({
 
   // Check authentication status
   React.useEffect(() => {
-    if (!isAuthenticated && !authLoading && !hasRedirected) {
+    // Wait for auth initialization to complete
+    if (!isInitialized || authLoading) {
+      console.log('DashboardLayout: Waiting for auth initialization', { isInitialized, authLoading });
+      return;
+    }
+    
+    console.log('DashboardLayout: Auth initialized', { isAuthenticated, hasRedirected, pathname });
+    
+    if (!isAuthenticated && !hasRedirected) {
+      console.log('DashboardLayout: Not authenticated, redirecting to login with redirect param', pathname);
       setHasRedirected(true);
-      router.push('/login');
-    } else if (isAuthenticated && !authLoading) {
+      // Preserve current path for redirect back after login
+      const redirectUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+      router.push(redirectUrl);
+    } else if (isAuthenticated) {
+      console.log('DashboardLayout: Authenticated, setting isCheckingAuth false');
       setIsCheckingAuth(false);
     }
-  }, [isAuthenticated, authLoading, router, hasRedirected]);
+  }, [isAuthenticated, authLoading, isInitialized, router, hasRedirected, pathname]);
 
-  // Loading state while checking auth
-  if (isCheckingAuth || authLoading) {
+  // Loading state while checking auth or initializing
+  if (isCheckingAuth || authLoading || !isInitialized) {
     return <LoadingState text="Loading dashboard..." className="h-screen" />;
   }
 

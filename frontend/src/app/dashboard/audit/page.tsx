@@ -9,32 +9,24 @@ import { Input } from '@/components/ui/input';
 import { DataTable } from '@/components/tables/data-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { auditService, AuditLog } from '@/services/audit.service';
+import { useServerSearch } from '@/hooks/use-server-search';
 
 export default function AuditPage() {
-  const [search, setSearch] = React.useState('');
+  const { search, debouncedSearch, setSearch } = useServerSearch();
   const [entityFilter, setEntityFilter] = React.useState('all');
   const [actionFilter, setActionFilter] = React.useState('all');
 
-  // Use real API call
+  // Use real API call with debounced search
   const { data: auditData, isLoading } = useQuery({
-    queryKey: ['audit-logs', { search, entityFilter, actionFilter }],
+    queryKey: ['audit-logs', { search: debouncedSearch, entityFilter, actionFilter }],
     queryFn: () => auditService.getAuditLogs({
-      search,
+      search: debouncedSearch || undefined,
       entityType: entityFilter !== 'all' ? entityFilter : undefined,
       action: actionFilter !== 'all' ? actionFilter : undefined,
     }),
   });
 
   const auditLogs = auditData?.data || [];
-  const filteredLogs = auditLogs.filter((log: AuditLog) => {
-    const matchesSearch = 
-      log.entityType.toLowerCase().includes(search.toLowerCase()) ||
-      log.actor?.name.toLowerCase().includes(search.toLowerCase()) ||
-      JSON.stringify(log.details).toLowerCase().includes(search.toLowerCase());
-    const matchesEntity = entityFilter === 'all' || log.entityType === entityFilter;
-    const matchesAction = actionFilter === 'all' || log.action === actionFilter;
-    return matchesSearch && matchesEntity && matchesAction;
-  });
 
   const columns = [
     {
@@ -110,18 +102,7 @@ export default function AuditPage() {
           <CardTitle>Activity Log</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 grid gap-4 md:grid-cols-4">
-            <div className="md:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input 
-                  placeholder="Search logs..." 
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-            </div>
+          <div className="mb-6 grid gap-4 md:grid-cols-2">
             <div>
               <Select value={entityFilter} onValueChange={setEntityFilter}>
                 <SelectTrigger>
@@ -154,13 +135,16 @@ export default function AuditPage() {
             </div>
           </div>
 
-          {isLoading ? (
-            <div className="flex h-64 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
-          ) : (
-            <DataTable columns={columns} data={filteredLogs} isLoading={isLoading} />
-          )}
+          <DataTable
+            columns={columns}
+            data={auditLogs}
+            isLoading={isLoading}
+            searchPlaceholder="Search logs..."
+            searchKey="entityType"
+            onSearchChange={setSearch}
+            searchValue={search}
+            totalCount={auditData?.meta?.total}
+          />
         </CardContent>
       </Card>
     </div>

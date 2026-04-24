@@ -31,9 +31,4 @@ export class UpdateCompanyDto {
   code?: string | null;
 }
 
-export class CompanyListQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({ description: 'Search name or code' })
-  @IsOptional()
-  @IsString()
-  q?: string;
-}
+export class CompanyListQueryDto extends PaginationQueryDto {}

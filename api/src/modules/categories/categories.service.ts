@@ -83,10 +83,10 @@ export class CategoriesService {
       where.parentId = query.parentId;
     }
 
-    if (query.q) {
+    if (query.search) {
       where.OR = [
-        { name: { contains: query.q, mode: 'insensitive' } },
-        { slug: { contains: query.q, mode: 'insensitive' } },
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { slug: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 

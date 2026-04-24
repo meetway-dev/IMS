@@ -138,10 +138,10 @@ export class OrdersService {
 
     const where: Prisma.OrderWhereInput = { deletedAt: null };
     if (query.status) where.status = query.status;
-    if (query.q) {
+    if (query.search) {
       where.OR = [
-        { orderNumber: { contains: query.q, mode: 'insensitive' } },
-        { notes: { contains: query.q, mode: 'insensitive' } },
+        { orderNumber: { contains: query.search, mode: 'insensitive' } },
+        { notes: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 

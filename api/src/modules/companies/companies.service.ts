@@ -63,10 +63,10 @@ export class CompaniesService {
     const skip = (page - 1) * limit;
 
     const where: Prisma.CompanyWhereInput = { deletedAt: null };
-    if (query.q) {
+    if (query.search) {
       where.OR = [
-        { name: { contains: query.q, mode: 'insensitive' } },
-        { code: { contains: query.q, mode: 'insensitive' } },
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { code: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 

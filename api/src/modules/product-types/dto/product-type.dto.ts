@@ -68,8 +68,4 @@ export class ProductTypeListQueryDto extends PaginationQueryDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  q?: string;
 }

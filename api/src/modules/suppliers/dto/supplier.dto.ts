@@ -82,11 +82,4 @@ export class UpdateSupplierDto {
   notes?: string;
 }
 
-export class SupplierListQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({
-    description: 'Search by name, email, phone, or contact person',
-  })
-  @IsString()
-  @IsOptional()
-  q?: string;
-}
+export class SupplierListQueryDto extends PaginationQueryDto {}

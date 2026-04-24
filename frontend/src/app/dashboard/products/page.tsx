@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useServerSearch } from '@/hooks/use-server-search';
 import { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import {
@@ -37,6 +38,7 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function ProductsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { search, debouncedSearch, setSearch } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -189,8 +191,8 @@ export default function ProductsPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['products'],
-    queryFn: () => productService.getProducts({ page: 1, limit: 100 }),
+    queryKey: ['products', { search: debouncedSearch }],
+    queryFn: () => productService.getProducts({ page: 1, limit: 100, search: debouncedSearch || undefined }),
   });
 
   // Fetch categories for the form
@@ -314,6 +316,9 @@ export default function ProductsPage() {
           data={productsData?.data || []}
           searchKey="name"
           searchPlaceholder="Search products..."
+          onSearchChange={setSearch}
+          searchValue={search}
+          totalCount={productsData?.meta.total}
           isLoading={isLoading}
           emptyState={{
             icon: <Package className="h-12 w-12 text-muted-foreground/50" />,

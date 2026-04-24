@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useServerSearch } from '@/hooks/use-server-search';
 import { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import {
@@ -32,6 +33,7 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function ProductTypesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { search, debouncedSearch, setSearch } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProductType, setEditingProductType] = useState<ProductType | null>(null);
 
@@ -147,8 +149,8 @@ export default function ProductTypesPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['product-types'],
-    queryFn: () => productTypeService.getProductTypes({ page: 1, limit: 100 }),
+    queryKey: ['product-types', { search: debouncedSearch }],
+    queryFn: () => productTypeService.getProductTypes({ page: 1, limit: 100, search: debouncedSearch || undefined }),
   });
 
   // Create product type mutation
@@ -253,6 +255,9 @@ export default function ProductTypesPage() {
           isLoading={isLoading}
           searchPlaceholder="Search product types..."
           searchKey="name"
+          onSearchChange={setSearch}
+          searchValue={search}
+          totalCount={productTypesData?.meta.total}
           pagination={{
             pageSize: 10,
             pageSizeOptions: [10, 25, 50, 100],

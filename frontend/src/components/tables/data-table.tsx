@@ -64,6 +64,14 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string;
   searchPlaceholder?: string;
+  /** Server-side search callback. When provided, search is handled server-side
+   *  (debouncing is the caller's responsibility). When omitted, falls back to
+   *  client-side column filtering. */
+  onSearchChange?: (value: string) => void;
+  /** Current search value for controlled server-side search input */
+  searchValue?: string;
+  /** Total count of records for server-side pagination display */
+  totalCount?: number;
   onRowClick?: (row: TData) => void;
   isLoading?: boolean;
   error?: Error | null;
@@ -105,6 +113,9 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   searchPlaceholder = 'Search...',
+  onSearchChange,
+  searchValue: controlledSearchValue,
+  totalCount,
   onRowClick,
   isLoading = false,
   error = null,
@@ -127,12 +138,21 @@ export function DataTable<TData, TValue>({
     pageSizeOptions: [10, 20, 30, 40, 50],
   },
 }: DataTableProps<TData, TValue>) {
+  const isServerSideSearch = !!onSearchChange;
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const [searchValue, setSearchValue] = React.useState('');
+  const [internalSearchValue, setInternalSearchValue] = React.useState('');
   const [isFiltersOpen, setIsFiltersOpen] = React.useState(false);
+
+  // Use controlled search value for server-side, internal for client-side
+  const searchValue = isServerSideSearch
+    ? (controlledSearchValue ?? '')
+    : internalSearchValue;
+  const setSearchValue = isServerSideSearch
+    ? (value: string) => onSearchChange!(value)
+    : setInternalSearchValue;
 
   const table = useReactTable({
     data,
@@ -140,9 +160,11 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    // Skip client-side pagination when server-side search is active
+    getPaginationRowModel: isServerSideSearch ? undefined : getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    // Skip client-side filtering when server-side search is active
+    getFilteredRowModel: isServerSideSearch ? undefined : getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: enableSelection ? setRowSelection : undefined,
     state: {
@@ -151,22 +173,27 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection: enableSelection ? rowSelection : {},
     },
-    initialState: {
-      pagination: {
-        pageSize: pagination.pageSize || 10,
-      },
-    },
+    ...(isServerSideSearch
+      ? {}
+      : {
+          initialState: {
+            pagination: {
+              pageSize: pagination.pageSize || 10,
+            },
+          },
+        }),
   });
 
-  // Debounced search
+  // Client-side debounced search (only when NOT using server-side search)
   React.useEffect(() => {
+    if (isServerSideSearch) return;
     const timer = setTimeout(() => {
       if (searchKey) {
-        table.getColumn(searchKey)?.setFilterValue(searchValue);
+        table.getColumn(searchKey)?.setFilterValue(internalSearchValue);
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchValue, searchKey, table]);
+  }, [internalSearchValue, searchKey, table, isServerSideSearch]);
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const hasSelection = selectedRows.length > 0;
@@ -175,7 +202,9 @@ export function DataTable<TData, TValue>({
   const clearFilters = () => {
     setSearchValue('');
     setColumnFilters([]);
-    table.resetColumnFilters();
+    if (!isServerSideSearch) {
+      table.resetColumnFilters();
+    }
   };
 
   const getDensityClasses = () => {
@@ -736,51 +765,56 @@ export function DataTable<TData, TValue>({
       {/* Pagination */}
       <div className="flex items-center justify-between gap-4">
         <div className="text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} result{table.getFilteredRowModel().rows.length !== 1 ? 's' : ''}
+          {isServerSideSearch
+            ? `${totalCount ?? data.length} result${(totalCount ?? data.length) !== 1 ? 's' : ''}`
+            : `${table.getFilteredRowModel().rows.length} result${table.getFilteredRowModel().rows.length !== 1 ? 's' : ''}`
+          }
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm text-muted-foreground">Rows</span>
-            <Select
-              value={table.getState().pagination.pageSize.toString()}
-              onValueChange={(value) => table.setPageSize(Number(value))}
-            >
-              <SelectTrigger className="w-16 h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(pagination.pageSizeOptions || [10, 20, 30, 40, 50]).map((size) => (
-                  <SelectItem key={size} value={size.toString()}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {!isServerSideSearch && (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm text-muted-foreground">Rows</span>
+              <Select
+                value={table.getState().pagination.pageSize.toString()}
+                onValueChange={(value) => table.setPageSize(Number(value))}
+              >
+                <SelectTrigger className="w-16 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(pagination.pageSizeOptions || [10, 20, 30, 40, 50]).map((size) => (
+                    <SelectItem key={size} value={size.toString()}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm text-muted-foreground px-2">
-              {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
-            </span>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground px-2">
+                {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+              </span>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

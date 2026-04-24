@@ -128,6 +128,7 @@ export class InventoryController {
     @Query('limit') limit?: string,
     @Query('productId') productId?: string,
     @Query('variantId') variantId?: string,
+    @Query('search') search?: string,
   ) {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 20;
@@ -136,6 +137,7 @@ export class InventoryController {
       limitNum,
       productId,
       variantId,
+      search,
     );
   }
 

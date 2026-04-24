@@ -158,6 +158,7 @@ export class InventoryService {
     limit = 20,
     productId?: string,
     variantId?: string,
+    search?: string,
   ) {
     const skip = (page - 1) * limit;
 
@@ -167,6 +168,14 @@ export class InventoryService {
 
     if (productId) where.productId = productId;
     if (variantId) where.variantId = variantId;
+
+    if (search) {
+      where.OR = [
+        { product: { name: { contains: search, mode: 'insensitive' } } },
+        { product: { sku: { contains: search, mode: 'insensitive' } } },
+        { variant: { sku: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.inventoryItem.findMany({

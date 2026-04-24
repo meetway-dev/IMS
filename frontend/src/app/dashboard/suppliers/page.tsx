@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useServerSearch } from '@/hooks/use-server-search';
 import { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import {
@@ -33,6 +34,7 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function SuppliersPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { search, debouncedSearch, setSearch } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
@@ -43,8 +45,8 @@ export default function SuppliersPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['suppliers'],
-    queryFn: () => supplierService.getSuppliers({ page: 1, limit: 100 }),
+    queryKey: ['suppliers', { search: debouncedSearch }],
+    queryFn: () => supplierService.getSuppliers({ page: 1, limit: 100, search: debouncedSearch || undefined }),
   });
 
   // Create supplier mutation
@@ -229,6 +231,9 @@ export default function SuppliersPage() {
           data={suppliersData?.data || []}
           searchKey="name"
           searchPlaceholder="Search suppliers..."
+          onSearchChange={setSearch}
+          searchValue={search}
+          totalCount={suppliersData?.meta.total}
           isLoading={isLoading}
           emptyState={{
             icon: <Truck className="h-12 w-12 text-muted-foreground/50" />,

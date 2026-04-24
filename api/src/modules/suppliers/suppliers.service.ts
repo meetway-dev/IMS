@@ -68,12 +68,12 @@ export class SuppliersService {
 
     const where: Prisma.SupplierWhereInput = { deletedAt: null };
 
-    if (query.q) {
+    if (query.search) {
       where.OR = [
-        { name: { contains: query.q, mode: 'insensitive' } },
-        { email: { contains: query.q, mode: 'insensitive' } },
-        { phone: { contains: query.q, mode: 'insensitive' } },
-        { contactPerson: { contains: query.q, mode: 'insensitive' } },
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { email: { contains: query.search, mode: 'insensitive' } },
+        { phone: { contains: query.search, mode: 'insensitive' } },
+        { contactPerson: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 

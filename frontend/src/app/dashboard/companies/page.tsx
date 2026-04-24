@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useServerSearch } from '@/hooks/use-server-search';
 import { ColumnDef } from '@tanstack/react-table';
 import { motion } from 'framer-motion';
 import {
@@ -32,6 +33,7 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 export default function CompaniesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { search, debouncedSearch, setSearch } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
 
@@ -42,8 +44,8 @@ export default function CompaniesPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['companies'],
-    queryFn: () => companyService.getCompanies({ page: 1, limit: 100 }),
+    queryKey: ['companies', { search: debouncedSearch }],
+    queryFn: () => companyService.getCompanies({ page: 1, limit: 100, search: debouncedSearch || undefined }),
   });
 
   // Create company mutation
@@ -219,6 +221,9 @@ export default function CompaniesPage() {
           data={companiesData?.data || []}
           searchKey="name"
           searchPlaceholder="Search companies..."
+          onSearchChange={setSearch}
+          searchValue={search}
+          totalCount={companiesData?.meta.total}
           isLoading={isLoading}
           emptyState={{
             icon: <Building className="h-12 w-12 text-muted-foreground/50" />,

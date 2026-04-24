@@ -17,6 +17,7 @@ import { orderService } from '@/services/order.service';
 import { Order } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { useServerSearch } from '@/hooks/use-server-search';
 
 const statusVariantMap: Record<string, 'success' | 'info' | 'warning' | 'destructive' | 'secondary'> = {
   completed: 'success',
@@ -27,14 +28,16 @@ const statusVariantMap: Record<string, 'success' | 'info' | 'warning' | 'destruc
 };
 
 export default function OrdersPage() {
+  const { search, debouncedSearch, setSearch } = useServerSearch();
+
   const {
     data: ordersResponse,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => orderService.getOrders(),
+    queryKey: ['orders', { search: debouncedSearch }],
+    queryFn: () => orderService.getOrders({ search: debouncedSearch || undefined }),
   });
 
   const orders = ordersResponse?.data || [];
@@ -131,7 +134,7 @@ export default function OrdersPage() {
           <CardHeader className="pb-3">
             <CardTitle>All Orders</CardTitle>
             <CardDescription>
-              {orders.length} total orders
+              {ordersResponse?.meta?.total ?? orders.length} total orders
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -141,6 +144,9 @@ export default function OrdersPage() {
               isLoading={isLoading}
               searchKey="customerName"
               searchPlaceholder="Search orders..."
+              onSearchChange={setSearch}
+              searchValue={search}
+              totalCount={ordersResponse?.meta?.total}
               emptyState={{
                 icon: <ShoppingCart className="h-12 w-12 text-muted-foreground/50" />,
                 title: 'No orders found',

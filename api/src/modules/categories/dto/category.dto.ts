@@ -76,8 +76,4 @@ export class CategoryListQueryDto extends PaginationQueryDto {
   @IsBoolean()
   rootOnly?: boolean;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  q?: string;
 }

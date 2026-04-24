@@ -32,6 +32,7 @@ import { RoleFormModal } from './RoleFormModal';
 import { RoleDetailsModal } from './RoleDetailsModal';
 import { AssignPermissionsModal } from './AssignPermissionsModal';
 import { permissionService } from '@/services/role-permission.service';
+import { useServerSearch } from '@/hooks/use-server-search';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -47,7 +48,7 @@ const staggerItem = {
 };
 
 export default function RolesPage() {
-  const [search, setSearch] = React.useState('');
+  const { search, debouncedSearch, setSearch } = useServerSearch();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editRole, setEditRole] = React.useState<Role | null>(null);
   const { user, initializeAuth } = useAuthStore();
@@ -70,8 +71,8 @@ export default function RolesPage() {
   }, [isSuperAdmin]);
 
   const { data: rolesData, isLoading, refetch, error } = useQuery({
-    queryKey: ['roles', { search }],
-    queryFn: () => roleService.getAllRoles({ search }),
+    queryKey: ['roles', { search: debouncedSearch }],
+    queryFn: () => roleService.getAllRoles({ search: debouncedSearch || undefined }),
     enabled: !!user,
   });
 
@@ -349,6 +350,9 @@ export default function RolesPage() {
               data={roles}
               searchKey="name"
               searchPlaceholder="Search roles by name..."
+              onSearchChange={setSearch}
+              searchValue={search}
+              totalCount={rolesData?.meta?.total}
               isLoading={isLoading}
               error={error}
               onRetry={refetch}

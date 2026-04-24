@@ -67,7 +67,7 @@ export class ProductsController {
   findAll(@Query() q: PaginationQueryDto) {
     const page = q.page ?? 1;
     const limit = q.limit ?? 20;
-    return this.products.findPage(page, limit);
+    return this.products.findPage(page, limit, q.search);
   }
 
   @Get(':id')

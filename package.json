@@ -17,6 +17,10 @@
     "db:reset": "cd api && npx prisma migrate reset --force",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "docker:build": "docker compose build"
+    "docker:build": "docker compose build",
+    "app": "npx concurrently \"npm run dev:shared\" \"npm run dev:api\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

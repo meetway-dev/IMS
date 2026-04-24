@@ -76,10 +76,6 @@ export class OrderListQueryDto extends PaginationQueryDto {
   @IsEnum(OrderStatus)
   status?: OrderStatus;
 
-  @ApiPropertyOptional({ description: 'Search order number or notes' })
-  @IsOptional()
-  @IsString()
-  q?: string;
 }
 
 export class UpdateOrderDto {

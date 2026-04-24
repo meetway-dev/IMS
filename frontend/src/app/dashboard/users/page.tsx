@@ -19,6 +19,7 @@ import { UserFormModal } from './UserFormModal';
 import { UserDetailsModal } from './UserDetailsModal';
 import { SimpleAssignRolesModal } from './SimpleAssignRolesModal';
 import { roleService, permissionService } from '@/services/role-permission.service';
+import { useServerSearch } from '@/hooks/use-server-search';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -47,7 +48,7 @@ const statusVariantMap: Record<string, 'success' | 'secondary' | 'destructive'> 
 };
 
 export default function UsersPage() {
-  const [search, setSearch] = React.useState('');
+  const { search, debouncedSearch, setSearch } = useServerSearch();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editUser, setEditUser] = React.useState<UserType | null>(null);
   const { user, initializeAuth } = useAuthStore();
@@ -86,8 +87,8 @@ export default function UsersPage() {
   }, [canAssignRoles]);
 
   const { data: usersData, isLoading, refetch, error } = useQuery({
-    queryKey: ['users', { search }],
-    queryFn: () => userService.getUsers({ search }),
+    queryKey: ['users', { search: debouncedSearch }],
+    queryFn: () => userService.getUsers({ search: debouncedSearch || undefined }),
     enabled: !!user,
   });
 
@@ -325,6 +326,9 @@ export default function UsersPage() {
               data={usersData?.data || []}
               searchKey="name"
               searchPlaceholder="Search users by name or email..."
+              onSearchChange={setSearch}
+              searchValue={search}
+              totalCount={usersData?.meta?.total}
               isLoading={isLoading}
               error={error}
               onRetry={refetch}

@@ -9,6 +9,7 @@ interface AuthState {
   tokens: TokenResponse | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   setAuth: (tokens: TokenResponse) => void;
   setUser: (user: User) => void;
   setTokens: (tokens: TokenResponse) => void;
@@ -24,6 +25,7 @@ export const useAuthStore = create<AuthState>()(
       tokens: null,
       isAuthenticated: false,
       isLoading: false,
+      isInitialized: false,
       setAuth: (tokens) =>
         set({
           tokens,
@@ -38,6 +40,7 @@ export const useAuthStore = create<AuthState>()(
           tokens: null,
           isAuthenticated: false,
           isLoading: false,
+          isInitialized: true,
         }),
       setLoading: (isLoading) => set({ isLoading }),
       initializeAuth: () => {
@@ -68,8 +71,15 @@ export const useAuthStore = create<AuthState>()(
               user,
               isAuthenticated: true,
               isLoading: false,
+              isInitialized: true,
             });
+          } else {
+            // No tokens found, mark as initialized anyway
+            set({ isInitialized: true });
           }
+        } else {
+          // Not in browser, mark as initialized
+          set({ isInitialized: true });
         }
       },
     }),
