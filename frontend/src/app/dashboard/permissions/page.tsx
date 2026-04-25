@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/tables/data-table';
-import { ActionMenu } from '@/components/ui/action-menu';
+import { ActionMenu, menuItem, menuSeparator, menuLabel } from '@/components/ui/action-menu';
+import { PageHeader } from '@/components/ui/page-header';
+import { ErrorState } from '@/components/ui/states';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StatsCard } from '@/components/ui/stats-card';
 import {
   Search,
   Plus,
@@ -21,7 +25,18 @@ import {
   Eye,
   AlertTriangle,
   CheckCircle,
-  XCircle
+  XCircle,
+  RefreshCw,
+  Filter,
+  Database,
+  Globe,
+  Smartphone,
+  Lock,
+  Unlock,
+  Crown,
+  FileText,
+  Loader2,
+  Download,
 } from 'lucide-react';
 
 import { permissionService } from '@/services/role-permission.service';
@@ -48,6 +63,7 @@ export default function PermissionsPage() {
   const [editPermission, setEditPermission] = React.useState<Permission | null>(null);
   const { user, initializeAuth } = useAuthStore();
   const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');
+  const [activeTab, setActiveTab] = React.useState('all');
 
   React.useEffect(() => {
     initializeAuth();
@@ -80,6 +96,17 @@ export default function PermissionsPage() {
 
   const permissions = permissionsData?.data || [];
 
+  // Filter permissions based on active tab
+  const filteredPermissions = React.useMemo(() => {
+    if (activeTab === 'all') return permissions;
+    if (activeTab === 'system') return permissions.filter(p => p.isSystem);
+    if (activeTab === 'custom') return permissions.filter(p => !p.isSystem);
+    if (activeTab === 'api') return permissions.filter(p => p.type === 'API');
+    if (activeTab === 'ui') return permissions.filter(p => p.type === 'UI');
+    if (activeTab === 'data') return permissions.filter(p => p.type === 'DATA');
+    return permissions;
+  }, [permissions, activeTab]);
+
   const handleAdd = () => {
     setEditPermission(null);
     setModalOpen(true);
@@ -91,9 +118,13 @@ export default function PermissionsPage() {
   };
 
   const handleDelete = async (permission: Permission) => {
-    if (window.confirm('Are you sure you want to delete this permission? This action cannot be undone.')) {
-      await permissionService.deletePermission(permission.id);
-      refetch();
+    if (window.confirm(`Are you sure you want to delete the permission "${permission.name}"? This action cannot be undone and may affect roles that use this permission.`)) {
+      try {
+        await permissionService.deletePermission(permission.id);
+        refetch();
+      } catch (error) {
+        console.error('Failed to delete permission:', error);
+      }
     }
   };
 
@@ -109,7 +140,7 @@ export default function PermissionsPage() {
   };
 
   const handleBulkDelete = async (selectedPermissions: Permission[]) => {
-    if (window.confirm(`Are you sure you want to delete ${selectedPermissions.length} permission(s)? This action cannot be undone.`)) {
+    if (window.confirm(`Are you sure you want to delete ${selectedPermissions.length} permission(s)? This action cannot be undone and may affect roles that use these permissions.`)) {
       try {
         await Promise.all(selectedPermissions.map(permission => permissionService.deletePermission(permission.id)));
         refetch();
@@ -120,16 +151,18 @@ export default function PermissionsPage() {
   };
 
   const handleExport = (data: Permission[]) => {
-    // Simple CSV export
     const csv = [
-      ['Key', 'Name', 'Description', 'Type', 'Effect', 'Resource', 'Created'],
+      ['Key', 'Name', 'Description', 'Type', 'Effect', 'Module', 'Resource', 'Action', 'System', 'Created'],
       ...data.map(permission => [
         permission.key,
         permission.name,
         permission.description || '',
         permission.type,
         permission.effect,
+        permission.module,
         permission.resource || '',
+        permission.action || '',
+        permission.isSystem ? 'Yes' : 'No',
         new Date(permission.createdAt).toLocaleDateString()
       ])
     ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
@@ -152,53 +185,33 @@ export default function PermissionsPage() {
     },
   ];
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'API':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
-      case 'UI':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
-      case 'DATA':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
-    }
-  };
-
   const columns = [
     {
       accessorKey: 'key',
-      header: 'Permission Key',
+      header: 'Key',
       cell: ({ row }: any) => (
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-500/20 to-red-500/10">
-            <Key className="h-5 w-5 text-orange-600" />
-          </div>
-          <div>
-            <div className="font-medium font-mono text-sm">
-              {row.original.key}
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {row.original.name}
-            </div>
-          </div>
-        </div>
+        <div className="font-mono text-sm">{row.original.key}</div>
       ),
     },
     {
-      accessorKey: 'module',
-      header: 'Module',
+      accessorKey: 'name',
+      header: 'Name',
       cell: ({ row }: any) => (
-        <Badge variant="outline" className="font-mono">
-          {row.original.module}
-        </Badge>
+        <div className="font-medium">{row.original.name}</div>
+      ),
+    },
+    {
+      accessorKey: 'description',
+      header: 'Description',
+      cell: ({ row }: any) => (
+        <div className="text-muted-foreground">{row.original.description || '-'}</div>
       ),
     },
     {
       accessorKey: 'type',
       header: 'Type',
       cell: ({ row }: any) => (
-        <Badge className={getTypeColor(row.original.type)}>
+        <Badge variant="outline" className="text-xs">
           {row.original.type}
         </Badge>
       ),
@@ -209,231 +222,191 @@ export default function PermissionsPage() {
       cell: ({ row }: any) => (
         <div className="flex items-center gap-2">
           {getEffectIcon(row.original.effect)}
-          <span className={`font-medium ${
-            row.original.effect === 'ALLOW' ? 'text-green-600' :
-            row.original.effect === 'DENY' ? 'text-red-600' : 'text-yellow-600'
-          }`}>
-            {row.original.effect}
-          </span>
+          <span>{row.original.effect}</span>
         </div>
       ),
     },
     {
+      accessorKey: 'module',
+      header: 'Module',
+      cell: ({ row }: any) => row.original.module,
+    },
+    {
       accessorKey: 'resource',
       header: 'Resource',
-      cell: ({ row }: any) => (
-        <span className="font-mono text-sm">
-          {row.original.resource || '-'}
-        </span>
-      ),
+      cell: ({ row }: any) => row.original.resource || '-',
     },
     {
       accessorKey: 'action',
       header: 'Action',
-      cell: ({ row }: any) => (
-        <span className="font-mono text-sm">
-          {row.original.action || '-'}
-        </span>
-      ),
+      cell: ({ row }: any) => row.original.action || '-',
     },
     {
       accessorKey: 'isSystem',
       header: 'System',
       cell: ({ row }: any) => (
-        row.original.isSystem ? (
-          <Badge variant="secondary">System</Badge>
-        ) : (
-          <Badge variant="outline">Custom</Badge>
-        )
+        <Badge variant={row.original.isSystem ? 'destructive' : 'outline'} className="text-xs">
+          {row.original.isSystem ? 'Yes' : 'No'}
+        </Badge>
       ),
     },
     {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: ({ row }: any) => new Date(row.original.createdAt).toLocaleDateString(),
+    },
+    {
       id: 'actions',
-      cell: ({ row }: any) => {
-// Import helper functions (they're exported from action-menu)
-        const { menuItem, menuSeparator, menuLabel } = require('@/components/ui/action-menu');
-        
-        const items = [
-          menuLabel({ label: 'Actions' }),
-          menuItem({
-            label: 'Copy permission ID',
-            icon: Copy,
-            iconPosition: 'start' as const,
-            onClick: () => navigator.clipboard.writeText(row.original.id)
-          }),
-        ];
-        
-        if (isSuperAdmin) {
-          items.push(
-            menuItem({
-              label: 'Edit permission',
+      header: '',
+      cell: ({ row }: any) => (
+        <ActionMenu
+          items={[
+            {
+              label: 'Edit',
               icon: Edit,
-              iconPosition: 'start' as const,
-              onClick: () => handleEdit(row.original)
-            }),
-            menuItem({
-              label: 'Delete permission',
+              onClick: () => handleEdit(row.original),
+              disabled: row.original.isSystem,
+            },
+            {
+              label: 'Delete',
               icon: Trash2,
-              iconPosition: 'start' as const,
               onClick: () => handleDelete(row.original),
-              disabled: row.original.isSystem
-            })
-          );
-        }
-        
-        items.push(
-          menuItem({
-            label: 'View details',
-            icon: Eye,
-            iconPosition: 'start' as const,
-            onClick: () => setDetailsPermission(row.original)
-          })
-        );
-
-        return (
-          <ActionMenu
-            trigger={{ icon: MoreVertical, variant: 'ghost', size: 'icon' }}
-            items={items}
-            align="end"
-          />
-        );
-      },
+              variant: 'destructive' as const,
+              disabled: row.original.isSystem,
+            },
+          ]}
+        />
+      ),
     },
   ];
 
-  // Group permissions by module for statistics
-  const moduleStats = React.useMemo(() => {
-    const stats: Record<string, number> = {};
-    permissions.forEach((permission: Permission) => {
-      stats[permission.module] = (stats[permission.module] || 0) + 1;
-    });
-    return Object.entries(stats).sort(([,a], [,b]) => b - a);
+  const stats = React.useMemo(() => {
+    const total = permissions?.length || 0;
+    const system = permissions?.filter(p => p.isSystem).length || 0;
+    const custom = total - system;
+    const allow = permissions?.filter(p => p.effect === 'ALLOW').length || 0;
+    const deny = permissions?.filter(p => p.effect === 'DENY').length || 0;
+
+    return [
+      {
+        title: 'Total Permissions',
+        value: total,
+        description: `${system} system, ${custom} custom`,
+        icon: Shield,
+        color: 'blue',
+      },
+      {
+        title: 'Allow Effect',
+        value: allow,
+        description: `${Math.round((allow / total) * 100) || 0}% of total`,
+        icon: CheckCircle,
+        color: 'green',
+      },
+      {
+        title: 'Deny Effect',
+        value: deny,
+        description: `${Math.round((deny / total) * 100) || 0}% of total`,
+        icon: XCircle,
+        color: 'red',
+      },
+      {
+        title: 'System Permissions',
+        value: system,
+        description: 'Built-in, cannot be modified',
+        icon: Lock,
+        color: 'orange',
+      },
+      {
+        title: 'Custom Permissions',
+        value: custom,
+        description: 'User-defined permissions',
+        icon: FileText,
+        color: 'purple',
+      },
+    ];
   }, [permissions]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Permission Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Permissions</h1>
           <p className="text-muted-foreground">
             Define and manage granular permissions for system access control
           </p>
         </div>
-        {isSuperAdmin && (
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => handleExport(filteredPermissions)}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
           <Button className="gap-2" onClick={handleAdd}>
             <Plus className="h-4 w-4" />
-            Create Permission
+            Add Permission
           </Button>
-        )}
+        </div>
       </div>
 
-      <PermissionFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSuccess={refetch}
-        permission={editPermission}
-      />
-      <PermissionDetailsModal
-        open={!!detailsPermission}
-        onClose={() => setDetailsPermission(null)}
-        permission={detailsPermission}
-      />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        {stats.map((stat, index) => (
+          <StatsCard
+            key={index}
+            title={stat.title}
+            value={stat.value}
+            description={stat.description}
+            icon={stat.icon}
+            color={stat.color}
+          />
+        ))}
+      </div>
 
       <Card>
-        <CardContent className="p-6">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Permission List</h2>
+              <p className="text-sm text-muted-foreground">
+                {filteredPermissions.length} permission(s) found
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Search permissions..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-[250px]"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
           <DataTable
             columns={columns}
-            data={permissions}
-            searchKey="key"
-            searchPlaceholder="Search permissions by key, name, or module..."
-            onSearchChange={setSearch}
-            searchValue={search}
-            totalCount={permissionsData?.meta?.total}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSortChange={setSort}
-            currentPage={page}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-            isLoading={isLoading}
-            error={error}
-            onRetry={refetch}
-            emptyState={{
-              icon: <Key className="h-12 w-12 text-muted-foreground/50" />,
-              title: 'No permissions found',
-              description: 'There are no permissions to display at the moment.',
-            }}
+            data={filteredPermissions}
             bulkActions={bulkActions}
-            exportAction={{
-              label: 'Export CSV',
-              onClick: handleExport,
-            }}
-            density={density}
-            onDensityChange={setDensity}
-            pagination={{
-              pageSize: pageSize,
-              pageSizeOptions: [10, 25, 50, 100],
-            }}
+            onRowClick={(permission) => {}}
           />
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Permissions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{permissions.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {permissions.filter((p: Permission) => p.isSystem).length} system permissions
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Permission Types</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">API Permissions</span>
-                <span className="font-medium">
-                  {permissions.filter((p: Permission) => p.type === 'API').length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">UI Permissions</span>
-                <span className="font-medium">
-                  {permissions.filter((p: Permission) => p.type === 'UI').length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Data Permissions</span>
-                <span className="font-medium">
-                  {permissions.filter((p: Permission) => p.type === 'DATA').length}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Top Modules</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {moduleStats.slice(0, 3).map(([module, count]) => (
-                <div key={module} className="flex items-center justify-between">
-                  <span className="text-sm font-mono">{module}</span>
-                  <span className="font-medium">{count}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <PermissionFormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        permission={editPermission}
+        onSuccess={() => {
+          setModalOpen(false);
+          setEditPermission(null);
+          refetch();
+        }}
+      />
     </div>
   );
 }

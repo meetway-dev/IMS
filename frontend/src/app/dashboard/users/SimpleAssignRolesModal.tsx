@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Shield, Key, Eye, CheckCircle, Info } from 'lucide-react';
+import { Search, Shield, Key, Eye, CheckCircle, Info, X } from 'lucide-react';
 import { userService } from '@/services/user.service';
 import { roleService, permissionService } from '@/services/role-permission.service';
 
@@ -222,9 +222,11 @@ export function SimpleAssignRolesModal({
                     <Badge
                       key={roleId}
                       variant="outline"
-                      className={`${getRoleColor(role?.name || '')} border`}
+                      className={`${getRoleColor(role?.name || '')} border cursor-pointer hover:opacity-80`}
+                      onClick={() => toggleRole(roleId)}
                     >
                       {role?.name || roleId}
+                      <X className="h-3 w-3 ml-1" />
                     </Badge>
                   );
                 })}

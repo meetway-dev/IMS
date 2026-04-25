@@ -20,7 +20,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, X } from 'lucide-react';
+import { Key, Loader2, Shield, X } from 'lucide-react';
 import { roleService, permissionService } from '@/services/role-permission.service';
 import { Role, Permission } from '@/types';
 import { toast } from '@/components/ui/use-toast';
@@ -137,7 +137,15 @@ export function RoleFormModal({ open, onClose, onSuccess, role }: RoleFormModalP
     <FormModal
       open={open}
       onClose={onClose}
-      title={role ? 'Edit Role' : 'Create New Role'}
+      title={
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Shield className="h-5 w-5 text-primary" />
+          </div>
+          {role ? 'Edit Role' : 'Create New Role'}
+        </div>
+      }
+      description={role ? 'Update role details and permissions' : 'Create a new role with specific permissions'}
       footer={
         <div className="flex justify-end gap-3">
           <Button type="button" variant="outline" onClick={onClose}>
@@ -283,51 +291,120 @@ export function RoleFormModal({ open, onClose, onSuccess, role }: RoleFormModalP
               name="permissionIds"
               render={() => (
                 <FormItem>
-                  <FormLabel>Permissions</FormLabel>
-                  <div className="border rounded-lg p-4 space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      {selectedPermissions.map((permission) => (
-                        <Badge key={permission.id} variant="secondary" className="gap-1">
-                          {permission.key}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const current = form.getValues('permissionIds');
-                              form.setValue('permissionIds', current.filter(id => id !== permission.id));
-                            }}
-                            className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
+                  <FormLabel className="text-base font-medium">Permissions</FormLabel>
+                  <div className="space-y-4">
+                    {/* Selected Permissions */}
+                    {selectedPermissions.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-sm font-medium text-muted-foreground">
+                          Selected Permissions ({selectedPermissions.length})
+                        </div>
+                        <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-muted/20">
+                          {selectedPermissions.map((permission) => (
+                            <Badge key={permission.id} variant="default" className="gap-1 pr-1">
+                              <span className="font-mono text-xs">{permission.key}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const current = form.getValues('permissionIds');
+                                  form.setValue('permissionIds', current.filter(id => id !== permission.id));
+                                }}
+                                className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Permission Selector */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Add Permissions
+                      </div>
+                      <Select
+                        onValueChange={(value) => {
+                          const current = form.getValues('permissionIds');
+                          if (!current.includes(value)) {
+                            form.setValue('permissionIds', [...current, value]);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Search and select permissions..." />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          {permissions
+                            .filter(p => !form.watch('permissionIds').includes(p.id))
+                            .map((permission) => (
+                              <SelectItem key={permission.id} value={permission.id}>
+                                <div className="flex items-center gap-3 w-full">
+                                  <div className="flex h-6 w-6 items-center justify-center rounded border">
+                                    <Key className="h-3 w-3" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-sm truncate">{permission.name}</div>
+                                    <div className="text-xs text-muted-foreground font-mono truncate">
+                                      {permission.key}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <Badge variant="outline" className="text-xs">
+                                      {permission.type}
+                                    </Badge>
+                                    <Badge
+                                      variant={permission.effect === 'ALLOW' ? 'default' : 'destructive'}
+                                      className="text-xs"
+                                    >
+                                      {permission.effect}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
-                    <Select
-                      onValueChange={(value) => {
-                        const current = form.getValues('permissionIds');
-                        if (!current.includes(value)) {
-                          form.setValue('permissionIds', [...current, value]);
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Add permissions..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {permissions
-                          .filter(p => !form.watch('permissionIds').includes(p.id))
-                          .map((permission) => (
-                            <SelectItem key={permission.id} value={permission.id}>
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono text-sm">{permission.key}</span>
-                                <span className="text-muted-foreground">-</span>
-                                <span className="text-sm">{permission.name}</span>
+                    {/* Permission Groups */}
+                    <div className="space-y-3">
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Quick Add by Module
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {Array.from(new Set(permissions.map(p => p.module))).map((module) => {
+                          const modulePermissions = permissions.filter(p => p.module === module);
+                          const selectedInModule = modulePermissions.filter(p =>
+                            form.watch('permissionIds').includes(p.id)
+                          ).length;
+
+                          return (
+                            <Button
+                              key={module}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="justify-between h-auto p-3"
+                              onClick={() => {
+                                const current = form.getValues('permissionIds');
+                                const moduleIds = modulePermissions.map(p => p.id);
+                                const newSelection = Array.from(new Set([...current, ...moduleIds]));
+                                form.setValue('permissionIds', newSelection);
+                              }}
+                            >
+                              <div className="text-left">
+                                <div className="font-medium text-sm">{module}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {selectedInModule}/{modulePermissions.length} selected
+                                </div>
                               </div>
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                   <FormMessage />
                 </FormItem>

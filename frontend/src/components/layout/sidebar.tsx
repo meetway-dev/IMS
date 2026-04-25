@@ -24,6 +24,7 @@ import {
   Ruler,
   Warehouse,
   PackageCheck,
+  Key,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
@@ -93,15 +94,16 @@ const navigationGroups: NavGroup[] = [
   },
   {
     id: 'administration',
-    title: 'Admin',
+    title: 'Administration',
     icon: Shield,
     type: 'group',
     defaultExpanded: true,
     items: [
-      { name: 'Users', href: '/dashboard/users', icon: Users, description: 'User accounts', permissions: ['users.read'] },
-      { name: 'Roles', href: '/dashboard/roles', icon: Shield, description: 'Access control', permissions: ['roles.read'] },
-      { name: 'Permissions', href: '/dashboard/permissions', icon: Settings, description: 'System permissions', permissions: ['permissions.read'] },
-      { name: 'Companies', href: '/dashboard/companies', icon: Building, description: 'Organizations', permissions: ['companies.read'] },
+      { name: 'RBAC Dashboard', href: '/dashboard/rbac', icon: Shield, description: 'Access control overview', permissions: ['roles.read'] },
+      { name: 'Users', href: '/dashboard/users', icon: Users, description: 'User accounts & roles', permissions: ['users.read'] },
+      { name: 'Roles', href: '/dashboard/roles', icon: Shield, description: 'Role management', permissions: ['roles.read'] },
+      { name: 'Permissions', href: '/dashboard/permissions', icon: Key, description: 'Permission control', permissions: ['permissions.read'] },
+      { name: 'Companies', href: '/dashboard/companies', icon: Building, description: 'Organization setup', permissions: ['companies.read'] },
     ],
   },
   {
