@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 
@@ -35,10 +36,10 @@ export default function Error({
             Try again
           </Button>
           <Button asChild className="gap-2">
-            <a href="/dashboard">
+            <Link href="/dashboard">
               <Home className="h-4 w-4" />
               Dashboard
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

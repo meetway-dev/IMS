@@ -135,6 +135,132 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  /* ── Ocean Theme ── Cool, deep-sea blues and teals ── */
+  .ocean {
+    --background: 210 40% 97%;
+    --foreground: 213 68% 8%;
+    
+    --card: 210 40% 99%;
+    --card-foreground: 213 68% 8%;
+    
+    --popover: 210 40% 99%;
+    --popover-foreground: 213 68% 8%;
+    
+    /* Primary - Deep Ocean Blue */
+    --primary: 210 100% 36%;
+    --primary-foreground: 210 40% 98%;
+    
+    /* Secondary - Seafoam */
+    --secondary: 190 30% 92%;
+    --secondary-foreground: 210 80% 14%;
+    
+    /* Muted */
+    --muted: 210 25% 93%;
+    --muted-foreground: 210 12% 44%;
+    
+    /* Accent - Teal */
+    --accent: 185 40% 90%;
+    --accent-foreground: 185 80% 14%;
+    
+    /* Semantic Colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --success: 170 70% 34%;
+    --success-foreground: 170 60% 96%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 80% 8%;
+    
+    --info: 200 90% 46%;
+    --info-foreground: 200 60% 96%;
+    
+    /* Border & Input */
+    --border: 210 20% 88%;
+    --input: 210 20% 88%;
+    --ring: 210 100% 36%;
+    
+    /* Sidebar */
+    --sidebar-background: 210 50% 96%;
+    --sidebar-foreground: 213 50% 22%;
+    --sidebar-primary: 210 100% 36%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 190 30% 90%;
+    --sidebar-accent-foreground: 210 80% 14%;
+    --sidebar-border: 210 20% 88%;
+    --sidebar-ring: 210 100% 36%;
+    
+    /* Chart colors */
+    --chart-1: 210 80% 46%;
+    --chart-2: 185 70% 40%;
+    --chart-3: 200 60% 50%;
+    --chart-4: 170 50% 45%;
+    --chart-5: 220 70% 55%;
+  }
+
+  /* ── Sunset Theme ── Warm oranges, ambers, and golden hues ── */
+  .sunset {
+    --background: 30 40% 97%;
+    --foreground: 20 60% 8%;
+    
+    --card: 30 40% 99%;
+    --card-foreground: 20 60% 8%;
+    
+    --popover: 30 40% 99%;
+    --popover-foreground: 20 60% 8%;
+    
+    /* Primary - Warm Amber */
+    --primary: 24 95% 40%;
+    --primary-foreground: 30 60% 98%;
+    
+    /* Secondary - Peach */
+    --secondary: 25 60% 92%;
+    --secondary-foreground: 20 70% 14%;
+    
+    /* Muted */
+    --muted: 30 30% 93%;
+    --muted-foreground: 20 12% 44%;
+    
+    /* Accent - Coral */
+    --accent: 10 60% 90%;
+    --accent-foreground: 10 80% 18%;
+    
+    /* Semantic Colors */
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 30 60% 98%;
+    
+    --success: 150 60% 34%;
+    --success-foreground: 150 50% 96%;
+    
+    --warning: 35 90% 44%;
+    --warning-foreground: 35 80% 8%;
+    
+    --info: 200 70% 44%;
+    --info-foreground: 200 50% 96%;
+    
+    /* Border & Input */
+    --border: 25 25% 87%;
+    --input: 25 25% 87%;
+    --ring: 24 95% 40%;
+    
+    /* Sidebar */
+    --sidebar-background: 30 45% 96%;
+    --sidebar-foreground: 20 50% 22%;
+    --sidebar-primary: 24 95% 40%;
+    --sidebar-primary-foreground: 30 60% 98%;
+    --sidebar-accent: 25 55% 90%;
+    --sidebar-accent-foreground: 20 70% 14%;
+    --sidebar-border: 25 25% 87%;
+    --sidebar-ring: 24 95% 40%;
+    
+    /* Chart colors */
+    --chart-1: 24 90% 46%;
+    --chart-2: 10 70% 50%;
+    --chart-3: 35 80% 48%;
+    --chart-4: 340 60% 50%;
+    --chart-5: 45 70% 45%;
+  }
 }
 
 @layer base {
@@ -156,7 +282,8 @@
 
   /* Focus ring standardization */
   :focus-visible {
-    @apply outline-none ring-2 ring-ring/20 ring-offset-2 ring-offset-background;
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2), 0 0 0 4px hsl(var(--background));
   }
 
   /* Remove default focus for mouse users */
