@@ -32,6 +32,7 @@ import { goodsReceiptService, GoodsReceiptListParams } from '@/services/goods-re
 import { GoodsReceiptNote, GoodsReceiptStatus } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import {
   Select,
@@ -73,6 +74,8 @@ export default function GoodsReceiptsPage() {
   } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingGoodsReceipt, setEditingGoodsReceipt] = useState<GoodsReceiptNote | null>(null);
+  const deleteConfirm = useConfirmation<string>();
+  const completeConfirm = useConfirmation<string>();
 
   // Fetch goods receipts
   const {
@@ -176,14 +179,24 @@ export default function GoodsReceiptsPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this goods receipt?')) {
-      deleteGoodsReceiptMutation.mutate(id);
+    deleteConfirm.open(id);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteConfirm.data) {
+      deleteGoodsReceiptMutation.mutate(deleteConfirm.data);
+      deleteConfirm.close();
     }
   };
 
   const handleComplete = (id: string) => {
-    if (confirm('Are you sure you want to mark this goods receipt as completed?')) {
-      completeGoodsReceiptMutation.mutate(id);
+    completeConfirm.open(id);
+  };
+
+  const handleCompleteConfirm = () => {
+    if (completeConfirm.data) {
+      completeGoodsReceiptMutation.mutate(completeConfirm.data);
+      completeConfirm.close();
     }
   };
 
@@ -452,6 +465,26 @@ export default function GoodsReceiptsPage() {
           </div>
         </form>
       </FormModal>
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete Goods Receipt"
+        description="Are you sure you want to delete this goods receipt? This action cannot be undone."
+        confirmLabel="Delete Goods Receipt"
+        variant="destructive"
+        isLoading={deleteGoodsReceiptMutation.isPending}
+        onConfirm={handleDeleteConfirm}
+      />
+
+      <ConfirmationDialog
+        {...completeConfirm.dialogProps}
+        title="Complete Goods Receipt"
+        description="Are you sure you want to mark this goods receipt as completed? This action cannot be undone."
+        confirmLabel="Mark as Completed"
+        variant="default"
+        isLoading={completeGoodsReceiptMutation.isPending}
+        onConfirm={handleCompleteConfirm}
+      />
     </motion.div>
   );
 }

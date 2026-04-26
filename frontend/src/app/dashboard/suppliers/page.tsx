@@ -29,6 +29,7 @@ import { supplierService } from '@/services/supplier.service';
 import { Supplier } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 
 export default function SuppliersPage() {
@@ -50,6 +51,7 @@ export default function SuppliersPage() {
   } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const deleteConfirm = useConfirmation<string>();
 
   // Fetch suppliers
   const {
@@ -128,9 +130,14 @@ export default function SuppliersPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDeleteSupplier = async (id: string) => {
-    if (confirm('Are you sure you want to delete this supplier?')) {
-      await deleteSupplierMutation.mutateAsync(id);
+  const handleDeleteSupplier = (id: string) => {
+    deleteConfirm.open(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirm.data) {
+      await deleteSupplierMutation.mutateAsync(deleteConfirm.data);
+      deleteConfirm.close();
     }
   };
 
@@ -395,6 +402,16 @@ export default function SuppliersPage() {
           </div>
         </form>
       </FormModal>
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete Supplier"
+        description="Are you sure you want to delete this supplier? This action cannot be undone."
+        confirmLabel="Delete Supplier"
+        variant="destructive"
+        isLoading={deleteSupplierMutation.isPending}
+        onConfirm={handleDeleteConfirm}
+      />
     </motion.div>
   );
 }

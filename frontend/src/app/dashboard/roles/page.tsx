@@ -43,6 +43,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { RoleFormModal } from './RoleFormModal';
 import { RoleDetailsModal } from './RoleDetailsModal';
 import { AssignPermissionsModal } from './AssignPermissionsModal';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { permissionService } from '@/services/role-permission.service';
 import { useServerSearch } from '@/hooks/use-server-search';
 
@@ -76,6 +77,8 @@ export default function RolesPage() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editRole, setEditRole] = React.useState<Role | null>(null);
   const { user, initializeAuth } = useAuthStore();
+  const deleteConfirm = useConfirmation<Role>();
+  const bulkDeleteConfirm = useConfirmation<Role[]>();
   const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');
   const [activeTab, setActiveTab] = React.useState('all');
 
@@ -128,14 +131,19 @@ export default function RolesPage() {
     setModalOpen(true);
   };
 
-  const handleDelete = async (role: Role) => {
-    if (window.confirm(`Are you sure you want to delete the role "${role.name}"? This action cannot be undone and may affect users assigned to this role.`)) {
+  const handleDelete = (role: Role) => {
+    deleteConfirm.open(role);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirm.data) {
       try {
-        await roleService.deleteRole(role.id);
+        await roleService.deleteRole(deleteConfirm.data.id);
         refetch();
       } catch (error) {
         console.error('Failed to delete role:', error);
       }
+      deleteConfirm.close();
     }
   };
 
@@ -151,14 +159,19 @@ export default function RolesPage() {
     }
   };
 
-  const handleBulkDelete = async (selectedRoles: Role[]) => {
-    if (window.confirm(`Are you sure you want to delete ${selectedRoles.length} role(s)? This action cannot be undone and may affect users assigned to these roles.`)) {
+  const handleBulkDelete = (selectedRoles: Role[]) => {
+    bulkDeleteConfirm.open(selectedRoles);
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    if (bulkDeleteConfirm.data) {
       try {
-        await Promise.all(selectedRoles.map(role => roleService.deleteRole(role.id)));
+        await Promise.all(bulkDeleteConfirm.data.map(role => roleService.deleteRole(role.id)));
         refetch();
       } catch (error) {
         console.error('Failed to delete roles:', error);
       }
+      bulkDeleteConfirm.close();
     }
   };
 
@@ -284,7 +297,58 @@ export default function RolesPage() {
     {
       id: 'actions',
       cell: ({ row }: any) => (
-        <div>Actions</div>
+        <ActionMenu
+          trigger={{ icon: MoreVertical, variant: 'ghost', size: 'icon-sm' }}
+          items={[
+            menuLabel({ label: 'Actions' }),
+            menuItem({
+              label: 'Copy role ID',
+              icon: Copy,
+              iconPosition: 'start' as const,
+              onClick: () => navigator.clipboard.writeText(row.original.id),
+            }),
+            menuSeparator(),
+            menuItem({
+              label: 'View details',
+              icon: Eye,
+              iconPosition: 'start' as const,
+              onClick: () => setDetailsRole(row.original),
+            }),
+            ...(isSuperAdmin
+              ? [
+                  menuItem({
+                    label: 'Edit role',
+                    icon: Edit,
+                    iconPosition: 'start' as const,
+                    onClick: () => handleEdit(row.original),
+                    disabled: row.original.isSystem,
+                  }),
+                  menuItem({
+                    label: 'Assign permissions',
+                    icon: ShieldCheck,
+                    iconPosition: 'start' as const,
+                    onClick: () => setAssignRole(row.original),
+                  }),
+                  menuItem({
+                    label: 'Clone role',
+                    icon: Copy,
+                    iconPosition: 'start' as const,
+                    onClick: () => handleClone(row.original),
+                  }),
+                  menuSeparator(),
+                  menuItem({
+                    label: 'Delete role',
+                    icon: Trash2,
+                    iconPosition: 'start' as const,
+                    variant: 'destructive' as const,
+                    onClick: () => handleDelete(row.original),
+                    disabled: row.original.isSystem,
+                  }),
+                ]
+              : []),
+          ]}
+          align="end"
+        />
       ),
     },
   ];
@@ -450,6 +514,24 @@ export default function RolesPage() {
         currentPermissions={assignRole?.permissions?.map(p => p.id) || []}
         allPermissions={permissions}
         onSuccess={refetch}
+      />
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete Role"
+        description={`Are you sure you want to delete the role "${deleteConfirm.data?.name || ''}"? This action cannot be undone and may affect users assigned to this role.`}
+        confirmLabel="Delete Role"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+      />
+
+      <ConfirmationDialog
+        {...bulkDeleteConfirm.dialogProps}
+        title="Delete Roles"
+        description={`Are you sure you want to delete ${bulkDeleteConfirm.data?.length || 0} role(s)? This action cannot be undone and may affect users assigned to these roles.`}
+        confirmLabel="Delete All"
+        variant="destructive"
+        onConfirm={handleBulkDeleteConfirm}
       />
     </motion.div>
   );

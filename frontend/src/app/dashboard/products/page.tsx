@@ -33,6 +33,7 @@ import type { UnitOfMeasure } from '@/services/unit-of-measure.service';
 import { formatCurrency, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 
 export default function ProductsPage() {
@@ -54,15 +55,21 @@ export default function ProductsPage() {
   } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const deleteConfirm = useConfirmation<string>();
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setIsDialogOpen(true);
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      await deleteProductMutation.mutateAsync(id);
+  const handleDeleteProduct = (id: string) => {
+    deleteConfirm.open(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirm.data) {
+      await deleteProductMutation.mutateAsync(deleteConfirm.data);
+      deleteConfirm.close();
     }
   };
 
@@ -515,6 +522,16 @@ export default function ProductsPage() {
           </div>
         </form>
       </FormModal>
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete Product"
+        description="Are you sure you want to delete this product? This action cannot be undone."
+        confirmLabel="Delete Product"
+        variant="destructive"
+        isLoading={deleteProductMutation.isPending}
+        onConfirm={handleDeleteConfirm}
+      />
     </motion.div>
   );
 }

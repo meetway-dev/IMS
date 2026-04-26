@@ -27,6 +27,7 @@ import { ErrorState } from '@/components/ui/states';
 import { unitOfMeasureService, UnitOfMeasure } from '@/services/unit-of-measure.service';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { formatDate } from '@/lib/utils';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 
@@ -47,15 +48,21 @@ export default function UnitOfMeasuresPage() {
   } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<UnitOfMeasure | null>(null);
+  const deleteConfirm = useConfirmation<string>();
 
   const handleEditUnit = (unit: UnitOfMeasure) => {
     setEditingUnit(unit);
     setIsDialogOpen(true);
   };
 
-  const handleDeleteUnit = async (id: string) => {
-    if (confirm('Are you sure you want to delete this unit of measure?')) {
-      await deleteUnitMutation.mutateAsync(id);
+  const handleDeleteUnit = (id: string) => {
+    deleteConfirm.open(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirm.data) {
+      await deleteUnitMutation.mutateAsync(deleteConfirm.data);
+      deleteConfirm.close();
     }
   };
 
@@ -370,6 +377,16 @@ export default function UnitOfMeasuresPage() {
           </div>
         </form>
       </FormModal>
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete Unit of Measure"
+        description="Are you sure you want to delete this unit of measure? This action cannot be undone."
+        confirmLabel="Delete Unit"
+        variant="destructive"
+        isLoading={deleteUnitMutation.isPending}
+        onConfirm={handleDeleteConfirm}
+      />
     </motion.div>
   );
 }

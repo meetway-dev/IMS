@@ -47,6 +47,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useServerSearch } from '@/hooks/use-server-search';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { warehouseService } from '@/services/warehouse.service';
 import {
   Warehouse,
@@ -336,6 +337,8 @@ export default function WarehousesPage() {
     null,
   );
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const deleteConfirm = useConfirmation<string>();
+  const archiveConfirm = useConfirmation<string>();
 
   const {
     search,
@@ -444,14 +447,24 @@ export default function WarehousesPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this warehouse? This action cannot be undone.')) {
-      deleteMutation.mutate(id);
+    deleteConfirm.open(id);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteConfirm.data) {
+      deleteMutation.mutate(deleteConfirm.data);
+      deleteConfirm.close();
     }
   };
 
   const handleArchive = (id: string) => {
-    if (confirm('Are you sure you want to archive this warehouse?')) {
-      archiveMutation.mutate(id);
+    archiveConfirm.open(id);
+  };
+
+  const handleArchiveConfirm = () => {
+    if (archiveConfirm.data) {
+      archiveMutation.mutate(archiveConfirm.data);
+      archiveConfirm.close();
     }
   };
 
@@ -663,6 +676,26 @@ export default function WarehousesPage() {
         warehouse={editingWarehouse}
         onSubmit={handleFormSubmit}
         isPending={isMutating}
+      />
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete Warehouse"
+        description="Are you sure you want to delete this warehouse? This action cannot be undone."
+        confirmLabel="Delete Warehouse"
+        variant="destructive"
+        isLoading={deleteMutation.isPending}
+        onConfirm={handleDeleteConfirm}
+      />
+
+      <ConfirmationDialog
+        {...archiveConfirm.dialogProps}
+        title="Archive Warehouse"
+        description="Are you sure you want to archive this warehouse? It will be set to inactive."
+        confirmLabel="Archive Warehouse"
+        variant="default"
+        isLoading={archiveMutation.isPending}
+        onConfirm={handleArchiveConfirm}
       />
     </div>
   );

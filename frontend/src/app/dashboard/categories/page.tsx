@@ -33,6 +33,7 @@ import { categoryService } from '@/services/category.service';
 import { Category } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { formatDate } from '@/lib/utils';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 
@@ -57,6 +58,8 @@ export default function CategoriesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [selectedRows, setSelectedRows] = useState<Category[]>([]);
+  const deleteConfirm = useConfirmation<string>();
+  const bulkDeleteConfirm = useConfirmation<Category[]>();
 
   // Fetch categories
   const {
@@ -159,16 +162,32 @@ export default function CategoriesPage() {
 
   const handleBulkDelete = () => {
     if (selectedRows.length === 0) return;
+    bulkDeleteConfirm.open(selectedRows);
+  };
 
-    if (confirm(`Are you sure you want to delete ${selectedRows.length} categories?`)) {
+  const handleBulkDeleteConfirm = () => {
+    if (bulkDeleteConfirm.data) {
       Promise.all(
-        selectedRows.map((category) => deleteCategoryMutation.mutateAsync(category.id))
+        bulkDeleteConfirm.data.map((category) => deleteCategoryMutation.mutateAsync(category.id))
       ).then(() => {
         toast({
           title: 'Success',
-          description: `${selectedRows.length} categories deleted successfully.`,
+          description: `${bulkDeleteConfirm.data!.length} categories deleted successfully.`,
         });
         setSelectedRows([]);
+        bulkDeleteConfirm.close();
+      });
+    }
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    deleteConfirm.open(id);
+  };
+
+  const handleDeleteCategoryConfirm = () => {
+    if (deleteConfirm.data) {
+      deleteCategoryMutation.mutateAsync(deleteConfirm.data).then(() => {
+        deleteConfirm.close();
       });
     }
   };
@@ -324,66 +343,40 @@ export default function CategoriesPage() {
     {
       id: 'actions',
       header: 'Actions',
-      cell: ({ row }) => {
-        const { toast } = useToast();
-        const queryClient = useQueryClient();
-
-        const deleteMutation = useMutation({
-          mutationFn: () => categoryService.deleteCategory(row.original.id),
-          onSuccess: () => {
-            toast({ title: 'Success', description: 'Category deleted successfully.' });
-            queryClient.invalidateQueries({ queryKey: ['categories'] });
-          },
-          onError: (error: any) => {
-            toast({
-              title: 'Error',
-              description: error.message || 'Failed to delete category.',
-              variant: 'destructive',
-            });
-          },
-        });
-
-        const handleDelete = () => {
-          if (confirm('Are you sure you want to delete this category?')) {
-            deleteMutation.mutate();
-          }
-        };
-
-        return (
-          <ActionMenu
-            trigger={{
-              icon: MoreHorizontal,
-              variant: 'ghost',
-              size: 'icon-sm',
-            }}
-            items={[
-              {
-                label: 'View Details',
-                icon: Eye,
-                iconPosition: 'start' as const,
-                onClick: () => console.log('View category', row.original),
+      cell: ({ row }) => (
+        <ActionMenu
+          trigger={{
+            icon: MoreHorizontal,
+            variant: 'ghost',
+            size: 'icon-sm',
+          }}
+          items={[
+            {
+              label: 'View Details',
+              icon: Eye,
+              iconPosition: 'start' as const,
+              onClick: () => console.log('View category', row.original),
+            },
+            {
+              label: 'Edit',
+              icon: Edit,
+              iconPosition: 'start' as const,
+              onClick: () => {
+                setEditingCategory(row.original);
+                setIsEditModalOpen(true);
               },
-              {
-                label: 'Edit',
-                icon: Edit,
-                iconPosition: 'start' as const,
-                onClick: () => {
-                  setEditingCategory(row.original);
-                  setIsEditModalOpen(true);
-                },
-              },
-              {
-                label: 'Delete',
-                icon: Trash2,
-                iconPosition: 'start' as const,
-                variant: 'destructive' as const,
-                onClick: handleDelete,
-              },
-            ]}
-            align="end"
-          />
-        );
-      },
+            },
+            {
+              label: 'Delete',
+              icon: Trash2,
+              iconPosition: 'start' as const,
+              variant: 'destructive' as const,
+              onClick: () => handleDeleteCategory(row.original.id),
+            },
+          ]}
+          align="end"
+        />
+      ),
     },
   ];
 
@@ -626,6 +619,26 @@ export default function CategoriesPage() {
           </form>
         )}
       </FormModal>
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete Category"
+        description="Are you sure you want to delete this category? This action cannot be undone."
+        confirmLabel="Delete Category"
+        variant="destructive"
+        isLoading={deleteCategoryMutation.isPending}
+        onConfirm={handleDeleteCategoryConfirm}
+      />
+
+      <ConfirmationDialog
+        {...bulkDeleteConfirm.dialogProps}
+        title="Delete Categories"
+        description={`Are you sure you want to delete ${bulkDeleteConfirm.data?.length || 0} categories? This action cannot be undone.`}
+        confirmLabel="Delete All"
+        variant="destructive"
+        isLoading={deleteCategoryMutation.isPending}
+        onConfirm={handleBulkDeleteConfirm}
+      />
     </motion.div>
   );
 }

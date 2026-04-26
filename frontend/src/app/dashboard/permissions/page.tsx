@@ -44,6 +44,7 @@ import { Permission } from '@/types';
 import { useAuthStore } from '@/store/auth-store';
 import { PermissionFormModal } from './PermissionFormModal';
 import { PermissionDetailsModal } from './PermissionDetailsModal';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { useServerSearch } from '@/hooks/use-server-search';
 
 export default function PermissionsPage() {
@@ -62,6 +63,8 @@ export default function PermissionsPage() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editPermission, setEditPermission] = React.useState<Permission | null>(null);
   const { user, initializeAuth } = useAuthStore();
+  const deleteConfirm = useConfirmation<Permission>();
+  const bulkDeleteConfirm = useConfirmation<Permission[]>();
   const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');
   const [activeTab, setActiveTab] = React.useState('all');
 
@@ -117,14 +120,19 @@ export default function PermissionsPage() {
     setModalOpen(true);
   };
 
-  const handleDelete = async (permission: Permission) => {
-    if (window.confirm(`Are you sure you want to delete the permission "${permission.name}"? This action cannot be undone and may affect roles that use this permission.`)) {
+  const handleDelete = (permission: Permission) => {
+    deleteConfirm.open(permission);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirm.data) {
       try {
-        await permissionService.deletePermission(permission.id);
+        await permissionService.deletePermission(deleteConfirm.data.id);
         refetch();
       } catch (error) {
         console.error('Failed to delete permission:', error);
       }
+      deleteConfirm.close();
     }
   };
 
@@ -139,14 +147,19 @@ export default function PermissionsPage() {
     }
   };
 
-  const handleBulkDelete = async (selectedPermissions: Permission[]) => {
-    if (window.confirm(`Are you sure you want to delete ${selectedPermissions.length} permission(s)? This action cannot be undone and may affect roles that use these permissions.`)) {
+  const handleBulkDelete = (selectedPermissions: Permission[]) => {
+    bulkDeleteConfirm.open(selectedPermissions);
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    if (bulkDeleteConfirm.data) {
       try {
-        await Promise.all(selectedPermissions.map(permission => permissionService.deletePermission(permission.id)));
+        await Promise.all(bulkDeleteConfirm.data.map(permission => permissionService.deletePermission(permission.id)));
         refetch();
       } catch (error) {
         console.error('Failed to delete permissions:', error);
       }
+      bulkDeleteConfirm.close();
     }
   };
 
@@ -406,6 +419,24 @@ export default function PermissionsPage() {
           setEditPermission(null);
           refetch();
         }}
+      />
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete Permission"
+        description={`Are you sure you want to delete the permission "${deleteConfirm.data?.name || ''}"? This action cannot be undone and may affect roles that use this permission.`}
+        confirmLabel="Delete Permission"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+      />
+
+      <ConfirmationDialog
+        {...bulkDeleteConfirm.dialogProps}
+        title="Delete Permissions"
+        description={`Are you sure you want to delete ${bulkDeleteConfirm.data?.length || 0} permission(s)? This action cannot be undone and may affect roles that use these permissions.`}
+        confirmLabel="Delete All"
+        variant="destructive"
+        onConfirm={handleBulkDeleteConfirm}
       />
     </div>
   );
