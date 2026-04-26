@@ -3,20 +3,23 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 describe('AppController', () => {
-  let appController: AppController;
+  let controller: AppController;
 
   beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
+    const module: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [AppService],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    controller = module.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+  describe('getStatus', () => {
+    it('should return status object with "ok"', () => {
+      const result = controller.getStatus();
+      expect(result).toHaveProperty('status', 'ok');
+      expect(result).toHaveProperty('service', 'IMS API');
+      expect(result).toHaveProperty('timestamp');
     });
   });
 });

@@ -1,15 +1,45 @@
+/**
+ * Pagination DTO and helpers.
+ *
+ * All list endpoints accept `PaginationQueryDto` as their query
+ * parameter class. The `buildPaginatedResult` helper constructs the
+ * response envelope consumed by the frontend.
+ *
+ * @module pagination.dto
+ */
+
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
-// Pagination constants
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Default rows per page when the caller does not specify `limit`. */
 export const DEFAULT_PAGE_SIZE = 20;
+
+/** Hard ceiling for `limit` to prevent unbounded queries. */
 export const MAX_PAGE_SIZE = 100;
+
+/** Allowed page-size options (for UI dropdowns). */
 export const PAGE_SIZE_OPTIONS = [10, 20, 30, 50] as const;
+
+// ---------------------------------------------------------------------------
+// DTO
+// ---------------------------------------------------------------------------
 
 export class PaginationQueryDto {
   @ApiPropertyOptional({ description: 'Search term', required: false })
   @IsOptional()
+  @IsString()
   search?: string;
 
   @ApiPropertyOptional({ example: 1, minimum: 1, default: 1 })
@@ -52,15 +82,20 @@ export class PaginationQueryDto {
   sortOrder?: 'asc' | 'desc';
 }
 
-export type PaginatedMeta = {
+// ---------------------------------------------------------------------------
+// Response helpers
+// ---------------------------------------------------------------------------
+
+export interface PaginatedMeta {
   page: number;
   limit: number;
   total: number;
   totalPages: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-};
+}
 
+/** Compute pagination metadata from raw counts. */
 export function paginationMeta(
   total: number,
   page: number,
@@ -77,6 +112,7 @@ export function paginationMeta(
   };
 }
 
+/** Wrap data + counts into the standard paginated response shape. */
 export function buildPaginatedResult<T>(
   data: T[],
   total: number,

@@ -1,11 +1,28 @@
-// Entity Types
+/**
+ * Domain entity interfaces shared across the stack.
+ *
+ * These are *presentation-layer* shapes -- the frontend and API
+ * serializers both target these types. They intentionally omit
+ * Prisma-specific details (Decimal, Json, etc.).
+ *
+ * @module entity.types
+ */
 
+// ---------------------------------------------------------------------------
+// Base
+// ---------------------------------------------------------------------------
+
+/** Fields present on every soft-deletable entity. */
 export interface BaseEntity {
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt?: Date | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  deletedAt?: Date | string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Auth / Users
+// ---------------------------------------------------------------------------
 
 export interface User extends BaseEntity {
   email: string;
@@ -14,11 +31,16 @@ export interface User extends BaseEntity {
   permissions?: string[];
 }
 
+// ---------------------------------------------------------------------------
+// Catalogue
+// ---------------------------------------------------------------------------
+
 export interface Product extends BaseEntity {
   name: string;
   sku: string;
-  type: 'SANITARY' | 'ELECTRICAL';
-  unit: string;
+  barcode?: string;
+  typeId: string;
+  unitId: string;
   purchasePrice: string;
   salePrice: string;
   minStockAlert: number;
@@ -26,7 +48,9 @@ export interface Product extends BaseEntity {
   companyId?: string;
   category?: Category;
   company?: Company;
-  inventory?: Inventory;
+  type?: ProductType;
+  unit?: UnitOfMeasure;
+  inventory?: InventoryItem;
   variants?: ProductVariant[];
 }
 
@@ -34,19 +58,39 @@ export interface ProductVariant extends BaseEntity {
   productId: string;
   size?: string;
   color?: string;
-  sku: string;
-  purchasePrice?: string;
-  salePrice?: string;
-  inventory?: Inventory;
+  material?: string;
+  sku?: string;
+  barcode?: string;
+  inventory?: InventoryItem;
+  product?: Product;
+}
+
+export interface ProductType extends BaseEntity {
+  name: string;
+  code: string;
+  description?: string;
+  isActive: boolean;
+}
+
+export interface UnitOfMeasure extends BaseEntity {
+  name: string;
+  abbreviation: string;
+  description?: string;
+  isActive: boolean;
 }
 
 export interface Category extends BaseEntity {
   name: string;
   slug: string;
+  description?: string;
   parentId?: string | null;
   parent?: Category;
   children?: Category[];
 }
+
+// ---------------------------------------------------------------------------
+// Suppliers
+// ---------------------------------------------------------------------------
 
 export interface Supplier extends BaseEntity {
   name: string;
@@ -57,35 +101,50 @@ export interface Supplier extends BaseEntity {
   notes?: string;
 }
 
-export interface Inventory extends BaseEntity {
+// ---------------------------------------------------------------------------
+// Inventory
+// ---------------------------------------------------------------------------
+
+export interface InventoryItem extends BaseEntity {
   productId?: string;
   variantId?: string;
-  quantity: number;
-  reservedQuantity: number;
-  availableQuantity: number;
+  stockQuantity: number;
   product?: Product;
   variant?: ProductVariant;
-  lowStock?: boolean;
 }
 
 export interface InventoryTransaction extends BaseEntity {
-  inventoryId: string;
-  type: 'IN' | 'OUT' | 'ADJUSTMENT';
-  quantity: number;
-  reason?: string;
-  referenceId?: string;
-  referenceType?: string;
-  inventory?: Inventory;
+  inventoryItemId: string;
+  type: 'SALE' | 'RETURN' | 'ADJUSTMENT' | 'PURCHASE';
+  quantityDelta: number;
+  reference?: string;
+  note?: string;
+  createdByUserId?: string;
+  inventoryItem?: InventoryItem;
 }
+
+// ---------------------------------------------------------------------------
+// Orders
+// ---------------------------------------------------------------------------
 
 export interface Order extends BaseEntity {
   orderNumber: string;
-  customerId?: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED';
-  totalAmount: string;
+  status: OrderStatus;
+  subtotal: string;
+  discountTotal: string;
+  taxTotal: string;
+  total: string;
   notes?: string;
+  createdByUserId?: string;
   items?: OrderItem[];
 }
+
+export type OrderStatus =
+  | 'DRAFT'
+  | 'CONFIRMED'
+  | 'PAID'
+  | 'CANCELLED'
+  | 'REFUNDED';
 
 export interface OrderItem extends BaseEntity {
   orderId: string;
@@ -93,10 +152,14 @@ export interface OrderItem extends BaseEntity {
   variantId?: string;
   quantity: number;
   unitPrice: string;
-  totalPrice: string;
+  lineTotal: string;
   product?: Product;
   variant?: ProductVariant;
 }
+
+// ---------------------------------------------------------------------------
+// Company
+// ---------------------------------------------------------------------------
 
 export interface Company extends BaseEntity {
   name: string;
@@ -110,12 +173,16 @@ export interface Company extends BaseEntity {
   isActive: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// Audit
+// ---------------------------------------------------------------------------
+
 export interface AuditLog extends BaseEntity {
   actorUserId: string;
   action: string;
   entityType: string;
   entityId: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   ip?: string;
   userAgent?: string;
   actor?: User;

@@ -1,15 +1,16 @@
 /**
- * Services Barrel Export
+ * Services barrel export.
  *
- * Export all API service modules for centralized imports.
+ * Import all API services from this single entry point:
  *
- * @example
- * ```tsx
- * import { authService, userService } from '@/services';
+ * ```ts
+ * import { authService, productService } from '@/services';
  * ```
+ *
+ * @module services
  */
 
-// Base services
+// Base
 export { CrudServiceBase } from './base/crud.service.base';
 
 // Feature services

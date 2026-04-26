@@ -1,4 +1,16 @@
-// Permission Enums
+/**
+ * Permission and role definitions.
+ *
+ * The `ROLE_PERMISSIONS` map is the single source of truth for which
+ * actions each built-in role can perform. Custom roles/permissions
+ * stored in the database extend (but do not replace) these defaults.
+ *
+ * @module permission.enums
+ */
+
+// ---------------------------------------------------------------------------
+// Permissions
+// ---------------------------------------------------------------------------
 
 export enum Permission {
   // Products
@@ -45,6 +57,10 @@ export enum Permission {
   ADMIN = 'admin',
 }
 
+// ---------------------------------------------------------------------------
+// Roles
+// ---------------------------------------------------------------------------
+
 export enum Role {
   ADMIN = 'ADMIN',
   MANAGER = 'MANAGER',
@@ -52,8 +68,14 @@ export enum Role {
   VIEWER = 'VIEWER',
 }
 
-export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+// ---------------------------------------------------------------------------
+// Role -> Permission mapping
+// ---------------------------------------------------------------------------
+
+/** Default permissions granted to each built-in role. */
+export const ROLE_PERMISSIONS: Readonly<Record<Role, Permission[]>> = {
   [Role.ADMIN]: Object.values(Permission),
+
   [Role.MANAGER]: [
     Permission.PRODUCTS_READ,
     Permission.PRODUCTS_WRITE,
@@ -72,6 +94,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.COMPANIES_WRITE,
     Permission.AUDIT_READ,
   ],
+
   [Role.STAFF]: [
     Permission.PRODUCTS_READ,
     Permission.CATEGORIES_READ,
@@ -82,6 +105,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.ORDERS_WRITE,
     Permission.COMPANIES_READ,
   ],
+
   [Role.VIEWER]: [
     Permission.PRODUCTS_READ,
     Permission.CATEGORIES_READ,

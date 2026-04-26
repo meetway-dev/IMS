@@ -1,3 +1,14 @@
+/**
+ * Axios-based API client with automatic auth token management.
+ *
+ * - Attaches the JWT access token to every request.
+ * - Transparently refreshes expired tokens on 401 responses.
+ * - Provides typed helper methods (`get`, `post`, `patch`, etc.)
+ *   that unwrap the Axios response into the API envelope.
+ *
+ * @module api-client
+ */
+
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { STORAGE_KEYS, API_ENDPOINTS } from './constants';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '@/types';

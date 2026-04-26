@@ -7,6 +7,7 @@ import {
 import { Prisma, AuditAction } from '@prisma/client';
 import { paginationMeta } from '../../common/dto/pagination.dto';
 import { decToString } from '../../common/utils/decimal';
+import { ErrorHandler } from '../../common/errors/error-handler';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type { CreateProductDto, UpdateProductDto } from './dto/product.dto';
@@ -120,7 +121,7 @@ export class ProductsService {
 
       return this.serializeProduct(result);
     } catch (e: unknown) {
-      if (this.isUniqueViolation(e)) {
+      if (ErrorHandler.isUniqueViolation(e)) {
         throw new ConflictException('SKU or barcode already exists');
       }
       throw e;
@@ -222,7 +223,7 @@ export class ProductsService {
       });
       return this.serializeProduct(row);
     } catch (e: unknown) {
-      if (this.isUniqueViolation(e)) {
+      if (ErrorHandler.isUniqueViolation(e)) {
         throw new ConflictException('SKU or barcode already exists');
       }
       throw e;
@@ -252,12 +253,4 @@ export class ProductsService {
     };
   }
 
-  private isUniqueViolation(e: unknown): boolean {
-    return (
-      typeof e === 'object' &&
-      e !== null &&
-      'code' in e &&
-      (e as { code: string }).code === 'P2002'
-    );
-  }
 }

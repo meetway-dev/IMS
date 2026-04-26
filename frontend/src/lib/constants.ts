@@ -1,4 +1,14 @@
-// API Endpoints
+/**
+ * Application constants.
+ *
+ * API endpoint paths, storage keys, pagination defaults, and other
+ * configuration values used across the frontend.
+ *
+ * @module constants
+ */
+
+// ── API Endpoints ─────────────────────────────────────────────────────────
+
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {

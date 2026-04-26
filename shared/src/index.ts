@@ -1,4 +1,13 @@
-// Shared Package Exports
+/**
+ * @ims/shared -- barrel export
+ *
+ * Re-exports every public type, constant, enum, and utility so
+ * consumers can import from a single entry point:
+ *
+ * ```ts
+ * import { ApiResponse, Permission, formatCurrency } from '@ims/shared';
+ * ```
+ */
 
 // Types
 export * from './types/api.types';

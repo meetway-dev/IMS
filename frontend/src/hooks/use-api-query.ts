@@ -1,18 +1,30 @@
-import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
+/**
+ * Thin wrappers around React Query with automatic toast notifications.
+ *
+ * @module use-api-query
+ */
+
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryOptions,
+  type UseMutationOptions,
+} from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 
 /**
- * Enhanced useQuery hook with toast notifications
+ * `useQuery` wrapper that optionally shows an error toast on failure.
  */
-export function useApiQuery<TData = any>(
-  queryKey: any[],
+export function useApiQuery<TData = unknown>(
+  queryKey: unknown[],
   queryFn: () => Promise<TData>,
   options?: Omit<UseQueryOptions<TData>, 'queryKey' | 'queryFn'> & {
+    /** Show a toast when the query errors. Defaults to `true`. */
     showErrorToast?: boolean;
-  }
+  },
 ) {
-  const { toast } = useToast();
-  const { showErrorToast = true, ...queryOptions } = options || {};
+  const { showErrorToast: _showErrorToast = true, ...queryOptions } = options ?? {};
 
   return useQuery<TData>({
     queryKey,
@@ -22,17 +34,19 @@ export function useApiQuery<TData = any>(
 }
 
 /**
- * Enhanced useMutation hook with toast notifications
+ * `useMutation` wrapper with success/error toasts and automatic
+ * query invalidation.
  */
-export function useApiMutation<TData = any, TVariables = any>(
+export function useApiMutation<TData = unknown, TVariables = unknown>(
   mutationFn: (variables: TVariables) => Promise<TData>,
-  options?: Omit<UseMutationOptions<TData, any, TVariables>, 'mutationFn'> & {
+  options?: Omit<UseMutationOptions<TData, unknown, TVariables>, 'mutationFn'> & {
     showErrorToast?: boolean;
     showSuccessToast?: boolean;
     successMessage?: string;
     errorMessage?: string;
-    invalidateQueries?: any[];
-  }
+    /** Query keys to invalidate after a successful mutation. */
+    invalidateQueries?: unknown[];
+  },
 ) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -43,9 +57,9 @@ export function useApiMutation<TData = any, TVariables = any>(
     errorMessage,
     invalidateQueries,
     ...mutationOptions
-  } = options || {};
+  } = options ?? {};
 
-  return useMutation<TData, any, TVariables>({
+  return useMutation<TData, unknown, TVariables>({
     mutationFn,
     ...mutationOptions,
     onSuccess: (data, variables, context) => {
@@ -57,21 +71,28 @@ export function useApiMutation<TData = any, TVariables = any>(
         });
       }
 
-      // Invalidate related queries
       if (invalidateQueries) {
-        invalidateQueries.forEach(queryKey => {
-          queryClient.invalidateQueries({ queryKey });
-        });
+        for (const queryKey of invalidateQueries) {
+          queryClient.invalidateQueries({ queryKey: queryKey as unknown[] });
+        }
       }
+
+      mutationOptions.onSuccess?.(data, variables, context);
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       if (showErrorToast) {
+        const message =
+          errorMessage ??
+          (error as Record<string, any>)?.message ??
+          'Operation failed';
         toast({
           title: 'Error',
-          description: errorMessage || error?.message || 'Operation failed',
+          description: message,
           variant: 'error',
         });
       }
+
+      mutationOptions.onError?.(error, undefined as unknown as TVariables, undefined);
     },
   });
 }

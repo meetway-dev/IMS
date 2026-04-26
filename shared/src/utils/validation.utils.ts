@@ -1,15 +1,25 @@
-// Shared Validation Utilities
+/**
+ * Shared validation utilities.
+ *
+ * These helpers enforce the same rules on both client and server
+ * so validation errors stay consistent across the stack.
+ *
+ * @module validation.utils
+ */
 
 import { ValidationError } from '../types/api.types';
 
-/**
- * Common validation patterns that can be shared between BE and FE
- */
+// ---------------------------------------------------------------------------
+// Regex patterns
+// ---------------------------------------------------------------------------
 
-// Email validation regex
+/** RFC 5322-ish email pattern (good enough for UI validation). */
 export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-// Password validation rules
+// ---------------------------------------------------------------------------
+// Password validation
+// ---------------------------------------------------------------------------
+
 export interface PasswordValidationOptions {
   minLength?: number;
   requireUppercase?: boolean;
@@ -18,7 +28,7 @@ export interface PasswordValidationOptions {
   requireSpecialChars?: boolean;
 }
 
-export const DEFAULT_PASSWORD_OPTIONS: PasswordValidationOptions = {
+export const DEFAULT_PASSWORD_OPTIONS: Readonly<PasswordValidationOptions> = {
   minLength: 8,
   requireUppercase: true,
   requireLowercase: true,
@@ -26,19 +36,18 @@ export const DEFAULT_PASSWORD_OPTIONS: PasswordValidationOptions = {
   requireSpecialChars: true,
 };
 
-/**
- * Validate password strength
- */
+/** Validate a password against configurable strength rules. */
 export function validatePassword(
   password: string,
-  options: PasswordValidationOptions = DEFAULT_PASSWORD_OPTIONS
+  options: PasswordValidationOptions = DEFAULT_PASSWORD_OPTIONS,
 ): ValidationError[] {
   const errors: ValidationError[] = [];
+  const minLen = options.minLength ?? 8;
 
-  if (password.length < (options.minLength || 8)) {
+  if (password.length < minLen) {
     errors.push({
       field: 'password',
-      message: `Password must be at least ${options.minLength || 8} characters long`,
+      message: `Password must be at least ${minLen} characters long`,
     });
   }
 
@@ -63,7 +72,10 @@ export function validatePassword(
     });
   }
 
-  if (options.requireSpecialChars && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  if (
+    options.requireSpecialChars &&
+    !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)
+  ) {
     errors.push({
       field: 'password',
       message: 'Password must contain at least one special character',
@@ -73,9 +85,11 @@ export function validatePassword(
   return errors;
 }
 
-/**
- * Validate email format
- */
+// ---------------------------------------------------------------------------
+// Email validation
+// ---------------------------------------------------------------------------
+
+/** Validate an email address and return any errors. */
 export function validateEmail(email: string): ValidationError[] {
   const errors: ValidationError[] = [];
 
@@ -89,10 +103,14 @@ export function validateEmail(email: string): ValidationError[] {
   return errors;
 }
 
-/**
- * Convert validation errors to field-error mapping
- */
-export function mapValidationErrors(errors: ValidationError[]): Record<string, string> {
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Convert a `ValidationError[]` to a `{ field: message }` map (first error wins). */
+export function mapValidationErrors(
+  errors: ValidationError[],
+): Record<string, string> {
   const mapped: Record<string, string> = {};
 
   for (const error of errors) {
@@ -104,16 +122,16 @@ export function mapValidationErrors(errors: ValidationError[]): Record<string, s
   return mapped;
 }
 
-/**
- * Common validation messages
- */
+/** Reusable validation message templates. */
 export const VALIDATION_MESSAGES = {
   REQUIRED: (field: string) => `${field} is required`,
   INVALID_EMAIL: 'Please enter a valid email address',
-  MIN_LENGTH: (field: string, length: number) => `${field} must be at least ${length} characters`,
-  MAX_LENGTH: (field: string, length: number) => `${field} must not exceed ${length} characters`,
+  MIN_LENGTH: (field: string, length: number) =>
+    `${field} must be at least ${length} characters`,
+  MAX_LENGTH: (field: string, length: number) =>
+    `${field} must not exceed ${length} characters`,
   INVALID_FORMAT: (field: string) => `${field} has an invalid format`,
   MUST_BE_NUMBER: (field: string) => `${field} must be a number`,
   MUST_BE_POSITIVE: (field: string) => `${field} must be a positive number`,
   MUST_BE_DATE: (field: string) => `${field} must be a valid date`,
-};
+} as const;

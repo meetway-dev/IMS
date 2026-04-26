@@ -1,4 +1,18 @@
-// User & Auth Types
+/**
+ * Frontend type definitions.
+ *
+ * Domain-specific types that represent the shapes used by UI
+ * components. Where possible these mirror the API response shapes
+ * defined in `@ims/shared`, but adapted for frontend convenience
+ * (e.g. string dates, display-friendly field names).
+ *
+ * @module types
+ */
+
+// =========================================================================
+// Auth & Users
+// =========================================================================
+
 export interface User {
   id: string;
   email: string;
@@ -58,14 +72,18 @@ export interface TokenResponse {
   sessionId: string;
 }
 
+// =========================================================================
+// API primitives
+// =========================================================================
+
 export interface ApiResponse<T> {
   data: T;
   message?: string;
 }
 
 export interface ApiError {
-  message: string;
   statusCode: number;
+  message: string;
   error?: string;
   code?: string;
   errors?: ValidationError[];
@@ -76,27 +94,38 @@ export interface ValidationError {
   message: string;
 }
 
+// =========================================================================
+// Pagination
+// =========================================================================
+
 export interface PaginationParams {
   page?: number;
   limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
   search?: string;
   searchFields?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
   lowStock?: boolean;
 }
 
 export interface PaginatedResponse<T> {
   data: T[];
   meta: {
-    total: number;
     page: number;
     limit: number;
+    total: number;
     totalPages: number;
   };
 }
 
-// Product Types
+export interface FilterParams extends PaginationParams {
+  [key: string]: unknown;
+}
+
+// =========================================================================
+// Product catalogue
+// =========================================================================
+
 export interface Product {
   id: string;
   name: string;
@@ -105,10 +134,14 @@ export interface Product {
   categoryId: string;
   typeId: string;
   unitId: string;
+  /** Display-friendly sale price. */
   price: number;
+  /** Display-friendly purchase cost. */
   cost: number;
-  unit: string; // Display name from UnitOfMeasure relation
-  type: string; // Display name from ProductType relation
+  /** Display name from UnitOfMeasure relation. */
+  unit: string;
+  /** Display name from ProductType relation. */
+  type: string;
   minStockLevel: number;
   stock?: number;
   isActive: boolean;
@@ -118,7 +151,21 @@ export interface Product {
   category?: Category;
 }
 
-// Category Types
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  size?: string;
+  color?: string;
+  material?: string;
+  sku?: string;
+  barcode?: string;
+  product?: Product;
+}
+
+// =========================================================================
+// Categories
+// =========================================================================
+
 export interface Category {
   id: string;
   name: string;
@@ -132,7 +179,10 @@ export interface Category {
   parent?: Category;
 }
 
-// Supplier Types
+// =========================================================================
+// Suppliers
+// =========================================================================
+
 export interface Supplier {
   id: string;
   name: string;
@@ -145,7 +195,10 @@ export interface Supplier {
   updatedAt: string;
 }
 
-// Inventory Types
+// =========================================================================
+// Inventory
+// =========================================================================
+
 export interface Inventory {
   id: string;
   productId: string;
@@ -171,7 +224,12 @@ export interface InventoryTransaction {
   user?: User;
 }
 
-// Order Types
+// =========================================================================
+// Orders
+// =========================================================================
+
+export type OrderStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED';
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -189,8 +247,6 @@ export interface Order {
   items?: OrderItem[];
 }
 
-export type OrderStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED';
-
 export interface OrderItem {
   id: string;
   orderId: string;
@@ -201,7 +257,10 @@ export interface OrderItem {
   product?: Product;
 }
 
-// Company Types
+// =========================================================================
+// Company
+// =========================================================================
+
 export interface Company {
   id: string;
   name: string;
@@ -218,39 +277,16 @@ export interface Company {
   deletedAt?: string;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+// =========================================================================
+// Warehouses
+// =========================================================================
 
-export interface ApiError {
-  statusCode: number;
-  message: string;
-  error?: string;
-}
-
-// Form Types
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  searchFields?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-export interface FilterParams extends PaginationParams {
-  [key: string]: any;
-}
-
-// ─── Warehouse Types ──────────────────────────────────────────────────────
-
-export type WarehouseType = 'MAIN' | 'DISTRIBUTION' | 'RETAIL' | 'COLD_STORAGE' | 'BONDED';
+export type WarehouseType =
+  | 'MAIN'
+  | 'DISTRIBUTION'
+  | 'RETAIL'
+  | 'COLD_STORAGE'
+  | 'BONDED';
 
 export interface Warehouse {
   id: string;
@@ -271,16 +307,9 @@ export interface Warehouse {
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
-  manager?: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  manager?: { id: string; name: string; email: string };
   locations?: WarehouseLocation[];
-  _count?: {
-    locations: number;
-    stockLevels: number;
-  };
+  _count?: { locations: number; stockLevels: number };
 }
 
 export interface WarehouseStatistics {
@@ -319,9 +348,17 @@ export interface WarehouseListParams extends PaginationParams {
   isActive?: boolean;
 }
 
-// ─── Location Types ───────────────────────────────────────────────────────
+// =========================================================================
+// Warehouse Locations
+// =========================================================================
 
-export type LocationType = 'SHELF' | 'BIN' | 'PALLET' | 'RACK' | 'FLOOR' | 'COLD_ROOM';
+export type LocationType =
+  | 'SHELF'
+  | 'BIN'
+  | 'PALLET'
+  | 'RACK'
+  | 'FLOOR'
+  | 'COLD_ROOM';
 
 export interface WarehouseLocation {
   id: string;
@@ -342,9 +379,7 @@ export interface WarehouseLocation {
   deletedAt?: string;
   warehouse?: Warehouse;
   stockLevels?: StockLevel[];
-  _count?: {
-    stockLevels: number;
-  };
+  _count?: { stockLevels: number };
 }
 
 export interface CreateLocationData {
@@ -363,7 +398,9 @@ export interface CreateLocationData {
 
 export interface UpdateLocationData extends Partial<CreateLocationData> {}
 
-// ─── Stock Level Types ────────────────────────────────────────────────────
+// =========================================================================
+// Stock Levels
+// =========================================================================
 
 export interface StockLevel {
   id: string;
@@ -390,7 +427,9 @@ export interface StockLevelListParams extends PaginationParams {
   lowStock?: boolean;
 }
 
-// ─── Purchase Order Types ─────────────────────────────────────────────────
+// =========================================================================
+// Purchase Orders
+// =========================================================================
 
 export type PurchaseOrderStatus =
   | 'DRAFT'
@@ -423,16 +462,8 @@ export interface PurchaseOrder {
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
-  createdByUser?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  approvedByUser?: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  createdByUser?: { id: string; name: string; email: string };
+  approvedByUser?: { id: string; name: string; email: string };
   supplier?: Supplier;
   warehouse?: Warehouse;
   items?: PurchaseOrderItem[];
@@ -453,17 +484,6 @@ export interface PurchaseOrderItem {
   updatedAt: string;
   deletedAt?: string;
   variant?: ProductVariant;
-}
-
-export interface ProductVariant {
-  id: string;
-  productId: string;
-  size?: string;
-  color?: string;
-  material?: string;
-  sku?: string;
-  barcode?: string;
-  product?: Product;
 }
 
 export interface CreatePurchaseOrderData {
@@ -487,7 +507,9 @@ export interface PurchaseOrderListParams extends PaginationParams {
   warehouseId?: string;
 }
 
-// ─── Goods Receipt Note Types ─────────────────────────────────────────────
+// =========================================================================
+// Goods Receipt Notes
+// =========================================================================
 
 export type GoodsReceiptStatus = 'DRAFT' | 'COMPLETED' | 'CANCELLED';
 
@@ -503,11 +525,7 @@ export interface GoodsReceiptNote {
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
-  createdByUser?: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  createdByUser?: { id: string; name: string; email: string };
   purchaseOrder?: PurchaseOrder;
   warehouse?: Warehouse;
   items?: GoodsReceiptItem[];
