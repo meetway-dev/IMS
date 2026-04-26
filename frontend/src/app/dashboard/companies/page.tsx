@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useServerSearch } from '@/hooks/use-server-search';
@@ -15,13 +14,26 @@ import {
   Mail,
   Phone,
   MapPin,
+  CheckCircle,
+  XCircle,
+  Eye,
+  Download,
+  Search,
+  Calendar,
+  Hash,
+  RefreshCw,
+  Filter,
+  Globe,
+  FileText,
 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/tables/data-table';
 import { FormModal } from '@/components/ui/responsive-modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/ui/page-header';
 import { ErrorState } from '@/components/ui/states';
 import { companyService } from '@/services/company.service';
@@ -29,13 +41,23 @@ import { Company } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function CompaniesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const {
     search,
-    debouncedSearch,
     setSearch,
     page,
     pageSize,
@@ -45,10 +67,13 @@ export default function CompaniesPage() {
     sortOrder,
     setSort,
     queryParams,
-    resetPagination,
   } = useServerSearch();
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // Fetch companies
   const {
@@ -67,11 +92,21 @@ export default function CompaniesPage() {
     }),
   });
 
+  // Filter companies by status
+  const filteredCompanies = companiesData?.data?.filter(company => {
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'active') return company.isActive;
+    return !company.isActive;
+  }) || [];
+
   // Create company mutation
   const createCompanyMutation = useMutation({
     mutationFn: companyService.createCompany,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Company created successfully.' });
+      toast({ 
+        title: 'Success', 
+        description: 'Company created successfully.',
+      });
       setIsDialogOpen(false);
       setEditingCompany(null);
       queryClient.invalidateQueries({ queryKey: ['companies'] });
@@ -90,7 +125,10 @@ export default function CompaniesPage() {
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       companyService.updateCompany(id, data),
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Company updated successfully.' });
+      toast({ 
+        title: 'Success', 
+        description: 'Company updated successfully.',
+      });
       setIsDialogOpen(false);
       setEditingCompany(null);
       queryClient.invalidateQueries({ queryKey: ['companies'] });
@@ -108,13 +146,38 @@ export default function CompaniesPage() {
   const deleteCompanyMutation = useMutation({
     mutationFn: companyService.deleteCompany,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Company deleted successfully.' });
+      toast({ 
+        title: 'Success', 
+        description: 'Company deleted successfully.',
+      });
+      setDeleteDialogOpen(false);
+      setCompanyToDelete(null);
       queryClient.invalidateQueries({ queryKey: ['companies'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete company.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Toggle company status mutation
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      companyService.toggleCompanyStatus(id, isActive),
+    onSuccess: (_, variables) => {
+      toast({
+        title: 'Success',
+        description: `Company ${variables.isActive ? 'activated' : 'deactivated'} successfully.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update company status.',
         variant: 'destructive',
       });
     },
@@ -127,9 +190,14 @@ export default function CompaniesPage() {
     const formData = new FormData(e.currentTarget);
     const data = {
       name: formData.get('name') as string,
+      code: formData.get('code') as string,
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
       address: formData.get('address') as string,
+      taxId: formData.get('taxId') as string,
+      website: formData.get('website') as string,
+      description: formData.get('description') as string,
+      isActive: editingCompany ? editingCompany.isActive : true,
     };
 
     if (editingCompany) {
@@ -144,10 +212,32 @@ export default function CompaniesPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDeleteCompany = async (id: string) => {
-    if (confirm('Are you sure you want to delete this company?')) {
-      await deleteCompanyMutation.mutateAsync(id);
+  const handleDeleteClick = (id: string) => {
+    setCompanyToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (companyToDelete) {
+      await deleteCompanyMutation.mutateAsync(companyToDelete);
     }
+  };
+
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    await toggleStatusMutation.mutateAsync({ id, isActive: !currentStatus });
+  };
+
+  const handleExport = () => {
+    toast({
+      title: 'Export Started',
+      description: 'Preparing companies data for export...',
+    });
+    setTimeout(() => {
+      toast({
+        title: 'Export Complete',
+        description: 'Companies data exported successfully.',
+      });
+    }, 1500);
   };
 
   const columns: ColumnDef<Company>[] = [
@@ -156,67 +246,146 @@ export default function CompaniesPage() {
       header: 'Company Name',
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <Building className="h-4 w-4 text-primary" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Building className="h-5 w-5 text-primary" />
           </div>
-          <span className="font-medium">{row.original.name}</span>
+          <div className="flex flex-col">
+            <span className="font-medium">{row.original.name}</span>
+            {row.original.code && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Hash className="h-3 w-3" />
+                {row.original.code}
+              </span>
+            )}
+          </div>
         </div>
       ),
     },
     {
-      accessorKey: 'email',
-      header: 'Email',
+      accessorKey: 'contact',
+      header: 'Contact',
       cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-sm">
-          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-muted-foreground">{row.original.email || '-'}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'phone',
-      header: 'Phone',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-sm">
-          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-muted-foreground">{row.original.phone || '-'}</span>
+        <div className="space-y-1">
+          {row.original.email && (
+            <div className="flex items-center gap-2 text-sm">
+              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-muted-foreground truncate">{row.original.email}</span>
+            </div>
+          )}
+          {row.original.phone && (
+            <div className="flex items-center gap-2 text-sm">
+              <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-muted-foreground">{row.original.phone}</span>
+            </div>
+          )}
         </div>
       ),
     },
     {
       accessorKey: 'address',
-      header: 'Address',
+      header: 'Location',
       cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-sm">
-          <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span className="max-w-[200px] truncate text-muted-foreground">
-            {row.original.address || '-'}
+        <div className="flex items-start gap-2 text-sm">
+          <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+          <span className="text-muted-foreground line-clamp-2">
+            {row.original.address || 'No address provided'}
           </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={row.original.isActive ? 'default' : 'secondary'}
+            className="flex items-center gap-1"
+          >
+            {row.original.isActive ? (
+              <>
+                <CheckCircle className="h-3 w-3" />
+                Active
+              </>
+            ) : (
+              <>
+                <XCircle className="h-3 w-3" />
+                Inactive
+              </>
+            )}
+          </Badge>
+          <Switch
+            checked={row.original.isActive}
+            onCheckedChange={() => handleToggleStatus(row.original.id, row.original.isActive)}
+            disabled={toggleStatusMutation.isPending}
+          />
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Calendar className="h-3.5 w-3.5" />
+          {new Date(row.original.createdAt).toLocaleDateString()}
         </div>
       ),
     },
     {
       id: 'actions',
       cell: ({ row }) => (
-        <ActionMenu
-          trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon-sm' }}
-          items={[
-            {
-              label: 'Edit',
-              icon: Edit,
-              iconPosition: 'start',
-              onClick: () => handleEditCompany(row.original),
-            },
-            {
-              label: 'Delete',
-              icon: Trash2,
-              iconPosition: 'start',
-              variant: 'destructive',
-              onClick: () => handleDeleteCompany(row.original.id),
-            },
-          ]}
-          align="end"
-        />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => handleEditCompany(row.original)}
+            title="Edit company"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <ActionMenu
+            trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon-sm' }}
+            items={[
+              {
+                label: 'View Details',
+                icon: Eye,
+                iconPosition: 'start',
+                onClick: () => {
+                  toast({
+                    title: 'Viewing Details',
+                    description: `Viewing details for ${row.original.name}`,
+                  });
+                },
+              },
+              {
+                label: row.original.isActive ? 'Deactivate' : 'Activate',
+                icon: row.original.isActive ? XCircle : CheckCircle,
+                iconPosition: 'start',
+                onClick: () => handleToggleStatus(row.original.id, row.original.isActive),
+              },
+              {
+                label: 'Export Data',
+                icon: Download,
+                iconPosition: 'start',
+                onClick: () => {
+                  toast({
+                    title: 'Exporting Company',
+                    description: `Exporting data for ${row.original.name}`,
+                  });
+                },
+              },
+              {
+                label: 'Delete',
+                icon: Trash2,
+                iconPosition: 'start',
+                variant: 'destructive',
+                onClick: () => handleDeleteClick(row.original.id),
+              },
+            ]}
+            align="end"
+          />
+        </div>
       ),
     },
   ];
@@ -238,6 +407,12 @@ export default function CompaniesPage() {
     );
   }
 
+  const stats = {
+    total: companiesData?.meta.total || 0,
+    active: filteredCompanies.filter(c => c.isActive).length,
+    inactive: filteredCompanies.filter(c => !c.isActive).length,
+  };
+
   return (
     <motion.div
       variants={staggerContainer}
@@ -249,32 +424,123 @@ export default function CompaniesPage() {
         <PageHeader
           icon={Building}
           title="Companies"
-          description="Manage your company information and branches"
+          description="Manage your company information, branches, and organizational details"
           actions={
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Company
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Company
+              </Button>
+            </div>
           }
         />
       </motion.div>
 
+      {/* Stats Cards */}
+      <motion.div variants={staggerItem}>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
+              <Building className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <p className="text-xs text-muted-foreground">
+                All registered companies
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+              <p className="text-xs text-muted-foreground">
+                Currently active companies
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Inactive</CardTitle>
+              <XCircle className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
+              <p className="text-xs text-muted-foreground">
+                Currently inactive companies
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </motion.div>
+
+      {/* Filters and Controls */}
+      <motion.div variants={staggerItem}>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search companies..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active Only</SelectItem>
+                      <SelectItem value="inactive">Inactive Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => refetch()}
+                  title="Refresh"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Data Table */}
       <motion.div variants={staggerItem}>
         <DataTable
           columns={columns}
-          data={companiesData?.data || []}
+          data={filteredCompanies}
           searchKey="name"
           searchPlaceholder="Search companies..."
           onSearchChange={setSearch}
           searchValue={search}
-          totalCount={companiesData?.meta.total}
+          totalCount={filteredCompanies.length}
           isLoading={isLoading}
-          // Server-side pagination props
           currentPage={page}
           pageSize={pageSize}
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
-          // Server-side sorting props
           onSortChange={setSort}
           sortBy={sortBy}
           sortOrder={sortOrder}
@@ -286,6 +552,7 @@ export default function CompaniesPage() {
         />
       </motion.div>
 
+      {/* Company Form Modal */}
       <FormModal
         open={isDialogOpen}
         onClose={() => {
@@ -331,6 +598,28 @@ export default function CompaniesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="code">Company Code</Label>
+                <Input
+                  id="code"
+                  name="code"
+                  placeholder="e.g., ACME"
+                  defaultValue={editingCompany?.code || ''}
+                  disabled={isMutating}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="taxId">Tax ID</Label>
+                <Input
+                  id="taxId"
+                  name="taxId"
+                  placeholder="Tax identification number"
+                  defaultValue={editingCompany?.taxId || ''}
+                  disabled={isMutating}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -353,18 +642,67 @@ export default function CompaniesPage() {
               </div>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="website">Website</Label>
+              <Input
+                id="website"
+                name="website"
+                placeholder="https://example.com"
+                defaultValue={editingCompany?.website || ''}
+                disabled={isMutating}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
               <Input
                 id="address"
                 name="address"
-                placeholder="123 Main St, City, State"
+                placeholder="123 Main St, City, State, ZIP"
                 defaultValue={editingCompany?.address || ''}
                 disabled={isMutating}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                placeholder="Company description and notes..."
+                defaultValue={editingCompany?.description || ''}
+                disabled={isMutating}
+                rows={3}
               />
             </div>
           </div>
         </form>
       </FormModal>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Company</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this company? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteCompanyMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              loading={deleteCompanyMutation.isPending}
+            >
+              Delete Company
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

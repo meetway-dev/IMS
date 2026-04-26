@@ -5,7 +5,7 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto scrollbar-thin">
+  <div className="relative w-full overflow-auto scrollbar-thin rounded-lg border bg-background shadow-sm">
     <table
       ref={ref}
       className={cn('w-full caption-bottom text-sm', className)}
@@ -21,7 +21,10 @@ const TableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn('[&_tr]:border-b bg-muted/30', className)}
+    className={cn(
+      '[&_tr]:border-b bg-gradient-to-b from-muted/20 to-muted/5 border-b',
+      className
+    )}
     {...props}
   />
 ));
@@ -46,7 +49,7 @@ const TableFooter = React.forwardRef<
   <tfoot
     ref={ref}
     className={cn(
-      'border-t bg-muted/50 font-medium [&>tr]:last:border-b-0',
+      'border-t bg-gradient-to-t from-muted/30 to-transparent font-medium [&>tr]:last:border-b-0',
       className
     )}
     {...props}
@@ -61,7 +64,7 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      'border-b transition-colors hover:bg-muted/40 data-[state=selected]:bg-muted/60',
+      'border-b transition-all duration-150 hover:bg-accent/20 data-[state=selected]:bg-accent/40',
       className
     )}
     {...props}
@@ -76,7 +79,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      'h-10 px-4 text-left align-middle text-xs font-medium uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0',
+      'h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground [&:has([role=checkbox])]:pr-0',
       className
     )}
     {...props}
@@ -90,7 +93,10 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn('p-4 align-middle text-sm [&:has([role=checkbox])]:pr-0', className)}
+    className={cn(
+      'p-4 align-middle text-sm transition-colors duration-150 [&:has([role=checkbox])]:pr-0',
+      className
+    )}
     {...props}
   />
 ));

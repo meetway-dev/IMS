@@ -10,12 +10,19 @@ import {
   User,
   Settings,
   HelpCircle,
-  ChevronDown,
+  ChevronRight,
   Package,
   ShoppingCart,
   Mail,
   Shield,
   Calendar,
+  ChevronDown,
+  Home,
+  Filter,
+  Plus,
+  Truck,
+  FileText,
+  type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,77 +83,148 @@ export function Topbar() {
     }
   };
 
+  // Breadcrumb segments
+  const breadcrumbSegments = React.useMemo(() => {
+    const segments = pathname.split('/').filter(Boolean);
+    return segments.map((segment, index) => ({
+      name: segment.charAt(0).toUpperCase() + segment.slice(1),
+      path: '/' + segments.slice(0, index + 1).join('/'),
+      isLast: index === segments.length - 1,
+    }));
+  }, [pathname]);
+
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-background/80 backdrop-blur-md px-4 sm:px-6">
-      {/* Left: Mobile menu + Title */}
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/90 backdrop-blur-xl px-4 sm:px-6 lg:px-8">
+      {/* Left: Mobile menu + Title + Breadcrumb */}
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
-          size="icon-sm"
-          className="lg:hidden"
+          size="icon"
+          className="lg:hidden hover:bg-accent"
           onClick={() => setMobileMenuOpen(true)}
           aria-label="Open menu"
         >
-          <Menu className="h-4 w-4" />
+          <Menu className="h-5 w-5" />
         </Button>
 
         <div className="flex flex-col min-w-0">
-          <h1 className="text-sm font-semibold tracking-tight truncate">{pageTitle}</h1>
-          <div className="hidden sm:flex items-center gap-1 text-[11px] text-muted-foreground">
-            <span>Dashboard</span>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold tracking-tight text-foreground truncate">{pageTitle}</h1>
             {pathname !== '/dashboard' && (
-              <>
-                <ChevronDown className="h-2.5 w-2.5 rotate-270" />
-                <span className="capitalize">{pathname.split('/').pop()}</span>
-              </>
+              <Badge variant="outline" className="hidden sm:inline-flex text-xs font-medium px-2 py-0.5 h-5">
+                {breadcrumbSegments.length - 1} sections
+              </Badge>
             )}
+          </div>
+          <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+            <Home className="h-3.5 w-3.5" />
+            {breadcrumbSegments.map((segment, index) => (
+              <React.Fragment key={segment.path}>
+                <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+                {segment.isLast ? (
+                  <span className="font-medium text-foreground">{segment.name}</span>
+                ) : (
+                  <button
+                    onClick={() => router.push(segment.path)}
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {segment.name}
+                  </button>
+                )}
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Center: Search */}
-      <div className="relative hidden md:flex flex-1 max-w-md mx-6">
-        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      <div className="relative hidden lg:flex flex-1 max-w-xl mx-6">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <Search className="h-4 w-4 text-muted-foreground" />
+        </div>
         <Input
           type="search"
-          placeholder="Search..."
-          className="w-full h-8 pl-9 pr-4 rounded-lg bg-muted/50 border-0 text-sm focus-visible:ring-1 focus-visible:ring-ring"
+          placeholder="Search products, orders, suppliers..."
+          className="w-full h-10 pl-10 pr-4 rounded-xl bg-muted/40 border border-input/50 text-sm focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all"
           aria-label="Search"
         />
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+          <kbd className="hidden xl:inline-flex items-center gap-0.5 rounded border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            ⌘K
+          </kbd>
+        </div>
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         {/* Mobile search */}
-        <Button variant="ghost" size="icon-sm" className="md:hidden" aria-label="Search">
-          <Search className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="lg:hidden hover:bg-accent" aria-label="Search">
+          <Search className="h-5 w-5" />
         </Button>
+
+        {/* Quick actions dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="hidden md:flex gap-1.5 h-9 px-3 rounded-lg">
+              <Plus className="h-4 w-4" />
+              <span className="text-sm font-medium">Create</span>
+              <ChevronDown className="h-3.5 w-3.5 ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-48" align="end">
+            <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">Quick Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer py-2.5 text-sm">
+              <Package className="mr-2.5 h-4 w-4" />
+              New Product
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer py-2.5 text-sm">
+              <ShoppingCart className="mr-2.5 h-4 w-4" />
+              New Order
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer py-2.5 text-sm">
+              <Truck className="mr-2.5 h-4 w-4" />
+              New Supplier
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer py-2.5 text-sm">
+              <FileText className="mr-2.5 h-4 w-4" />
+              New Purchase Order
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer py-2.5 text-sm text-primary font-medium">
+              View all actions
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Theme toggle */}
         <ThemeToggle />
 
         {/* Help */}
-        <Button variant="ghost" size="icon-sm" className="hidden sm:flex" aria-label="Help">
-          <HelpCircle className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="hidden sm:flex hover:bg-accent" aria-label="Help">
+          <HelpCircle className="h-5 w-5" />
         </Button>
 
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" className="relative" aria-label="Notifications">
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-destructive" />
+            <Button variant="ghost" size="icon" className="relative hover:bg-accent" aria-label="Notifications">
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive border border-background" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-80" align="end">
-            <DropdownMenuLabel className="flex items-center justify-between text-sm">
-              <span>Notifications</span>
+          <DropdownMenuContent className="w-88" align="end">
+            <DropdownMenuLabel className="flex items-center justify-between p-4">
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">Notifications</span>
+                <span className="text-xs text-muted-foreground mt-0.5">You have 3 unread notifications</span>
+              </div>
               <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-primary hover:text-primary">
                 Mark all read
               </Button>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div className="max-h-72 overflow-y-auto scrollbar-thin p-1">
+            <div className="max-h-80 overflow-y-auto scrollbar-thin p-2">
               <NotificationItem
                 icon={Package}
                 iconColor="text-primary"
@@ -154,6 +232,7 @@ export function Topbar() {
                 description="LED Bulb 10W is running low (5 left)"
                 time="2h ago"
                 badge="Inventory"
+                unread
               />
               <NotificationItem
                 icon={ShoppingCart}
@@ -162,6 +241,7 @@ export function Topbar() {
                 description="Order #ORD-004 from Jane Smith"
                 time="4h ago"
                 badge="Order"
+                unread
               />
               <NotificationItem
                 icon={Mail}
@@ -171,15 +251,23 @@ export function Topbar() {
                 time="1d ago"
                 badge="Support"
               />
+              <NotificationItem
+                icon={Shield}
+                iconColor="text-warning"
+                title="Security alert"
+                description="Unusual login attempt detected"
+                time="2d ago"
+                badge="Security"
+              />
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer justify-center text-xs font-medium text-primary py-2">
+            <DropdownMenuItem className="cursor-pointer justify-center text-sm font-medium text-primary py-3 hover:bg-accent/50">
               View all notifications
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Separator orientation="vertical" className="mx-1 h-5 hidden sm:block" />
+        <Separator orientation="vertical" className="mx-1 h-6 hidden sm:block" />
 
         {/* User menu */}
         {user && (
@@ -187,51 +275,88 @@ export function Topbar() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="h-8 px-2 gap-2 rounded-lg"
+                className="h-10 px-2.5 gap-3 rounded-xl hover:bg-accent"
                 aria-label="User menu"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-[11px] font-medium text-background">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-xs font-medium text-primary-foreground shadow-sm">
                   {getInitials(user.name)}
                 </div>
-                <span className="hidden md:block text-sm font-medium max-w-[100px] truncate">
-                  {user.name?.split(' ')[0]}
-                </span>
-                <ChevronDown className="hidden md:block h-3 w-3 text-muted-foreground" />
+                <div className="hidden md:flex flex-col items-start min-w-0">
+                  <span className="text-sm font-semibold max-w-[120px] truncate text-foreground">
+                    {user.name?.split(' ')[0]}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">{user.roles?.[0] || 'User'}</span>
+                </div>
+                <ChevronDown className="hidden md:block h-4 w-4 text-muted-foreground ml-1" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end">
-              <DropdownMenuLabel className="font-normal p-3">
+            <DropdownMenuContent className="w-64" align="end">
+              <DropdownMenuLabel className="font-normal p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-xs font-medium text-background">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-sm font-medium text-primary-foreground">
                     {getInitials(user.name)}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <p className="text-sm font-medium truncate">{user.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    <p className="text-sm font-semibold truncate text-foreground">{user.name}</p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">{user.email}</p>
+                    <Badge variant="outline" className="mt-1.5 text-[10px] px-1.5 py-0 h-5 w-fit">
+                      {user.roles?.[0] || 'User'}
+                    </Badge>
                   </div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/dashboard/profile')} className="cursor-pointer py-2 text-sm">
-                <User className="mr-2 h-4 w-4" /> Profile
+              <DropdownMenuItem 
+                onClick={() => router.push('/dashboard/profile')} 
+                className="cursor-pointer py-3 text-sm hover:bg-accent/50"
+              >
+                <User className="mr-3 h-4 w-4" />
+                <div className="flex flex-col">
+                  <span>Profile</span>
+                  <span className="text-xs text-muted-foreground">View your profile</span>
+                </div>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/dashboard/profile/settings')} className="cursor-pointer py-2 text-sm">
-                <Settings className="mr-2 h-4 w-4" /> Settings
+              <DropdownMenuItem 
+                onClick={() => router.push('/dashboard/profile/settings')} 
+                className="cursor-pointer py-3 text-sm hover:bg-accent/50"
+              >
+                <Settings className="mr-3 h-4 w-4" />
+                <div className="flex flex-col">
+                  <span>Settings</span>
+                  <span className="text-xs text-muted-foreground">Manage preferences</span>
+                </div>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/dashboard/profile/security')} className="cursor-pointer py-2 text-sm">
-                <Shield className="mr-2 h-4 w-4" /> Security
+              <DropdownMenuItem 
+                onClick={() => router.push('/dashboard/profile/security')} 
+                className="cursor-pointer py-3 text-sm hover:bg-accent/50"
+              >
+                <Shield className="mr-3 h-4 w-4" />
+                <div className="flex flex-col">
+                  <span>Security</span>
+                  <span className="text-xs text-muted-foreground">Password & 2FA</span>
+                </div>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/dashboard/profile/activity')} className="cursor-pointer py-2 text-sm">
-                <Calendar className="mr-2 h-4 w-4" /> Activity Log
+              <DropdownMenuItem 
+                onClick={() => router.push('/dashboard/profile/activity')} 
+                className="cursor-pointer py-3 text-sm hover:bg-accent/50"
+              >
+                <Calendar className="mr-3 h-4 w-4" />
+                <div className="flex flex-col">
+                  <span>Activity Log</span>
+                  <span className="text-xs text-muted-foreground">Recent activities</span>
+                </div>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleLogout}
                 disabled={logout.isPending}
-                className="cursor-pointer py-2 text-sm text-destructive focus:text-destructive"
+                className="cursor-pointer py-3 text-sm text-destructive focus:text-destructive hover:bg-destructive/10"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                {logout.isPending ? 'Logging out...' : 'Log out'}
+                <LogOut className="mr-3 h-4 w-4" />
+                <div className="flex flex-col">
+                  <span>{logout.isPending ? 'Logging out...' : 'Log out'}</span>
+                  <span className="text-xs text-muted-foreground">Sign out of your account</span>
+                </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -250,6 +375,7 @@ function NotificationItem({
   description,
   time,
   badge,
+  unread = false,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   iconColor: string;
@@ -257,19 +383,28 @@ function NotificationItem({
   description: string;
   time: string;
   badge: string;
+  unread?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg p-2.5 hover:bg-accent/50 transition-colors cursor-pointer">
-      <div className={cn('flex h-7 w-7 items-center justify-center rounded-full bg-muted shrink-0')}>
-        <Icon className={cn('h-3.5 w-3.5', iconColor)} />
+    <div className="flex items-start gap-3 rounded-xl p-3 hover:bg-accent/50 transition-colors cursor-pointer group">
+      {unread && (
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary" />
+      )}
+      <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 shrink-0 group-hover:bg-muted')}>
+        <Icon className={cn('h-4.5 w-4.5', iconColor)} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-medium truncate">{title}</p>
-          <Badge variant="muted" className="text-[10px] shrink-0">{badge}</Badge>
+          <p className="text-sm font-medium truncate text-foreground">{title}</p>
+          <Badge variant="outline" className="text-[10px] shrink-0 px-1.5 py-0 h-5">{badge}</Badge>
         </div>
-        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{description}</p>
-        <p className="text-[10px] text-muted-foreground mt-0.5">{time}</p>
+        <p className="text-sm text-muted-foreground mt-1 truncate">{description}</p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-xs text-muted-foreground">{time}</p>
+          {unread && (
+            <span className="text-xs font-medium text-primary">New</span>
+          )}
+        </div>
       </div>
     </div>
   );

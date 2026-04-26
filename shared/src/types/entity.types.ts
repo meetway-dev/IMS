@@ -100,10 +100,14 @@ export interface OrderItem extends BaseEntity {
 
 export interface Company extends BaseEntity {
   name: string;
+  code?: string;
   email?: string;
   phone?: string;
   address?: string;
   taxId?: string;
+  website?: string;
+  description?: string;
+  isActive: boolean;
 }
 
 export interface AuditLog extends BaseEntity {

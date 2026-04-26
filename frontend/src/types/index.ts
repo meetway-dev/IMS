@@ -205,11 +205,17 @@ export interface OrderItem {
 export interface Company {
   id: string;
   name: string;
+  code?: string;
   email?: string;
   phone?: string;
   address?: string;
+  taxId?: string;
+  website?: string;
+  description?: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
 }
 
 export interface PaginatedResponse<T> {

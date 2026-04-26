@@ -25,6 +25,8 @@ import {
   Warehouse,
   PackageCheck,
   Key,
+  Home,
+  PieChart,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
@@ -32,6 +34,7 @@ import { useUIStore } from '@/store/ui-store';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 // ─── Navigation config ──────────────────────────────────────────────────────
 
@@ -155,16 +158,16 @@ function NavigationGroup({
       <Link
         href={group.href}
         className={cn(
-          'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150',
+          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
           isActive
-            ? 'bg-accent text-accent-foreground'
-            : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+            ? 'bg-primary/10 text-primary border-l-4 border-primary'
+            : 'text-muted-foreground hover:bg-accent hover:text-foreground'
         )}
       >
-        <group.icon className={cn('h-4 w-4 shrink-0', isActive && 'text-foreground')} />
-        {sidebarOpen && <span>{group.title}</span>}
+        <group.icon className={cn('h-4.5 w-4.5 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
+        {sidebarOpen && <span className="font-medium">{group.title}</span>}
         {sidebarOpen && isActive && (
-          <div className="ml-auto h-1.5 w-1.5 rounded-full bg-foreground" />
+          <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
         )}
       </Link>
     );
@@ -177,15 +180,15 @@ function NavigationGroup({
         <button
           onClick={() => toggleGroup(group.id)}
           className={cn(
-            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-150',
-            isExpanded ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+            'flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200',
+            isExpanded ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
           )}
           title={group.title}
         >
-          <group.icon className="h-4 w-4" />
+          <group.icon className="h-4.5 w-4.5" />
         </button>
         {isExpanded && group.items && (
-          <div className="flex flex-col items-center gap-0.5 pt-1">
+          <div className="flex flex-col items-center gap-1 pt-2">
             {group.items.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -194,13 +197,13 @@ function NavigationGroup({
                   href={item.href}
                   title={item.name}
                   className={cn(
-                    'flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150',
+                    'flex h-8 w-8 items-center justify-center rounded-md transition-all duration-200',
                     isActive
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                   )}
                 >
-                  <item.icon className="h-3.5 w-3.5" />
+                  <item.icon className="h-4 w-4" />
                 </Link>
               );
             })}
@@ -212,16 +215,19 @@ function NavigationGroup({
 
   // Expanded sidebar — full group
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-1">
       <button
         onClick={() => toggleGroup(group.id)}
-        className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors duration-150"
+        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 group"
       >
-        <span>{group.title}</span>
+        <div className="flex items-center gap-2.5">
+          <group.icon className="h-3.5 w-3.5 group-hover:text-primary transition-colors" />
+          <span>{group.title}</span>
+        </div>
         <ChevronRight
           className={cn(
-            'h-3 w-3 transition-transform duration-150',
-            isExpanded && 'rotate-90'
+            'h-3.5 w-3.5 transition-all duration-200',
+            isExpanded && 'rotate-90 text-primary'
           )}
         />
       </button>
@@ -235,20 +241,20 @@ function NavigationGroup({
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'group flex items-center justify-between rounded-lg px-3 py-1.5 text-sm transition-colors duration-150',
+                  'group/item flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all duration-200',
                   isActive
-                    ? 'bg-accent text-accent-foreground font-medium'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                    ? 'bg-primary/10 text-primary font-medium border-l-2 border-primary'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )}
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <item.icon className={cn('h-4 w-4 shrink-0', isActive && 'text-foreground')} />
+                <div className="flex items-center gap-3 min-w-0">
+                  <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground group-hover/item:text-foreground')} />
                   <span className="truncate">{item.name}</span>
                 </div>
                 {item.badge && (
-                  <span className="ml-2 inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  <Badge variant="outline" className="ml-2 text-[10px] font-medium px-1.5 py-0 h-5">
                     {item.badge}
-                  </span>
+                  </Badge>
                 )}
               </Link>
             );
@@ -294,34 +300,34 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-card transition-all duration-200 lg:static lg:inset-y-0',
-          sidebarOpen ? 'w-60' : 'w-[68px]',
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-card/50 backdrop-blur-sm transition-all duration-300 ease-out lg:static lg:inset-y-0',
+          sidebarOpen ? 'w-64' : 'w-[72px]',
+          mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Logo area */}
-        <div className={cn('flex h-14 items-center border-b px-4', sidebarOpen ? 'justify-between' : 'justify-center')}>
+        <div className={cn('flex h-16 items-center border-b px-4', sidebarOpen ? 'justify-between' : 'justify-center')}>
           {sidebarOpen ? (
-            <Link href="/dashboard" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
-                <span className="text-xs font-bold text-background">IM</span>
+            <Link href="/dashboard" className="flex items-center gap-3 group">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
+                <span className="text-sm font-bold text-primary-foreground">IM</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold tracking-tight">Inventory</span>
-                <span className="text-[10px] text-muted-foreground leading-none">Management</span>
+                <span className="text-sm font-semibold tracking-tight text-foreground">Inventory</span>
+                <span className="text-[11px] text-muted-foreground leading-none">Management System</span>
               </div>
             </Link>
           ) : (
             <Link href="/dashboard">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
-                <span className="text-xs font-bold text-background">IM</span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
+                <span className="text-sm font-bold text-primary-foreground">IM</span>
               </div>
             </Link>
           )}
           <Button
             variant="ghost"
             size="icon-sm"
-            className="lg:hidden"
+            className="lg:hidden hover:bg-accent"
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close menu"
           >
@@ -330,7 +336,7 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <ScrollArea className="flex-1 px-3 py-3">
+        <ScrollArea className="flex-1 px-3 py-4">
           <div className="space-y-1">
             {navigationGroups.map((group) => (
               <NavigationGroup
@@ -346,17 +352,17 @@ export function Sidebar() {
         </ScrollArea>
 
         {/* Footer / collapse toggle */}
-        <div className="border-t p-3">
+        <div className="border-t p-4">
           {sidebarOpen ? (
             <div className="flex items-center justify-between">
               {user && (
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 text-xs font-medium text-primary">
                     {user.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-medium truncate">{user.name?.split(' ')[0]}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{user.roles?.[0] || 'User'}</p>
+                    <p className="text-sm font-medium truncate text-foreground">{user.name?.split(' ')[0]}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{user.roles?.[0] || 'User'}</p>
                   </div>
                 </div>
               )}
@@ -365,7 +371,7 @@ export function Sidebar() {
                 size="icon-sm"
                 onClick={toggleSidebar}
                 aria-label="Collapse sidebar"
-                className="hidden lg:flex shrink-0"
+                className="hidden lg:flex shrink-0 hover:bg-accent"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -377,7 +383,7 @@ export function Sidebar() {
                 size="icon-sm"
                 onClick={toggleSidebar}
                 aria-label="Expand sidebar"
-                className="hidden lg:flex"
+                className="hidden lg:flex hover:bg-accent"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

@@ -4,13 +4,22 @@ import { Company, PaginatedResponse, PaginationParams } from '@/types';
 
 interface CreateCompanyData {
   name: string;
+  code?: string;
   email?: string;
   phone?: string;
   address?: string;
+  taxId?: string;
+  website?: string;
+  description?: string;
+  isActive?: boolean;
 }
 
 interface UpdateCompanyData extends Partial<CreateCompanyData> {
   isActive?: boolean;
+}
+
+interface ToggleCompanyStatusData {
+  isActive: boolean;
 }
 
 export const companyService = {
@@ -57,5 +66,16 @@ export const companyService = {
    */
   async deleteCompany(id: string): Promise<void> {
     await apiClient.delete(API_ENDPOINTS.COMPANIES.DELETE(id));
+  },
+
+  /**
+   * Toggle company active status
+   */
+  async toggleCompanyStatus(id: string, isActive: boolean): Promise<Company> {
+    const response = await apiClient.patch<Company>(
+      API_ENDPOINTS.COMPANIES.UPDATE(id),
+      { isActive }
+    );
+    return response.data;
   },
 };
