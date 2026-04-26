@@ -25,15 +25,12 @@ import {
   Warehouse,
   PackageCheck,
   Key,
-  Home,
-  PieChart,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useUIStore } from '@/store/ui-store';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 
 // ─── Navigation config ──────────────────────────────────────────────────────
@@ -158,37 +155,34 @@ function NavigationGroup({
       <Link
         href={group.href}
         className={cn(
-          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+          'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
           isActive
-            ? 'bg-primary/10 text-primary border-l-4 border-primary'
-            : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+            ? 'bg-primary text-primary-foreground shadow-sm'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
         )}
       >
-        <group.icon className={cn('h-4.5 w-4.5 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
-        {sidebarOpen && <span className="font-medium">{group.title}</span>}
-        {sidebarOpen && isActive && (
-          <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
-        )}
+        <group.icon className={cn('h-4 w-4 shrink-0', isActive && 'text-primary-foreground')} />
+        {sidebarOpen && <span>{group.title}</span>}
       </Link>
     );
   }
 
-  // Collapsed sidebar — just the icon
+  // Collapsed sidebar - just the icon
   if (!sidebarOpen) {
     return (
-      <div className="flex flex-col items-center gap-1 py-1">
+      <div className="flex flex-col items-center gap-0.5 py-1">
         <button
           onClick={() => toggleGroup(group.id)}
           className={cn(
-            'flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200',
-            isExpanded ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+            'flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-150',
+            isExpanded ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
           )}
           title={group.title}
         >
-          <group.icon className="h-4.5 w-4.5" />
+          <group.icon className="h-4 w-4" />
         </button>
         {isExpanded && group.items && (
-          <div className="flex flex-col items-center gap-1 pt-2">
+          <div className="flex flex-col items-center gap-0.5 pt-1">
             {group.items.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -197,13 +191,13 @@ function NavigationGroup({
                   href={item.href}
                   title={item.name}
                   className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-md transition-all duration-200',
+                    'flex h-8 w-8 items-center justify-center rounded-md transition-all duration-150',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="h-3.5 w-3.5" />
                 </Link>
               );
             })}
@@ -213,27 +207,24 @@ function NavigationGroup({
     );
   }
 
-  // Expanded sidebar — full group
+  // Expanded sidebar - full group
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       <button
         onClick={() => toggleGroup(group.id)}
-        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 group"
+        className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-150"
       >
-        <div className="flex items-center gap-2.5">
-          <group.icon className="h-3.5 w-3.5 group-hover:text-primary transition-colors" />
-          <span>{group.title}</span>
-        </div>
+        <span>{group.title}</span>
         <ChevronRight
           className={cn(
-            'h-3.5 w-3.5 transition-all duration-200',
-            isExpanded && 'rotate-90 text-primary'
+            'h-3 w-3 transition-transform duration-200',
+            isExpanded && 'rotate-90'
           )}
         />
       </button>
 
       {isExpanded && group.items && (
-        <div className="space-y-0.5 pl-2">
+        <div className="space-y-0.5">
           {group.items.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -241,18 +232,18 @@ function NavigationGroup({
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'group/item flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all duration-200',
+                  'group/item flex items-center justify-between rounded-lg px-3 py-1.5 text-sm transition-all duration-150',
                   isActive
-                    ? 'bg-primary/10 text-primary font-medium border-l-2 border-primary'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                    ? 'bg-primary text-primary-foreground font-medium shadow-sm'
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 )}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground group-hover/item:text-foreground')} />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-primary-foreground' : 'text-muted-foreground/70 group-hover/item:text-accent-foreground')} />
                   <span className="truncate">{item.name}</span>
                 </div>
                 {item.badge && (
-                  <Badge variant="outline" className="ml-2 text-[10px] font-medium px-1.5 py-0 h-5">
+                  <Badge variant="muted" className="ml-2 text-[10px] font-medium px-1.5 py-0 h-[18px] rounded-full">
                     {item.badge}
                   </Badge>
                 )}
@@ -291,7 +282,7 @@ export function Sidebar() {
       {/* Mobile backdrop */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
           aria-hidden="true"
         />
@@ -300,27 +291,27 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-card/50 backdrop-blur-sm transition-all duration-300 ease-out lg:static lg:inset-y-0',
-          sidebarOpen ? 'w-64' : 'w-[72px]',
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar-background transition-all duration-300 ease-out lg:static lg:inset-y-0',
+          sidebarOpen ? 'w-60' : 'w-[68px]',
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Logo area */}
-        <div className={cn('flex h-16 items-center border-b px-4', sidebarOpen ? 'justify-between' : 'justify-center')}>
+        <div className={cn('flex h-14 items-center border-b border-sidebar-border px-4', sidebarOpen ? 'justify-between' : 'justify-center')}>
           {sidebarOpen ? (
-            <Link href="/dashboard" className="flex items-center gap-3 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
-                <span className="text-sm font-bold text-primary-foreground">IM</span>
+            <Link href="/dashboard" className="flex items-center gap-2.5 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background">
+                <span className="text-xs font-bold tracking-tight">IM</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold tracking-tight text-foreground">Inventory</span>
-                <span className="text-[11px] text-muted-foreground leading-none">Management System</span>
+                <span className="text-sm font-semibold tracking-tight text-foreground leading-none">IMS</span>
+                <span className="text-[10px] text-muted-foreground leading-none mt-0.5">Inventory System</span>
               </div>
             </Link>
           ) : (
             <Link href="/dashboard">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
-                <span className="text-sm font-bold text-primary-foreground">IM</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background">
+                <span className="text-xs font-bold tracking-tight">IM</span>
               </div>
             </Link>
           )}
@@ -336,7 +327,7 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <ScrollArea className="flex-1 px-3 py-4">
+        <ScrollArea className="flex-1 px-3 py-3">
           <div className="space-y-1">
             {navigationGroups.map((group) => (
               <NavigationGroup
@@ -352,17 +343,17 @@ export function Sidebar() {
         </ScrollArea>
 
         {/* Footer / collapse toggle */}
-        <div className="border-t p-4">
+        <div className="border-t border-sidebar-border p-3">
           {sidebarOpen ? (
             <div className="flex items-center justify-between">
               {user && (
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 text-xs font-medium text-primary">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground shrink-0">
                     {user.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate text-foreground">{user.name?.split(' ')[0]}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{user.roles?.[0] || 'User'}</p>
+                    <p className="text-sm font-medium truncate text-foreground leading-none">{user.name?.split(' ')[0]}</p>
+                    <p className="text-[11px] text-muted-foreground truncate mt-0.5">{user.roles?.[0] || 'User'}</p>
                   </div>
                 </div>
               )}
@@ -371,7 +362,7 @@ export function Sidebar() {
                 size="icon-sm"
                 onClick={toggleSidebar}
                 aria-label="Collapse sidebar"
-                className="hidden lg:flex shrink-0 hover:bg-accent"
+                className="hidden lg:flex shrink-0 text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -383,7 +374,7 @@ export function Sidebar() {
                 size="icon-sm"
                 onClick={toggleSidebar}
                 aria-label="Expand sidebar"
-                className="hidden lg:flex hover:bg-accent"
+                className="hidden lg:flex text-muted-foreground hover:text-foreground"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

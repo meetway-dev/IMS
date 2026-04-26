@@ -27,20 +27,14 @@ export default function DashboardLayout({
   React.useEffect(() => {
     // Wait for auth initialization to complete
     if (!isInitialized || authLoading) {
-      console.log('DashboardLayout: Waiting for auth initialization', { isInitialized, authLoading });
       return;
     }
     
-    console.log('DashboardLayout: Auth initialized', { isAuthenticated, hasRedirected, pathname });
-    
     if (!isAuthenticated && !hasRedirected) {
-      console.log('DashboardLayout: Not authenticated, redirecting to login with redirect param', pathname);
       setHasRedirected(true);
-      // Preserve current path for redirect back after login
       const redirectUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
       router.push(redirectUrl);
     } else if (isAuthenticated) {
-      console.log('DashboardLayout: Authenticated, setting isCheckingAuth false');
       setIsCheckingAuth(false);
     }
   }, [isAuthenticated, authLoading, isInitialized, router, hasRedirected, pathname]);
@@ -60,7 +54,7 @@ export default function DashboardLayout({
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
+        <main className="flex-1 overflow-y-auto scrollbar-thin bg-muted/30">
           <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             {children}
           </div>

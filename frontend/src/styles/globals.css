@@ -4,116 +4,136 @@
 
 @layer base {
   :root {
-    /* ── Modern color palette inspired by Vercel/Linear/Stripe ── */
+    /* ── Premium color palette - Clean, modern, professional ── */
     
     /* Background & Foreground */
-    --background: 0 0% 100%; /* Pure white */
-    --foreground: 222.2 84% 4.9%; /* Near black - better contrast */
+    --background: 0 0% 99%;
+    --foreground: 224 71.4% 4.1%;
     
-    /* Card */
+    /* Card - Slightly elevated from background */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 224 71.4% 4.1%;
     
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 224 71.4% 4.1%;
     
-    /* Primary - Modern Indigo (Vercel/Linear style) */
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Rich Indigo */
+    --primary: 220.9 39.3% 11%;
+    --primary-foreground: 210 20% 98%;
     
-    /* Secondary - Subtle gray */
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Subtle warm gray */
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
     
-    /* Muted - Softer gray for subtle text */
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted */
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
     
-    /* Accent - Complementary to primary */
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent */
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
     
-    /* Semantic Colors - Modern, softer tones */
+    /* Semantic Colors */
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 210 20% 98%;
     
     --success: 142.1 76.2% 36.3%;
     --success-foreground: 355.7 100% 97.3%;
     
-    --warning: 32.1 94.6% 43.7%;
-    --warning-foreground: 210 40% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 5%;
     
-    --info: 199.8 89.1% 48.2%;
-    --info-foreground: 210 40% 98%;
+    --info: 217.2 91.2% 59.8%;
+    --info-foreground: 210 20% 98%;
     
-    /* Border & Input - Subtle gray */
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%; /* Matches primary */
+    /* Border & Input */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 71.4% 4.1%;
     
-    /* Border radius - Softer, modern (8px) */
-    --radius: 0.5rem;
+    /* Sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
     
-    /* ── Chart colors ── */
-    --chart-1: 221.2 83.2% 53.3%; /* Primary blue */
-    --chart-2: 142.1 76.2% 36.3%; /* Success green */
-    --chart-3: 32.1 94.6% 43.7%; /* Warning orange */
-    --chart-4: 262.1 83.3% 57.8%; /* Purple */
-    --chart-5: 346.8 77.2% 49.8%; /* Pink/red */
+    /* Border radius */
+    --radius: 0.625rem;
+    
+    /* Chart colors */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 
   .dark {
-    /* Dark mode - Inspired by Linear dark theme */
-    --background: 222.2 84% 4.9%; /* Dark blue-gray */
-    --foreground: 210 40% 98%;
+    /* Dark mode - Premium dark theme */
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
     
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
     
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
     
-    /* Primary - Brighter blue for dark mode */
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary */
+    --primary: 210 20% 98%;
+    --primary-foreground: 220.9 39.3% 11%;
     
-    /* Secondary - Darker gray */
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary */
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
     
-    /* Muted - Dark gray for subtle elements */
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Muted */
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
     
     /* Accent */
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
     
-    /* Semantic Colors - Adjusted for dark mode */
+    /* Semantic Colors */
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 210 20% 98%;
     
     --success: 142.1 70.6% 45.3%;
     --success-foreground: 144.9 80.4% 10%;
     
-    --warning: 32.1 94.6% 43.7%;
-    --warning-foreground: 210 40% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 5%;
     
-    --info: 199.8 89.1% 48.2%;
-    --info-foreground: 210 40% 98%;
+    --info: 217.2 91.2% 59.8%;
+    --info-foreground: 222.2 47.4% 11.2%;
     
-    /* Border & Input - Darker borders */
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    /* Border & Input */
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 216 12.2% 83.9%;
+    
+    /* Sidebar */
+    --sidebar-background: 224 71.4% 4.1%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 27.9% 16.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 215 27.9% 16.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
     
     /* Chart colors for dark mode */
-    --chart-1: 217.2 91.2% 59.8%;
-    --chart-2: 142.1 70.6% 45.3%;
-    --chart-3: 32.1 94.6% 43.7%;
-    --chart-4: 262.1 83.3% 57.8%;
-    --chart-5: 346.8 77.2% 49.8%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -125,7 +145,6 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   html {
@@ -135,23 +154,9 @@
     color-scheme: light dark;
   }
 
-  /* Smooth theme transitions for specific properties */
-  *,
-  *::before,
-  *::after {
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, fill 0.3s ease, stroke 0.3s ease;
-  }
-
-  /* Disable transitions during theme changes to prevent flash */
-  .disable-transitions *,
-  .disable-transitions *::before,
-  .disable-transitions *::after {
-    transition: none !important;
-  }
-
   /* Focus ring standardization */
   :focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+    @apply outline-none ring-2 ring-ring/20 ring-offset-2 ring-offset-background;
   }
 
   /* Remove default focus for mouse users */
@@ -161,11 +166,11 @@
 
   /* Better selection colors for themes */
   ::selection {
-    @apply bg-primary/30 text-foreground;
+    @apply bg-primary/20 text-foreground;
   }
 
   .dark ::selection {
-    @apply bg-primary/40 text-foreground;
+    @apply bg-primary/30 text-foreground;
   }
 }
 
@@ -173,12 +178,12 @@
   /* ── Scrollbar ── */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
@@ -186,12 +191,12 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted-foreground) / 0.3);
+    background-color: hsl(var(--muted-foreground) / 0.2);
     border-radius: 9999px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground) / 0.5);
+    background-color: hsl(var(--muted-foreground) / 0.35);
   }
 
   .scrollbar-hide::-webkit-scrollbar {
@@ -205,10 +210,15 @@
 
   /* ── Glass morphism ── */
   .glass {
-    background: hsl(var(--background) / 0.72);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    border: 1px solid hsl(var(--border) / 0.5);
+    background: hsl(var(--background) / 0.8);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+  }
+
+  .glass-subtle {
+    background: hsl(var(--background) / 0.6);
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
   }
 
   /* ── Gradient accents ── */
@@ -250,7 +260,7 @@
       hsl(var(--foreground) / 0.04),
       transparent
     );
-    animation: shimmer 1.8s ease-in-out infinite;
+    animation: shimmer 2s ease-in-out infinite;
   }
 
   @keyframes shimmer {
@@ -272,32 +282,50 @@
   /* ── Grid pattern for backgrounds ── */
   .bg-grid-pattern {
     background-image:
-      linear-gradient(to right, hsl(var(--border) / 0.1) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(var(--border) / 0.1) 1px, transparent 1px);
-    background-size: 40px 40px;
+      linear-gradient(to right, hsl(var(--border) / 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
-  /* ── Custom scrollbar ── */
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--border)) transparent;
+  /* ── Dot pattern ── */
+  .bg-dot-pattern {
+    background-image: radial-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  /* ── Gradient mesh backgrounds ── */
+  .bg-gradient-mesh {
+    background:
+      radial-gradient(at 27% 37%, hsl(var(--chart-1) / 0.08) 0px, transparent 50%),
+      radial-gradient(at 97% 21%, hsl(var(--chart-2) / 0.06) 0px, transparent 50%),
+      radial-gradient(at 52% 99%, hsl(var(--chart-4) / 0.06) 0px, transparent 50%),
+      radial-gradient(at 10% 29%, hsl(var(--chart-3) / 0.04) 0px, transparent 50%);
   }
 
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
+  /* ── Text gradient ── */
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--muted-foreground)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
-    border-radius: 3px;
+  /* ── Hover lift effect ── */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.5);
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.08), 0 4px 10px -5px rgb(0 0 0 / 0.04);
+  }
+
+  /* ── Border glow on hover ── */
+  .hover-glow {
+    transition: box-shadow 0.3s ease;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.1), 0 4px 12px hsl(var(--primary) / 0.08);
   }
 }
