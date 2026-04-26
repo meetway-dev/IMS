@@ -86,10 +86,10 @@ export class OrdersService {
       }),
     );
 
-    const subtotal = lines.reduce((acc, l) => acc.adtoDecimal(l.lineTotal), toDecimal(0));
+    const subtotal = lines.reduce((acc, l) => acc.add(l.lineTotal), toDecimal(0));
     const discountTotal = dto.discountTotal ? toDecimal(dto.discountTotal) : toDecimal(0);
     const taxTotal = dto.taxTotal ? toDecimal(dto.taxTotal) : toDecimal(0);
-    const total = subtotal.sub(discountTotal).adtoDecimal(taxTotal);
+    const total = subtotal.sub(discountTotal).add(taxTotal);
 
     const order = await this.prisma.$transaction(async (tx) => {
       const o = await tx.order.create({

@@ -62,7 +62,7 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
   return useMutation<TData, unknown, TVariables>({
     mutationFn,
     ...mutationOptions,
-    onSuccess: (data, variables, context) => {
+    onSuccess: (...args) => {
       if (showSuccessToast && successMessage) {
         toast({
           title: 'Success',
@@ -77,10 +77,11 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
         }
       }
 
-      mutationOptions.onSuccess?.(data, variables, context);
+      mutationOptions.onSuccess?.(...args);
     },
-    onError: (error: unknown) => {
+    onError: (...args) => {
       if (showErrorToast) {
+        const error = args[0];
         const message =
           errorMessage ??
           (error as Record<string, any>)?.message ??
@@ -92,7 +93,7 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
         });
       }
 
-      mutationOptions.onError?.(error, undefined as unknown as TVariables, undefined);
+      mutationOptions.onError?.(...args);
     },
   });
 }
