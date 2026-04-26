@@ -36,10 +36,12 @@ import { ActionMenu } from '@/components/ui/action-menu';
 import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { formatDate } from '@/lib/utils';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export default function CategoriesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canWrite, canDelete } = usePermissions();
   const {
     search,
     debouncedSearch,
@@ -357,22 +359,26 @@ export default function CategoriesPage() {
               iconPosition: 'start' as const,
               onClick: () => console.log('View category', row.original),
             },
-            {
-              label: 'Edit',
-              icon: Edit,
-              iconPosition: 'start' as const,
-              onClick: () => {
-                setEditingCategory(row.original);
-                setIsEditModalOpen(true);
-              },
-            },
-            {
-              label: 'Delete',
-              icon: Trash2,
-              iconPosition: 'start' as const,
-              variant: 'destructive' as const,
-              onClick: () => handleDeleteCategory(row.original.id),
-            },
+            ...(canWrite('categories')
+              ? [{
+                  label: 'Edit',
+                  icon: Edit,
+                  iconPosition: 'start' as const,
+                  onClick: () => {
+                    setEditingCategory(row.original);
+                    setIsEditModalOpen(true);
+                  },
+                }]
+              : []),
+            ...(canDelete('categories')
+              ? [{
+                  label: 'Delete',
+                  icon: Trash2,
+                  iconPosition: 'start' as const,
+                  variant: 'destructive' as const,
+                  onClick: () => handleDeleteCategory(row.original.id),
+                }]
+              : []),
           ]}
           align="end"
         />
@@ -420,10 +426,12 @@ export default function CategoriesPage() {
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button onClick={() => setIsCreateModalOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Category
-              </Button>
+              {canWrite('categories') && (
+                <Button onClick={() => setIsCreateModalOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Category
+                </Button>
+              )}
             </div>
           }
         />

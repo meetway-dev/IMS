@@ -35,10 +35,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useServerSearch } from '@/hooks/use-server-search';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export default function InventoryPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canWrite } = usePermissions();
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string>('');
   const {
@@ -279,10 +281,12 @@ export default function InventoryPage() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => setIsAdjustModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Adjust Stock
-          </Button>
+          {canWrite('inventory') && (
+            <Button onClick={() => setIsAdjustModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Adjust Stock
+            </Button>
+          )}
         </div>
       </div>
 

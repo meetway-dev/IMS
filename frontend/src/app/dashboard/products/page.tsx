@@ -35,10 +35,12 @@ import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
 import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export default function ProductsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canWrite, canDelete } = usePermissions();
   const {
     search,
     debouncedSearch,
@@ -184,19 +186,23 @@ export default function ProductsPage() {
         <ActionMenu
           trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon-sm' }}
           items={[
-            {
-              label: 'Edit',
-              icon: Edit,
-              iconPosition: 'start',
-              onClick: () => handleEditProduct(row.original),
-            },
-            {
-              label: 'Delete',
-              icon: Trash2,
-              iconPosition: 'start',
-              variant: 'destructive',
-              onClick: () => handleDeleteProduct(row.original.id),
-            },
+            ...(canWrite('products')
+              ? [{
+                  label: 'Edit',
+                  icon: Edit,
+                  iconPosition: 'start' as const,
+                  onClick: () => handleEditProduct(row.original),
+                }]
+              : []),
+            ...(canDelete('products')
+              ? [{
+                  label: 'Delete',
+                  icon: Trash2,
+                  iconPosition: 'start' as const,
+                  variant: 'destructive' as const,
+                  onClick: () => handleDeleteProduct(row.original.id),
+                }]
+              : []),
           ]}
           align="end"
         />
@@ -323,15 +329,17 @@ export default function ProductsPage() {
           title="Products"
           description="Manage your product inventory"
           actions={
-            <Button
-              onClick={() => {
-                setEditingProduct(null);
-                setIsDialogOpen(true);
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Product
-            </Button>
+            canWrite('products') ? (
+              <Button
+                onClick={() => {
+                  setEditingProduct(null);
+                  setIsDialogOpen(true);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Product
+              </Button>
+            ) : undefined
           }
         />
       </motion.div>

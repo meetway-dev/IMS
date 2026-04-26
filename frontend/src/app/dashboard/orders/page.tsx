@@ -18,6 +18,7 @@ import { Order } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { useServerSearch } from '@/hooks/use-server-search';
+import { usePermissions } from '@/hooks/use-permissions';
 
 const statusVariantMap: Record<string, 'success' | 'info' | 'warning' | 'destructive' | 'secondary'> = {
   completed: 'success',
@@ -28,6 +29,7 @@ const statusVariantMap: Record<string, 'success' | 'info' | 'warning' | 'destruc
 };
 
 export default function OrdersPage() {
+  const { canWrite } = usePermissions();
   const {
     search,
     debouncedSearch,
@@ -147,10 +149,12 @@ export default function OrdersPage() {
           title="Orders"
           description="Manage and track customer orders"
           actions={
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Order
-            </Button>
+            canWrite('orders') ? (
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Order
+              </Button>
+            ) : undefined
           }
         />
       </motion.div>

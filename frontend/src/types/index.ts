@@ -19,6 +19,7 @@ export interface User {
   name: string;
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   roles: string[];
+  permissions?: string[];
   createdAt: string;
   updatedAt: string;
 }

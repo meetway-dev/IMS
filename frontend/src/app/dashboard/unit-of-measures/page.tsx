@@ -30,10 +30,12 @@ import { ActionMenu } from '@/components/ui/action-menu';
 import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { formatDate } from '@/lib/utils';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export default function UnitOfMeasuresPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canWrite, canDelete } = usePermissions();
   const {
     search,
     debouncedSearch,
@@ -150,19 +152,23 @@ export default function UnitOfMeasuresPage() {
         <ActionMenu
           trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon-sm' }}
           items={[
-            {
-              label: 'Edit',
-              icon: Edit,
-              iconPosition: 'start',
-              onClick: () => handleEditUnit(row.original),
-            },
-            {
-              label: 'Delete',
-              icon: Trash2,
-              iconPosition: 'start',
-              variant: 'destructive',
-              onClick: () => handleDeleteUnit(row.original.id),
-            },
+            ...(canWrite('unit-of-measures')
+              ? [{
+                  label: 'Edit',
+                  icon: Edit,
+                  iconPosition: 'start' as const,
+                  onClick: () => handleEditUnit(row.original),
+                }]
+              : []),
+            ...(canDelete('unit-of-measures')
+              ? [{
+                  label: 'Delete',
+                  icon: Trash2,
+                  iconPosition: 'start' as const,
+                  variant: 'destructive' as const,
+                  onClick: () => handleDeleteUnit(row.original.id),
+                }]
+              : []),
           ]}
           align="end"
         />
@@ -280,13 +286,15 @@ export default function UnitOfMeasuresPage() {
           title="Units of Measure"
           description="Manage measurement units for products"
           actions={
-            <Button onClick={() => {
-              setEditingUnit(null);
-              setIsDialogOpen(true);
-            }}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Unit
-            </Button>
+            canWrite('unit-of-measures') ? (
+              <Button onClick={() => {
+                setEditingUnit(null);
+                setIsDialogOpen(true);
+              }}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Unit
+              </Button>
+            ) : undefined
           }
         />
       </motion.div>

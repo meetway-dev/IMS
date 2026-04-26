@@ -35,6 +35,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
 import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { usePermissions } from '@/hooks/use-permissions';
 import {
   Select,
   SelectContent,
@@ -67,6 +68,7 @@ const STATUS_ICONS: Record<PurchaseOrderStatus, React.ReactNode> = {
 export default function PurchaseOrdersPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canWrite, canDelete, hasPermission } = usePermissions();
   const {
     search,
     debouncedSearch,
@@ -296,28 +298,34 @@ export default function PurchaseOrdersPage() {
                   console.log('View details:', purchaseOrder.id);
                 },
               },
-              {
-                label: 'Edit',
-                icon: <Edit className="h-4 w-4" />,
-                onClick: () => {
-                  setEditingPurchaseOrder(purchaseOrder);
-                  setIsDialogOpen(true);
-                },
-                disabled: purchaseOrder.status !== 'DRAFT',
-              },
-              {
-                label: 'Approve',
-                icon: <CheckCircle className="h-4 w-4" />,
-                onClick: () => handleApprove(purchaseOrder.id),
-                disabled: purchaseOrder.status !== 'PENDING_APPROVAL',
-              },
-              {
-                label: 'Delete',
-                icon: <Trash2 className="h-4 w-4" />,
-                onClick: () => handleDelete(purchaseOrder.id),
-                variant: 'destructive' as const,
-                disabled: !['DRAFT', 'PENDING_APPROVAL'].includes(purchaseOrder.status),
-              },
+              ...(canWrite('purchase-orders')
+                ? [{
+                    label: 'Edit',
+                    icon: <Edit className="h-4 w-4" />,
+                    onClick: () => {
+                      setEditingPurchaseOrder(purchaseOrder);
+                      setIsDialogOpen(true);
+                    },
+                    disabled: purchaseOrder.status !== 'DRAFT',
+                  }]
+                : []),
+              ...(hasPermission('purchase-orders.approve')
+                ? [{
+                    label: 'Approve',
+                    icon: <CheckCircle className="h-4 w-4" />,
+                    onClick: () => handleApprove(purchaseOrder.id),
+                    disabled: purchaseOrder.status !== 'PENDING_APPROVAL',
+                  }]
+                : []),
+              ...(canDelete('purchase-orders')
+                ? [{
+                    label: 'Delete',
+                    icon: <Trash2 className="h-4 w-4" />,
+                    onClick: () => handleDelete(purchaseOrder.id),
+                    variant: 'destructive' as const,
+                    disabled: !['DRAFT', 'PENDING_APPROVAL'].includes(purchaseOrder.status),
+                  }]
+                : []),
             ]}
           />
         );
@@ -347,10 +355,12 @@ export default function PurchaseOrdersPage() {
         description="Manage purchase orders from suppliers"
         icon={FileText}
         actions={
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Purchase Order
-          </Button>
+          canWrite('purchase-orders') ? (
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Purchase Order
+            </Button>
+          ) : undefined
         }
       />
 

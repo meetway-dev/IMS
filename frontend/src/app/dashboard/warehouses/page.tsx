@@ -55,6 +55,7 @@ import {
   CreateWarehouseData,
   UpdateWarehouseData,
 } from '@/types';
+import { usePermissions } from '@/hooks/use-permissions';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -328,6 +329,7 @@ function WarehouseFormModal({
 // ─── Main Page Component ───────────────────────────────────────────────────
 
 export default function WarehousesPage() {
+  const { canWrite, canDelete } = usePermissions();
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -582,22 +584,28 @@ export default function WarehousesPage() {
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleEdit(wh)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Warehouse
-              </DropdownMenuItem>
+              {canWrite('warehouses') && (
+                <DropdownMenuItem onClick={() => handleEdit(wh)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Warehouse
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleArchive(wh.id)}>
-                <Archive className="mr-2 h-4 w-4" />
-                Archive
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleDelete(wh.id)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {canWrite('warehouses') && (
+                <DropdownMenuItem onClick={() => handleArchive(wh.id)}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  Archive
+                </DropdownMenuItem>
+              )}
+              {canDelete('warehouses') && (
+                <DropdownMenuItem
+                  onClick={() => handleDelete(wh.id)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -628,10 +636,12 @@ export default function WarehousesPage() {
         title="Warehouses"
         description="Manage your warehouse locations and storage facilities"
         actions={
-          <Button onClick={() => setIsFormModalOpen(true)} size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Warehouse
-          </Button>
+          canWrite('warehouses') ? (
+            <Button onClick={() => setIsFormModalOpen(true)} size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Warehouse
+            </Button>
+          ) : undefined
         }
       />
 

@@ -22,6 +22,7 @@ import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmatio
 import { roleService, permissionService } from '@/services/role-permission.service';
 import { useServerSearch } from '@/hooks/use-server-search';
 import { menuItem, menuSeparator, menuLabel } from '@/components/ui/action-menu';
+import { usePermissions } from '@/hooks/use-permissions';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -69,6 +70,7 @@ export default function UsersPage() {
   const deleteConfirm = useConfirmation<UserType>();
   const bulkDeleteConfirm = useConfirmation<UserType[]>();
   const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');
+  const { canWrite: canWriteUser, canDelete: canDeleteUser } = usePermissions();
 
   React.useEffect(() => {
     initializeAuth();
@@ -88,7 +90,7 @@ export default function UsersPage() {
 
   const isSuperAdmin = roleNames.includes('SUPER_ADMIN');
   const isAdmin = roleNames.includes('ADMIN');
-  const canAssignRoles = !!user;
+  const canAssignRoles = canWriteUser('users');
 
   const [detailsUser, setDetailsUser] = React.useState<UserType | null>(null);
   const [assignUser, setAssignUser] = React.useState<UserType | null>(null);

@@ -31,10 +31,12 @@ import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
 import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export default function SuppliersPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canWrite, canDelete } = usePermissions();
   const {
     search,
     debouncedSearch,
@@ -218,19 +220,23 @@ export default function SuppliersPage() {
         <ActionMenu
           trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon-sm' }}
           items={[
-            {
-              label: 'Edit',
-              icon: Edit,
-              iconPosition: 'start',
-              onClick: () => handleEditSupplier(row.original),
-            },
-            {
-              label: 'Delete',
-              icon: Trash2,
-              iconPosition: 'start',
-              variant: 'destructive',
-              onClick: () => handleDeleteSupplier(row.original.id),
-            },
+            ...(canWrite('suppliers')
+              ? [{
+                  label: 'Edit',
+                  icon: Edit,
+                  iconPosition: 'start' as const,
+                  onClick: () => handleEditSupplier(row.original),
+                }]
+              : []),
+            ...(canDelete('suppliers')
+              ? [{
+                  label: 'Delete',
+                  icon: Trash2,
+                  iconPosition: 'start' as const,
+                  variant: 'destructive' as const,
+                  onClick: () => handleDeleteSupplier(row.original.id),
+                }]
+              : []),
           ]}
           align="end"
         />
@@ -268,10 +274,12 @@ export default function SuppliersPage() {
           title="Suppliers"
           description="Manage your suppliers and vendor relationships"
           actions={
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Supplier
-            </Button>
+            canWrite('suppliers') ? (
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Supplier
+              </Button>
+            ) : undefined
           }
         />
       </motion.div>

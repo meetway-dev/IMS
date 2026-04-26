@@ -34,6 +34,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
 import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { usePermissions } from '@/hooks/use-permissions';
 import {
   Select,
   SelectContent,
@@ -58,6 +59,7 @@ const STATUS_ICONS: Record<GoodsReceiptStatus, React.ReactNode> = {
 export default function GoodsReceiptsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canWrite, canDelete } = usePermissions();
   const {
     search,
     debouncedSearch,
@@ -274,28 +276,32 @@ export default function GoodsReceiptsPage() {
                   console.log('View details:', goodsReceipt.id);
                 },
               },
-              {
-                label: 'Edit',
-                icon: <Edit className="h-4 w-4" />,
-                onClick: () => {
-                  setEditingGoodsReceipt(goodsReceipt);
-                  setIsDialogOpen(true);
-                },
-                disabled: goodsReceipt.status !== 'DRAFT',
-              },
-              {
-                label: 'Complete',
-                icon: <CheckCircle className="h-4 w-4" />,
-                onClick: () => handleComplete(goodsReceipt.id),
-                disabled: goodsReceipt.status !== 'DRAFT',
-              },
-              {
-                label: 'Delete',
-                icon: <Trash2 className="h-4 w-4" />,
-                onClick: () => handleDelete(goodsReceipt.id),
-                variant: 'destructive' as const,
-                disabled: goodsReceipt.status !== 'DRAFT',
-              },
+              ...(canWrite('goods-receipts')
+                ? [{
+                    label: 'Edit',
+                    icon: <Edit className="h-4 w-4" />,
+                    onClick: () => {
+                      setEditingGoodsReceipt(goodsReceipt);
+                      setIsDialogOpen(true);
+                    },
+                    disabled: goodsReceipt.status !== 'DRAFT',
+                  },
+                  {
+                    label: 'Complete',
+                    icon: <CheckCircle className="h-4 w-4" />,
+                    onClick: () => handleComplete(goodsReceipt.id),
+                    disabled: goodsReceipt.status !== 'DRAFT',
+                  }]
+                : []),
+              ...(canDelete('goods-receipts')
+                ? [{
+                    label: 'Delete',
+                    icon: <Trash2 className="h-4 w-4" />,
+                    onClick: () => handleDelete(goodsReceipt.id),
+                    variant: 'destructive' as const,
+                    disabled: goodsReceipt.status !== 'DRAFT',
+                  }]
+                : []),
             ]}
           />
         );
@@ -325,10 +331,12 @@ export default function GoodsReceiptsPage() {
         description="Manage incoming shipments and inventory receipts"
         icon={PackageCheck}
         actions={
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Goods Receipt
-          </Button>
+          canWrite('goods-receipts') ? (
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Goods Receipt
+            </Button>
+          ) : undefined
         }
       />
 

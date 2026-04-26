@@ -41,6 +41,7 @@ const nextConfig = {
       '@/types': require('path').resolve(__dirname, './src/types'),
       '@/config': require('path').resolve(__dirname, './src/config'),
       '@/modules': require('path').resolve(__dirname, './src/modules'),
+      '@ims/shared': require('path').resolve(__dirname, '../shared/src/index.ts'),
     }
     return config
   },

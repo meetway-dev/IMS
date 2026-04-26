@@ -23,6 +23,16 @@ export enum Permission {
   CATEGORIES_WRITE = 'categories.write',
   CATEGORIES_DELETE = 'categories.delete',
 
+  // Product Types
+  PRODUCT_TYPES_READ = 'product-types.read',
+  PRODUCT_TYPES_WRITE = 'product-types.write',
+  PRODUCT_TYPES_DELETE = 'product-types.delete',
+
+  // Units of Measure
+  UNIT_OF_MEASURES_READ = 'unit-of-measures.read',
+  UNIT_OF_MEASURES_WRITE = 'unit-of-measures.write',
+  UNIT_OF_MEASURES_DELETE = 'unit-of-measures.delete',
+
   // Suppliers
   SUPPLIERS_READ = 'suppliers.read',
   SUPPLIERS_WRITE = 'suppliers.write',
@@ -34,16 +44,52 @@ export enum Permission {
   INVENTORY_DELETE = 'inventory.delete',
   INVENTORY_ADJUST = 'inventory.adjust',
 
+  // Warehouses
+  WAREHOUSES_READ = 'warehouses.read',
+  WAREHOUSES_WRITE = 'warehouses.write',
+  WAREHOUSES_DELETE = 'warehouses.delete',
+
+  // Purchase Orders
+  PURCHASE_ORDERS_READ = 'purchase-orders.read',
+  PURCHASE_ORDERS_WRITE = 'purchase-orders.write',
+  PURCHASE_ORDERS_DELETE = 'purchase-orders.delete',
+  PURCHASE_ORDERS_APPROVE = 'purchase-orders.approve',
+
+  // Goods Receipts
+  GOODS_RECEIPTS_READ = 'goods-receipts.read',
+  GOODS_RECEIPTS_WRITE = 'goods-receipts.write',
+  GOODS_RECEIPTS_DELETE = 'goods-receipts.delete',
+
   // Orders
   ORDERS_READ = 'orders.read',
   ORDERS_WRITE = 'orders.write',
   ORDERS_DELETE = 'orders.delete',
   ORDERS_APPROVE = 'orders.approve',
 
+  // Customers
+  CUSTOMERS_READ = 'customers.read',
+  CUSTOMERS_WRITE = 'customers.write',
+  CUSTOMERS_DELETE = 'customers.delete',
+
+  // Invoices
+  INVOICES_READ = 'invoices.read',
+  INVOICES_WRITE = 'invoices.write',
+  INVOICES_DELETE = 'invoices.delete',
+
   // Users
   USERS_READ = 'users.read',
   USERS_WRITE = 'users.write',
   USERS_DELETE = 'users.delete',
+
+  // Roles
+  ROLES_READ = 'roles.read',
+  ROLES_WRITE = 'roles.write',
+  ROLES_DELETE = 'roles.delete',
+
+  // Permissions
+  PERMISSIONS_READ = 'permissions.read',
+  PERMISSIONS_WRITE = 'permissions.write',
+  PERMISSIONS_DELETE = 'permissions.delete',
 
   // Companies
   COMPANIES_READ = 'companies.read',
@@ -52,6 +98,22 @@ export enum Permission {
 
   // Audit
   AUDIT_READ = 'audit.read',
+
+  // Analytics
+  ANALYTICS_READ = 'analytics.read',
+
+  // Reports
+  REPORTS_READ = 'reports.read',
+  REPORTS_WRITE = 'reports.write',
+  REPORTS_DELETE = 'reports.delete',
+
+  // Settings
+  SETTINGS_READ = 'settings.read',
+  SETTINGS_WRITE = 'settings.write',
+
+  // Integrations
+  INTEGRATIONS_READ = 'integrations.read',
+  INTEGRATIONS_WRITE = 'integrations.write',
 
   // Admin
   ADMIN = 'admin',
@@ -62,6 +124,7 @@ export enum Permission {
 // ---------------------------------------------------------------------------
 
 export enum Role {
+  SUPER_ADMIN = 'SUPER_ADMIN',
   ADMIN = 'ADMIN',
   MANAGER = 'MANAGER',
   STAFF = 'STAFF',
@@ -74,6 +137,7 @@ export enum Role {
 
 /** Default permissions granted to each built-in role. */
 export const ROLE_PERMISSIONS: Readonly<Record<Role, Permission[]>> = {
+  [Role.SUPER_ADMIN]: Object.values(Permission),
   [Role.ADMIN]: Object.values(Permission),
 
   [Role.MANAGER]: [
@@ -81,37 +145,74 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, Permission[]>> = {
     Permission.PRODUCTS_WRITE,
     Permission.CATEGORIES_READ,
     Permission.CATEGORIES_WRITE,
+    Permission.PRODUCT_TYPES_READ,
+    Permission.PRODUCT_TYPES_WRITE,
+    Permission.UNIT_OF_MEASURES_READ,
+    Permission.UNIT_OF_MEASURES_WRITE,
     Permission.SUPPLIERS_READ,
     Permission.SUPPLIERS_WRITE,
     Permission.INVENTORY_READ,
     Permission.INVENTORY_WRITE,
     Permission.INVENTORY_ADJUST,
+    Permission.WAREHOUSES_READ,
+    Permission.WAREHOUSES_WRITE,
+    Permission.PURCHASE_ORDERS_READ,
+    Permission.PURCHASE_ORDERS_WRITE,
+    Permission.PURCHASE_ORDERS_APPROVE,
+    Permission.GOODS_RECEIPTS_READ,
+    Permission.GOODS_RECEIPTS_WRITE,
     Permission.ORDERS_READ,
     Permission.ORDERS_WRITE,
     Permission.ORDERS_APPROVE,
+    Permission.CUSTOMERS_READ,
+    Permission.INVOICES_READ,
     Permission.USERS_READ,
+    Permission.ROLES_READ,
+    Permission.PERMISSIONS_READ,
     Permission.COMPANIES_READ,
     Permission.COMPANIES_WRITE,
     Permission.AUDIT_READ,
+    Permission.ANALYTICS_READ,
+    Permission.REPORTS_READ,
+    Permission.SETTINGS_READ,
+    Permission.INTEGRATIONS_READ,
   ],
 
   [Role.STAFF]: [
     Permission.PRODUCTS_READ,
     Permission.CATEGORIES_READ,
+    Permission.PRODUCT_TYPES_READ,
+    Permission.UNIT_OF_MEASURES_READ,
     Permission.SUPPLIERS_READ,
     Permission.INVENTORY_READ,
     Permission.INVENTORY_ADJUST,
+    Permission.WAREHOUSES_READ,
+    Permission.PURCHASE_ORDERS_READ,
+    Permission.GOODS_RECEIPTS_READ,
     Permission.ORDERS_READ,
     Permission.ORDERS_WRITE,
+    Permission.CUSTOMERS_READ,
+    Permission.INVOICES_READ,
     Permission.COMPANIES_READ,
+    Permission.ANALYTICS_READ,
+    Permission.REPORTS_READ,
   ],
 
   [Role.VIEWER]: [
     Permission.PRODUCTS_READ,
     Permission.CATEGORIES_READ,
+    Permission.PRODUCT_TYPES_READ,
+    Permission.UNIT_OF_MEASURES_READ,
     Permission.SUPPLIERS_READ,
     Permission.INVENTORY_READ,
+    Permission.WAREHOUSES_READ,
+    Permission.PURCHASE_ORDERS_READ,
+    Permission.GOODS_RECEIPTS_READ,
     Permission.ORDERS_READ,
+    Permission.CUSTOMERS_READ,
+    Permission.INVOICES_READ,
     Permission.COMPANIES_READ,
+    Permission.ANALYTICS_READ,
+    Permission.REPORTS_READ,
   ],
 };

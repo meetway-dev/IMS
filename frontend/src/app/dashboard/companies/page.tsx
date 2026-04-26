@@ -40,6 +40,7 @@ import { companyService } from '@/services/company.service';
 import { Company } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
+import { usePermissions } from '@/hooks/use-permissions';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,6 +57,7 @@ import {
 export default function CompaniesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canWrite, canDelete } = usePermissions();
   const {
     search,
     setSearch,
@@ -340,14 +342,16 @@ export default function CompaniesPage() {
       id: 'actions',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => handleEditCompany(row.original)}
-            title="Edit company"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
+          {canWrite('companies') && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => handleEditCompany(row.original)}
+              title="Edit company"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
           <ActionMenu
             trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon-sm' }}
             items={[
@@ -362,12 +366,14 @@ export default function CompaniesPage() {
                   });
                 },
               },
-              {
-                label: row.original.isActive ? 'Deactivate' : 'Activate',
-                icon: row.original.isActive ? XCircle : CheckCircle,
-                iconPosition: 'start',
-                onClick: () => handleToggleStatus(row.original.id, row.original.isActive),
-              },
+              ...(canWrite('companies')
+                ? [{
+                    label: row.original.isActive ? 'Deactivate' : 'Activate',
+                    icon: row.original.isActive ? XCircle : CheckCircle,
+                    iconPosition: 'start' as const,
+                    onClick: () => handleToggleStatus(row.original.id, row.original.isActive),
+                  }]
+                : []),
               {
                 label: 'Export Data',
                 icon: Download,
@@ -379,13 +385,15 @@ export default function CompaniesPage() {
                   });
                 },
               },
-              {
-                label: 'Delete',
-                icon: Trash2,
-                iconPosition: 'start',
-                variant: 'destructive',
-                onClick: () => handleDeleteClick(row.original.id),
-              },
+              ...(canDelete('companies')
+                ? [{
+                    label: 'Delete',
+                    icon: Trash2,
+                    iconPosition: 'start' as const,
+                    variant: 'destructive' as const,
+                    onClick: () => handleDeleteClick(row.original.id),
+                  }]
+                : []),
             ]}
             align="end"
           />
@@ -435,10 +443,12 @@ export default function CompaniesPage() {
                 <Download className="mr-2 h-4 w-4" />
                 Export
               </Button>
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Company
-              </Button>
+              {canWrite('companies') && (
+                <Button onClick={() => setIsDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Company
+                </Button>
+              )}
             </div>
           }
         />

@@ -46,8 +46,10 @@ import { PermissionFormModal } from './PermissionFormModal';
 import { PermissionDetailsModal } from './PermissionDetailsModal';
 import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { useServerSearch } from '@/hooks/use-server-search';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export default function PermissionsPage() {
+  const { canWrite, canDelete } = usePermissions();
   const {
     search,
     debouncedSearch,
@@ -274,19 +276,23 @@ export default function PermissionsPage() {
       cell: ({ row }: any) => (
         <ActionMenu
           items={[
-            {
-              label: 'Edit',
-              icon: Edit,
-              onClick: () => handleEdit(row.original),
-              disabled: row.original.isSystem,
-            },
-            {
-              label: 'Delete',
-              icon: Trash2,
-              onClick: () => handleDelete(row.original),
-              variant: 'destructive' as const,
-              disabled: row.original.isSystem,
-            },
+            ...(canWrite('permissions')
+              ? [{
+                  label: 'Edit',
+                  icon: Edit,
+                  onClick: () => handleEdit(row.original),
+                  disabled: row.original.isSystem,
+                }]
+              : []),
+            ...(canDelete('permissions')
+              ? [{
+                  label: 'Delete',
+                  icon: Trash2,
+                  onClick: () => handleDelete(row.original),
+                  variant: 'destructive' as const,
+                  disabled: row.original.isSystem,
+                }]
+              : []),
           ]}
         />
       ),
@@ -361,10 +367,12 @@ export default function PermissionsPage() {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button className="gap-2" onClick={handleAdd}>
-            <Plus className="h-4 w-4" />
-            Add Permission
-          </Button>
+          {canWrite('permissions') && (
+            <Button className="gap-2" onClick={handleAdd}>
+              <Plus className="h-4 w-4" />
+              Add Permission
+            </Button>
+          )}
         </div>
       </div>
 

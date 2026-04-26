@@ -36,6 +36,7 @@ import {
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useLogout } from '@/hooks/use-auth';
+import { usePermissions } from '@/hooks/use-permissions';
 import { useToast } from '@/components/ui/use-toast';
 import { getInitials } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -79,6 +80,7 @@ export function Topbar() {
   const { user } = useAuthStore();
   const logout = useLogout();
   const { toast } = useToast();
+  const { canWrite } = usePermissions();
 
   const router = useRouter();
   const pageTitle = pageTitles[pathname] || 'Dashboard';
@@ -176,22 +178,30 @@ export function Topbar() {
           <DropdownMenuContent className="w-48" align="end">
             <DropdownMenuLabel className="text-xs text-muted-foreground">Quick Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer gap-2 text-sm">
-              <Package className="h-4 w-4" />
-              New Product
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer gap-2 text-sm">
-              <ShoppingCart className="h-4 w-4" />
-              New Order
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer gap-2 text-sm">
-              <Truck className="h-4 w-4" />
-              New Supplier
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer gap-2 text-sm">
-              <FileText className="h-4 w-4" />
-              Purchase Order
-            </DropdownMenuItem>
+            {canWrite('products') && (
+              <DropdownMenuItem className="cursor-pointer gap-2 text-sm">
+                <Package className="h-4 w-4" />
+                New Product
+              </DropdownMenuItem>
+            )}
+            {canWrite('orders') && (
+              <DropdownMenuItem className="cursor-pointer gap-2 text-sm">
+                <ShoppingCart className="h-4 w-4" />
+                New Order
+              </DropdownMenuItem>
+            )}
+            {canWrite('suppliers') && (
+              <DropdownMenuItem className="cursor-pointer gap-2 text-sm">
+                <Truck className="h-4 w-4" />
+                New Supplier
+              </DropdownMenuItem>
+            )}
+            {canWrite('purchase-orders') && (
+              <DropdownMenuItem className="cursor-pointer gap-2 text-sm">
+                <FileText className="h-4 w-4" />
+                Purchase Order
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 

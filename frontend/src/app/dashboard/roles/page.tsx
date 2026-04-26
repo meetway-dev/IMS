@@ -46,6 +46,7 @@ import { AssignPermissionsModal } from './AssignPermissionsModal';
 import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { permissionService } from '@/services/role-permission.service';
 import { useServerSearch } from '@/hooks/use-server-search';
+import { usePermissions } from '@/hooks/use-permissions';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -81,12 +82,13 @@ export default function RolesPage() {
   const bulkDeleteConfirm = useConfirmation<Role[]>();
   const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');
   const [activeTab, setActiveTab] = React.useState('all');
+  const { canWrite: canWriteRole, canDelete: canDeleteRole } = usePermissions();
 
   React.useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
-  const isSuperAdmin = user?.roles?.includes('SUPER_ADMIN');
+  const isSuperAdmin = user?.roles?.includes('SUPER_ADMIN') || canWriteRole('roles');
 
   const [detailsRole, setDetailsRole] = React.useState<Role | null>(null);
   const [assignRole, setAssignRole] = React.useState<Role | null>(null);

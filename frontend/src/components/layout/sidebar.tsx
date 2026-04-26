@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useUIStore } from '@/store/ui-store';
+import { usePermissions } from '@/hooks/use-permissions';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -262,6 +263,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
   const { user } = useAuthStore();
+  const { hasAnyPermission } = usePermissions();
 
   const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
@@ -276,6 +278,27 @@ export function Sidebar() {
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
   };
+
+  // Filter navigation groups based on user permissions
+  const filteredGroups = React.useMemo(() => {
+    return navigationGroups
+      .map((group) => {
+        // Single links (Dashboard) are always visible
+        if (group.type === 'single') return group;
+
+        // Filter items within groups by their required read permission
+        const filteredItems = group.items?.filter((item) => {
+          if (!item.permissions || item.permissions.length === 0) return true;
+          return hasAnyPermission(item.permissions);
+        });
+
+        // Hide the entire group if no items are visible
+        if (!filteredItems || filteredItems.length === 0) return null;
+
+        return { ...group, items: filteredItems };
+      })
+      .filter(Boolean) as NavGroup[];
+  }, [hasAnyPermission]);
 
   return (
     <>
@@ -329,7 +352,7 @@ export function Sidebar() {
         {/* Navigation */}
         <ScrollArea className="flex-1 px-3 py-3">
           <div className="space-y-1">
-            {navigationGroups.map((group) => (
+            {filteredGroups.map((group) => (
               <NavigationGroup
                 key={group.id}
                 group={group}

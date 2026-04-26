@@ -4,293 +4,246 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import {
   PrismaClient,
   OrderStatus,
+  PurchaseOrderStatus,
+  GoodsReceiptStatus,
+  WarehouseType,
+  LocationType,
+  InventoryTransactionType,
+  PermissionType,
+  PermissionEffect,
+  UserStatus,
 } from '@prisma/client';
 import { Pool } from 'pg';
+import { faker } from '@faker-js/faker';
 
+// Initialize Prisma with PostgreSQL adapter
 const prisma = new PrismaClient({
   adapter: new PrismaPg(
     new Pool({ connectionString: process.env.DATABASE_URL }),
   ),
 });
 
-// Password hash for test@123 (argon2id)
-export const TEST_PASSWORD_HASH =
-  '$argon2id$v=19$m=65536,t=3,p=4$BvR1mKO6MDlTkM5vij1hJA$si2Cbk4n1oQl86e+DT4hqWKo4+uyCNcEqbVrQPuAugI';
-
-// System roles (predefined, cannot be deleted)
+// ==================== SYSTEM ROLES ====================
 export const SYSTEM_ROLES = [
   {
     name: 'SUPER_ADMIN',
-    description: 'Full system access',
+    description: 'Full system access with all permissions',
     isSystem: true,
     isDefault: false,
+    priority: 1000,
   },
   {
     name: 'ADMIN',
-    description: 'Administrator with full access',
+    description: 'Administrator with full operational access',
     isSystem: true,
     isDefault: false,
+    priority: 900,
   },
   {
-    name: 'MANAGER',
-    description: 'Manager with limited administrative access',
+    name: 'WAREHOUSE_MANAGER',
+    description: 'Manages warehouse operations, inventory, and staff',
     isSystem: false,
     isDefault: false,
+    priority: 800,
+  },
+  {
+    name: 'INVENTORY_CONTROLLER',
+    description: 'Controls inventory levels, stock counts, and adjustments',
+    isSystem: false,
+    isDefault: false,
+    priority: 700,
+  },
+  {
+    name: 'PURCHASING_OFFICER',
+    description: 'Handles purchase orders and supplier relationships',
+    isSystem: false,
+    isDefault: false,
+    priority: 600,
+  },
+  {
+    name: 'SALES_REPRESENTATIVE',
+    description: 'Manages customer orders and sales operations',
+    isSystem: false,
+    isDefault: false,
+    priority: 500,
   },
   {
     name: 'STAFF',
-    description: 'Staff member with operational access',
+    description: 'General staff with basic operational access',
     isSystem: false,
     isDefault: false,
+    priority: 400,
   },
   {
-    name: 'USER',
-    description: 'Regular user with basic access',
+    name: 'VIEWER',
+    description: 'Read-only access for reporting and monitoring',
     isSystem: false,
     isDefault: true,
+    priority: 100,
   },
 ] as const;
 
-// Default permissions following resource-action pattern
+// ==================== PERMISSIONS ====================
 export const PERMISSIONS = [
-  // User management (CRUD type)
+  // ===== USER MANAGEMENT =====
   {
     key: 'users.create',
     name: 'Create Users',
-    description: 'Create users',
+    description: 'Create new user accounts',
     module: 'users',
     resource: 'User',
     action: 'create',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'users.read',
     name: 'Read Users',
-    description: 'Read users',
+    description: 'View user profiles and lists',
     module: 'users',
     resource: 'User',
     action: 'read',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'users.update',
     name: 'Update Users',
-    description: 'Update users',
+    description: 'Edit user information and status',
     module: 'users',
     resource: 'User',
     action: 'update',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'users.delete',
     name: 'Delete Users',
-    description: 'Delete users',
+    description: 'Delete or archive user accounts',
     module: 'users',
     resource: 'User',
     action: 'delete',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'users.manage_roles',
+    name: 'Manage User Roles',
+    description: 'Assign or revoke roles from users',
+    module: 'users',
+    resource: 'User',
+    action: 'manage_roles',
+    type: PermissionType.ACTION,
+    effect: PermissionEffect.ALLOW,
   },
 
-  // Role management (CRUD type)
+  // ===== ROLE MANAGEMENT =====
   {
     key: 'roles.create',
     name: 'Create Roles',
-    description: 'Create roles',
+    description: 'Create new system roles',
     module: 'roles',
     resource: 'Role',
     action: 'create',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'roles.read',
     name: 'Read Roles',
-    description: 'Read roles',
+    description: 'View role definitions and permissions',
     module: 'roles',
     resource: 'Role',
     action: 'read',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'roles.update',
     name: 'Update Roles',
-    description: 'Update roles',
+    description: 'Edit role properties and permissions',
     module: 'roles',
     resource: 'Role',
     action: 'update',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'roles.delete',
     name: 'Delete Roles',
-    description: 'Delete roles',
+    description: 'Delete or archive roles',
     module: 'roles',
     resource: 'Role',
     action: 'delete',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
 
-  // Permission management (CRUD type)
-  {
-    key: 'permissions.create',
-    name: 'Create Permissions',
-    description: 'Create permissions',
-    module: 'permissions',
-    resource: 'Permission',
-    action: 'create',
-    type: 'CRUD' as const,
-  },
+  // ===== PERMISSION MANAGEMENT =====
   {
     key: 'permissions.read',
     name: 'Read Permissions',
-    description: 'Read permissions',
+    description: 'View system permissions',
     module: 'permissions',
     resource: 'Permission',
     action: 'read',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
-    key: 'permissions.update',
-    name: 'Update Permissions',
-    description: 'Update permissions',
+    key: 'permissions.manage',
+    name: 'Manage Permissions',
+    description: 'Assign permissions to roles',
     module: 'permissions',
     resource: 'Permission',
-    action: 'update',
-    type: 'CRUD' as const,
-  },
-  {
-    key: 'permissions.delete',
-    name: 'Delete Permissions',
-    description: 'Delete permissions',
-    module: 'permissions',
-    resource: 'Permission',
-    action: 'delete',
-    type: 'CRUD' as const,
-  },
-  {
-    key: 'permissions.assign',
-    name: 'Assign Permissions',
-    description: 'Assign permissions',
-    module: 'permissions',
-    resource: 'Permission',
-    action: 'assign',
-    type: 'ACTION' as const,
+    action: 'manage',
+    type: PermissionType.ACTION,
+    effect: PermissionEffect.ALLOW,
   },
 
-  // Products (CRUD type)
+  // ===== PRODUCT MANAGEMENT =====
   {
     key: 'products.create',
     name: 'Create Products',
-    description: 'Create products',
+    description: 'Create new product entries',
     module: 'products',
     resource: 'Product',
     action: 'create',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'products.read',
     name: 'Read Products',
-    description: 'Read products',
+    description: 'View product catalog',
     module: 'products',
     resource: 'Product',
     action: 'read',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'products.update',
     name: 'Update Products',
-    description: 'Update products',
+    description: 'Edit product information',
     module: 'products',
     resource: 'Product',
     action: 'update',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'products.delete',
     name: 'Delete Products',
-    description: 'Delete products',
+    description: 'Delete or archive products',
     module: 'products',
     resource: 'Product',
     action: 'delete',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
 
-  // Categories (CRUD type)
-  {
-    key: 'categories.create',
-    name: 'Create Categories',
-    description: 'Create categories',
-    module: 'categories',
-    resource: 'Category',
-    action: 'create',
-    type: 'CRUD' as const,
-  },
-  {
-    key: 'categories.read',
-    name: 'Read Categories',
-    description: 'Read categories',
-    module: 'categories',
-    resource: 'Category',
-    action: 'read',
-    type: 'CRUD' as const,
-  },
-  {
-    key: 'categories.update',
-    name: 'Update Categories',
-    description: 'Update categories',
-    module: 'categories',
-    resource: 'Category',
-    action: 'update',
-    type: 'CRUD' as const,
-  },
-  {
-    key: 'categories.delete',
-    name: 'Delete Categories',
-    description: 'Delete categories',
-    module: 'categories',
-    resource: 'Category',
-    action: 'delete',
-    type: 'CRUD' as const,
-  },
-
-  // Suppliers (CRUD type)
-  {
-    key: 'suppliers.create',
-    name: 'Create Suppliers',
-    description: 'Create suppliers',
-    module: 'suppliers',
-    resource: 'Supplier',
-    action: 'create',
-    type: 'CRUD' as const,
-  },
-  {
-    key: 'suppliers.read',
-    name: 'Read Suppliers',
-    description: 'Read suppliers',
-    module: 'suppliers',
-    resource: 'Supplier',
-    action: 'read',
-    type: 'CRUD' as const,
-  },
-  {
-    key: 'suppliers.update',
-    name: 'Update Suppliers',
-    description: 'Update suppliers',
-    module: 'suppliers',
-    resource: 'Supplier',
-    action: 'update',
-    type: 'CRUD' as const,
-  },
-  {
-    key: 'suppliers.delete',
-    name: 'Delete Suppliers',
-    description: 'Delete suppliers',
-    module: 'suppliers',
-    resource: 'Supplier',
-    action: 'delete',
-    type: 'CRUD' as const,
-  },
-
-  // Inventory (CRUD type)
+  // ===== INVENTORY MANAGEMENT =====
   {
     key: 'inventory.create',
     name: 'Create Inventory',
@@ -298,902 +251,590 @@ export const PERMISSIONS = [
     module: 'inventory',
     resource: 'Inventory',
     action: 'create',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'inventory.read',
     name: 'Read Inventory',
-    description: 'Read inventory',
+    description: 'View inventory levels and status',
     module: 'inventory',
     resource: 'Inventory',
     action: 'read',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'inventory.update',
     name: 'Update Inventory',
-    description: 'Update inventory',
+    description: 'Edit inventory information',
     module: 'inventory',
     resource: 'Inventory',
     action: 'update',
-    type: 'CRUD' as const,
-  },
-  {
-    key: 'inventory.delete',
-    name: 'Delete Inventory',
-    description: 'Delete inventory',
-    module: 'inventory',
-    resource: 'Inventory',
-    action: 'delete',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'inventory.adjust',
     name: 'Adjust Inventory',
-    description: 'Adjust inventory quantities',
+    description: 'Adjust stock quantities',
     module: 'inventory',
     resource: 'Inventory',
     action: 'adjust',
-    type: 'ACTION' as const,
+    type: PermissionType.ACTION,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'inventory.transfer',
+    name: 'Transfer Inventory',
+    description: 'Transfer stock between warehouses',
+    module: 'inventory',
+    resource: 'Inventory',
+    action: 'transfer',
+    type: PermissionType.ACTION,
+    effect: PermissionEffect.ALLOW,
   },
 
-  // Orders (CRUD type)
+  // ===== WAREHOUSE MANAGEMENT =====
+  {
+    key: 'warehouses.create',
+    name: 'Create Warehouses',
+    description: 'Create new warehouse locations',
+    module: 'warehouses',
+    resource: 'Warehouse',
+    action: 'create',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'warehouses.read',
+    name: 'Read Warehouses',
+    description: 'View warehouse information',
+    module: 'warehouses',
+    resource: 'Warehouse',
+    action: 'read',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'warehouses.update',
+    name: 'Update Warehouses',
+    description: 'Edit warehouse details',
+    module: 'warehouses',
+    resource: 'Warehouse',
+    action: 'update',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'warehouses.delete',
+    name: 'Delete Warehouses',
+    description: 'Delete or archive warehouses',
+    module: 'warehouses',
+    resource: 'Warehouse',
+    action: 'delete',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+
+  // ===== PURCHASE ORDER MANAGEMENT =====
+  {
+    key: 'purchase_orders.create',
+    name: 'Create Purchase Orders',
+    description: 'Create new purchase orders',
+    module: 'purchase_orders',
+    resource: 'PurchaseOrder',
+    action: 'create',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'purchase_orders.read',
+    name: 'Read Purchase Orders',
+    description: 'View purchase orders',
+    module: 'purchase_orders',
+    resource: 'PurchaseOrder',
+    action: 'read',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'purchase_orders.update',
+    name: 'Update Purchase Orders',
+    description: 'Edit purchase orders',
+    module: 'purchase_orders',
+    resource: 'PurchaseOrder',
+    action: 'update',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'purchase_orders.approve',
+    name: 'Approve Purchase Orders',
+    description: 'Approve or reject purchase orders',
+    module: 'purchase_orders',
+    resource: 'PurchaseOrder',
+    action: 'approve',
+    type: PermissionType.ACTION,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'purchase_orders.receive',
+    name: 'Receive Purchase Orders',
+    description: 'Receive goods against purchase orders',
+    module: 'purchase_orders',
+    resource: 'PurchaseOrder',
+    action: 'receive',
+    type: PermissionType.ACTION,
+    effect: PermissionEffect.ALLOW,
+  },
+
+  // ===== ORDER MANAGEMENT =====
   {
     key: 'orders.create',
     name: 'Create Orders',
-    description: 'Create orders',
+    description: 'Create new sales orders',
     module: 'orders',
     resource: 'Order',
     action: 'create',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'orders.read',
     name: 'Read Orders',
-    description: 'Read orders',
+    description: 'View sales orders',
     module: 'orders',
     resource: 'Order',
     action: 'read',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'orders.update',
     name: 'Update Orders',
-    description: 'Update orders',
+    description: 'Edit sales orders',
     module: 'orders',
     resource: 'Order',
     action: 'update',
-    type: 'CRUD' as const,
-  },
-  {
-    key: 'orders.delete',
-    name: 'Delete Orders',
-    description: 'Delete orders',
-    module: 'orders',
-    resource: 'Order',
-    action: 'delete',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'orders.approve',
     name: 'Approve Orders',
-    description: 'Approve orders',
+    description: 'Approve or reject sales orders',
     module: 'orders',
     resource: 'Order',
     action: 'approve',
-    type: 'ACTION' as const,
+    type: PermissionType.ACTION,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'orders.fulfill',
+    name: 'Fulfill Orders',
+    description: 'Process order fulfillment',
+    module: 'orders',
+    resource: 'Order',
+    action: 'fulfill',
+    type: PermissionType.ACTION,
+    effect: PermissionEffect.ALLOW,
   },
 
-  // Companies (CRUD type)
+  // ===== SUPPLIER MANAGEMENT =====
+  {
+    key: 'suppliers.create',
+    name: 'Create Suppliers',
+    description: 'Create new supplier records',
+    module: 'suppliers',
+    resource: 'Supplier',
+    action: 'create',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'suppliers.read',
+    name: 'Read Suppliers',
+    description: 'View supplier information',
+    module: 'suppliers',
+    resource: 'Supplier',
+    action: 'read',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'suppliers.update',
+    name: 'Update Suppliers',
+    description: 'Edit supplier details',
+    module: 'suppliers',
+    resource: 'Supplier',
+    action: 'update',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'suppliers.delete',
+    name: 'Delete Suppliers',
+    description: 'Delete or archive suppliers',
+    module: 'suppliers',
+    resource: 'Supplier',
+    action: 'delete',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+
+  // ===== CATEGORY MANAGEMENT =====
+  {
+    key: 'categories.create',
+    name: 'Create Categories',
+    description: 'Create new product categories',
+    module: 'categories',
+    resource: 'Category',
+    action: 'create',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'categories.read',
+    name: 'Read Categories',
+    description: 'View product categories',
+    module: 'categories',
+    resource: 'Category',
+    action: 'read',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'categories.update',
+    name: 'Update Categories',
+    description: 'Edit category information',
+    module: 'categories',
+    resource: 'Category',
+    action: 'update',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'categories.delete',
+    name: 'Delete Categories',
+    description: 'Delete or archive categories',
+    module: 'categories',
+    resource: 'Category',
+    action: 'delete',
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+
+  // ===== COMPANY MANAGEMENT =====
   {
     key: 'companies.create',
     name: 'Create Companies',
-    description: 'Create companies',
+    description: 'Create new company records',
     module: 'companies',
     resource: 'Company',
     action: 'create',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'companies.read',
     name: 'Read Companies',
-    description: 'Read companies',
+    description: 'View company information',
     module: 'companies',
     resource: 'Company',
     action: 'read',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'companies.update',
     name: 'Update Companies',
-    description: 'Update companies',
+    description: 'Edit company details',
     module: 'companies',
     resource: 'Company',
     action: 'update',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'companies.delete',
     name: 'Delete Companies',
-    description: 'Delete companies',
+    description: 'Delete or archive companies',
     module: 'companies',
     resource: 'Company',
     action: 'delete',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
   },
 
-  // Audit (CRUD type)
+  // ===== AUDIT & REPORTS =====
   {
     key: 'audit.read',
     name: 'Read Audit Logs',
-    description: 'Read audit logs',
+    description: 'View system audit logs',
     module: 'audit',
     resource: 'AuditLog',
     action: 'read',
-    type: 'CRUD' as const,
+    type: PermissionType.CRUD,
+    effect: PermissionEffect.ALLOW,
+  },
+  {
+    key: 'reports.view',
+    name: 'View Reports',
+    description: 'Access reporting dashboard',
+    module: 'reports',
+    resource: 'Report',
+    action: 'view',
+    type: PermissionType.PAGE,
+    effect: PermissionEffect.ALLOW,
   },
 
-  // Dashboard/Page access (PAGE type)
+  // ===== DASHBOARD ACCESS =====
   {
     key: 'dashboard.view',
     name: 'View Dashboard',
-    description: 'View dashboard',
+    description: 'Access main dashboard',
     module: 'dashboard',
     resource: 'Dashboard',
     action: 'view',
-    type: 'PAGE' as const,
+    type: PermissionType.PAGE,
+    effect: PermissionEffect.ALLOW,
   },
   {
     key: 'admin.panel.access',
     name: 'Access Admin Panel',
-    description: 'Access admin panel',
+    description: 'Access administrative panel',
     module: 'admin',
     resource: 'AdminPanel',
     action: 'access',
-    type: 'PAGE' as const,
+    type: PermissionType.PAGE,
+    effect: PermissionEffect.ALLOW,
   },
 ] as const;
 
-// Role-Permission mappings
-export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  SUPER_ADMIN: ['*'], // Wildcard for all permissions
-  ADMIN: ['*'], // Admin also gets wildcard for full access
-  MANAGER: [
-    'users.read',
-    'products.create',
-    'products.read',
-    'products.update',
-    'categories.create',
-    'categories.read',
-    'categories.update',
-    'suppliers.create',
-    'suppliers.read',
-    'suppliers.update',
-    'inventory.create',
-    'inventory.read',
-    'inventory.update',
-    'inventory.adjust',
-    'orders.create',
-    'orders.read',
-    'orders.update',
-    'orders.approve',
-    'companies.create',
-    'companies.read',
-    'companies.update',
-    'audit.read',
-    'dashboard.view',
-  ],
-  STAFF: [
-    'products.read',
-    'categories.read',
-    'suppliers.read',
-    'inventory.read',
-    'inventory.adjust',
-    'orders.create',
-    'orders.read',
-    'orders.update',
-    'companies.read',
-    'dashboard.view',
-  ],
-  USER: [
-    'products.read',
-    'categories.read',
-    'suppliers.read',
-    'inventory.read',
-    'orders.read',
-    'companies.read',
-    'dashboard.view',
-  ],
-};
+// ==================== TEST USERS ====================
+export const TEST_USERS = [
+  {
+    email: 'superadmin@test.com',
+    name: 'Super Admin',
+    roles: ['SUPER_ADMIN'],
+  },
+  {
+    email: 'admin@test.com',
+    name: 'Admin User',
+    roles: ['ADMIN'],
+  },
+  {
+    email: 'user@test.com',
+    name: 'Regular User',
+    roles: ['VIEWER'],
+  },
+  {
+    email: 'staff@test.com',
+    name: 'Staff User',
+    roles: ['STAFF'],
+  },
+] as const;
 
+// Password hash for test users (argon2id) - "test@123"
+export const TEST_PASSWORD_HASH =
+  '$argon2id$v=19$m=65536,t=3,p=4$uHk8StAwDETcOSFpjUzZ4Q$jGmbEIa7KNQD2iDWD819GSVZWlspMKuIQkL765tY8+I';
+
+// ==================== SEEDING FUNCTION ====================
 async function main() {
-  console.log('🌱 Seeding database with enhanced RBAC system...');
+  console.log('🌱 Starting database seeding...');
 
-  // 1. Create permissions
-  console.log('Creating permissions...');
-  for (const perm of PERMISSIONS) {
-    await prisma.permission.upsert({
-      where: { key: perm.key },
-      update: {
-        name: perm.name,
-        description: perm.description,
-        module: perm.module,
-        resource: perm.resource,
-        action: perm.action,
-        type: perm.type,
-      },
-      create: {
-        key: perm.key,
-        name: perm.name,
-        description: perm.description,
-        module: perm.module,
-        resource: perm.resource,
-        action: perm.action,
-        type: perm.type,
-      },
-    });
-  }
+  // Create roles
+  console.log('📝 Creating roles...');
+  const createdRoles = new Map<string, any>();
 
-  // 2. Create system roles
-  console.log('Creating system roles...');
   for (const roleData of SYSTEM_ROLES) {
-    await prisma.role.upsert({
+    const role = await prisma.role.upsert({
       where: { name: roleData.name },
-      update: {
-        description: roleData.description,
-        isSystem: roleData.isSystem,
-        isDefault: roleData.isDefault,
-      },
+      update: roleData,
       create: roleData,
     });
+    createdRoles.set(role.name, role);
+    console.log(`  ✓ Created role: ${role.name}`);
   }
 
-  // 3. Assign permissions to roles
-  console.log('Assigning permissions to roles...');
-  const allPermissions = await prisma.permission.findMany();
-  const permissionMap = new Map(allPermissions.map((p) => [p.key, p.id]));
+  // Create permissions
+  console.log('🔐 Creating permissions...');
+  const createdPermissions = new Map<string, any>();
 
-  for (const [roleName, permissionKeys] of Object.entries(ROLE_PERMISSIONS)) {
-    const role = await prisma.role.findUnique({ where: { name: roleName } });
-    if (!role) {
-      console.warn(
-        `Role ${roleName} not found, skipping permission assignment`,
-      );
-      continue;
-    }
-
-    // Clear existing permissions
-    await prisma.rolePermission.deleteMany({
-      where: { roleId: role.id },
+  for (const permissionData of PERMISSIONS) {
+    const permission = await prisma.permission.upsert({
+      where: { key: permissionData.key },
+      update: permissionData,
+      create: permissionData,
     });
+    createdPermissions.set(permission.key, permission);
+  }
+  console.log(`  ✓ Created ${PERMISSIONS.length} permissions`);
 
-    if (permissionKeys.includes('*')) {
-      // SUPER_ADMIN gets all permissions
-      await prisma.rolePermission.createMany({
-        data: allPermissions.map((p) => ({
-          roleId: role.id,
-          permissionId: p.id,
-        })),
-        skipDuplicates: true,
+  // Assign permissions to roles
+  console.log('🔗 Assigning permissions to roles...');
+
+  // SUPER_ADMIN gets all permissions
+  const superAdminRole = createdRoles.get('SUPER_ADMIN');
+  if (superAdminRole) {
+    for (const permission of createdPermissions.values()) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: superAdminRole.id,
+            permissionId: permission.id,
+          },
+        },
+        update: {},
+        create: {
+          roleId: superAdminRole.id,
+          permissionId: permission.id,
+        },
       });
-      console.log(`Assigned ALL permissions to ${roleName}`);
-    } else {
-      // Assign specific permissions
-      const rolePermissionData = permissionKeys
-        .map((key) => {
-          const permId = permissionMap.get(key);
-          if (!permId) {
-            console.warn(`Permission ${key} not found, skipping`);
-            return null;
-          }
-          return {
-            roleId: role.id,
-            permissionId: permId,
-          };
-        })
-        .filter(Boolean);
+    }
+    console.log(`  ✓ Assigned all permissions to SUPER_ADMIN`);
+  }
 
-      if (rolePermissionData.length > 0) {
-        await prisma.rolePermission.createMany({
-          data: rolePermissionData as any[],
-          skipDuplicates: true,
+  // ADMIN gets all permissions
+  const adminRole = createdRoles.get('ADMIN');
+  if (adminRole) {
+    for (const permission of createdPermissions.values()) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: adminRole.id,
+            permissionId: permission.id,
+          },
+        },
+        update: {},
+        create: {
+          roleId: adminRole.id,
+          permissionId: permission.id,
+        },
+      });
+    }
+    console.log(`  ✓ Assigned all permissions to ADMIN`);
+  }
+
+  // STAFF gets basic permissions (you can customize this)
+  const staffRole = createdRoles.get('STAFF');
+  if (staffRole) {
+    const staffPermissions = [
+      'dashboard.view',
+      'users.read',
+      'products.read',
+      'categories.read',
+      'inventory.read',
+      'orders.read',
+      'suppliers.read',
+    ];
+
+    for (const permKey of staffPermissions) {
+      const permission = createdPermissions.get(permKey);
+      if (permission) {
+        await prisma.rolePermission.upsert({
+          where: {
+            roleId_permissionId: {
+              roleId: staffRole.id,
+              permissionId: permission.id,
+            },
+          },
+          update: {},
+          create: {
+            roleId: staffRole.id,
+            permissionId: permission.id,
+          },
         });
-        console.log(
-          `Assigned ${rolePermissionData.length} permissions to ${roleName}`,
-        );
       }
     }
+    console.log(`  ✓ Assigned basic permissions to STAFF`);
   }
 
-  // 4. Create super admin user if not exists
-  console.log('Creating super admin user...');
-  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@example.com';
-  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'Admin123!';
+  // VIEWER gets read-only permissions
+  const viewerRole = createdRoles.get('VIEWER');
+  if (viewerRole) {
+    const viewerPermissions = [
+      'dashboard.view',
+      'users.read',
+      'products.read',
+      'categories.read',
+      'inventory.read',
+      'orders.read',
+      'suppliers.read',
+      'companies.read',
+      'audit.read',
+      'reports.view',
+    ];
 
-  const existingSuperAdmin = await prisma.user.findFirst({
-    where: { email: superAdminEmail, deletedAt: null },
-  });
+    for (const permKey of viewerPermissions) {
+      const permission = createdPermissions.get(permKey);
+      if (permission) {
+        await prisma.rolePermission.upsert({
+          where: {
+            roleId_permissionId: {
+              roleId: viewerRole.id,
+              permissionId: permission.id,
+            },
+          },
+          update: {},
+          create: {
+            roleId: viewerRole.id,
+            permissionId: permission.id,
+          },
+        });
+      }
+    }
+    console.log(`  ✓ Assigned read-only permissions to VIEWER`);
+  }
 
-  if (!existingSuperAdmin) {
-    const passwordHash = await argon2.hash(superAdminPassword);
-    const superAdmin = await prisma.user.create({
-      data: {
-        email: superAdminEmail,
-        passwordHash,
-        name: 'Super Admin',
-        status: 'ACTIVE',
+  // Create test users
+  console.log('👤 Creating test users...');
+  for (const userData of TEST_USERS) {
+    const user = await prisma.user.upsert({
+      where: { email: userData.email },
+      update: {
+        name: userData.name,
+        passwordHash: TEST_PASSWORD_HASH,
+        status: UserStatus.ACTIVE,
+        isEmailVerified: true,
+      },
+      create: {
+        email: userData.email,
+        name: userData.name,
+        passwordHash: TEST_PASSWORD_HASH,
+        status: UserStatus.ACTIVE,
         isEmailVerified: true,
       },
     });
 
-    // Assign SUPER_ADMIN role
-    const superAdminRole = await prisma.role.findUnique({
-      where: { name: 'SUPER_ADMIN' },
-    });
-    if (superAdminRole) {
-      await prisma.userRole.create({
-        data: {
-          userId: superAdmin.id,
-          roleId: superAdminRole.id,
-        },
-      });
-      console.log(`✅ Super admin user created: ${superAdminEmail}`);
-    }
-  } else {
-    console.log(`Super admin user already exists: ${superAdminEmail}`);
-  }
-
-  // 5. Create additional test users for each role
-  console.log('Creating additional test users...');
-  const testUsers = [
-    { email: 'admin@test.com', name: 'Admin User', roleName: 'ADMIN' },
-    { email: 'manager@test.com', name: 'Manager User', roleName: 'MANAGER' },
-    { email: 'staff@test.com', name: 'Staff User', roleName: 'STAFF' },
-    { email: 'user@test.com', name: 'Regular User', roleName: 'USER' },
-  ];
-
-  for (const userData of testUsers) {
-    const existingUser = await prisma.user.findFirst({
-      where: { email: userData.email, deletedAt: null },
-    });
-
-    if (!existingUser) {
-      const user = await prisma.user.create({
-        data: {
-          email: userData.email,
-          passwordHash: TEST_PASSWORD_HASH,
-          name: userData.name,
-          status: 'ACTIVE',
-          isEmailVerified: true,
-        },
-      });
-
-      const role = await prisma.role.findUnique({
-        where: { name: userData.roleName },
-      });
+    // Assign roles to user
+    for (const roleName of userData.roles) {
+      const role = createdRoles.get(roleName);
       if (role) {
-        await prisma.userRole.create({
-          data: {
+        await prisma.userRole.upsert({
+          where: {
+            userId_roleId: {
+              userId: user.id,
+              roleId: role.id,
+            },
+          },
+          update: {},
+          create: {
             userId: user.id,
             roleId: role.id,
           },
         });
-        console.log(`✅ Created ${userData.roleName} user: ${userData.email}`);
       }
-    } else {
-      console.log(`User already exists: ${userData.email}`);
     }
+
+    console.log(`  ✓ Created user: ${user.email} with roles: ${userData.roles.join(', ')}`);
   }
 
-  // 6. Seed core data (companies, categories, suppliers, products, inventory, orders)
-  console.log('Seeding core data...');
-
-  // Get super admin user for createdBy references
-  const superAdmin = await prisma.user.findFirst({
-    where: { email: superAdminEmail, deletedAt: null },
-  });
-  const createdByUserId = superAdmin!.id;
-
-  // Companies
-  console.log('Creating companies...');
-  const companies = [
-    { name: 'Acme Corp', code: 'ACME' },
-    { name: 'Globex Inc', code: 'GLBX' },
-  ];
-  const createdCompanies = [];
-  for (const companyData of companies) {
-    const company = await prisma.company.upsert({
-      where: { name: companyData.name },
-      update: {},
-      create: companyData,
-    });
-    createdCompanies.push(company);
-    console.log(`✅ Created company: ${company.name}`);
-  }
-
-  // Categories
-  console.log('Creating categories...');
-  // Delete existing categories to avoid duplicates (cascading will delete related products? Not yet)
-  await prisma.category.deleteMany({});
-  const categories = [
-    { name: 'Sanitary', slug: 'sanitary' },
-    { name: 'Electrical', slug: 'electrical' },
-    { name: 'Plumbing', slug: 'plumbing' },
-  ];
-  const createdCategories = [];
-  for (const categoryData of categories) {
-    const category = await prisma.category.create({
-      data: categoryData,
-    });
-    createdCategories.push(category);
-    console.log(`✅ Created category: ${category.name}`);
-  }
-
-  // Suppliers
-  console.log('Creating suppliers...');
-  const suppliers = [
-    {
-      name: 'Supplier One',
-      email: 'supplier1@test.com',
-      phone: '+1234567890',
-      address: '123 Main St',
-    },
-    {
-      name: 'Supplier Two',
-      email: 'supplier2@test.com',
-      phone: '+0987654321',
-      address: '456 Oak Ave',
-    },
-    {
-      name: 'Supplier Three',
-      email: 'supplier3@test.com',
-      phone: '+1112223333',
-      address: '789 Pine Rd',
-    },
-    {
-      name: 'Supplier Four',
-      email: 'supplier4@test.com',
-      phone: '+4445556666',
-      address: '321 Elm Blvd',
-    },
-    {
-      name: 'Supplier Five',
-      email: 'supplier5@test.com',
-      phone: '+7778889999',
-      address: '654 Maple Ln',
-    },
-  ];
-  const createdSuppliers = [];
-  for (const supplierData of suppliers) {
-    const supplier = await prisma.supplier.upsert({
-      where: { email: supplierData.email },
-      update: {},
-      create: supplierData,
-    });
-    createdSuppliers.push(supplier);
-    console.log(`✅ Created supplier: ${supplier.name}`);
-  }
-
-  // Product Types
-  console.log('Creating product types...');
-  const productTypes = [
-    {
-      name: 'Sanitary',
-      slug: 'sanitary',
-      description: 'Sanitary products and supplies',
-      isActive: true,
-    },
-    {
-      name: 'Electrical',
-      slug: 'electrical',
-      description: 'Electrical products and components',
-      isActive: true,
-    },
-  ];
-  const createdProductTypes = [];
-  for (const typeData of productTypes) {
-    const productType = await prisma.productType.upsert({
-      where: { slug: typeData.slug },
-      update: {},
-      create: typeData,
-    });
-    createdProductTypes.push(productType);
-    console.log(`✅ Created product type: ${productType.name}`);
-  }
-
-  // Unit of Measures
-  console.log('Creating units of measure...');
-  const unitOfMeasures = [
-    {
-      name: 'Piece',
-      slug: 'piece',
-      symbol: 'pcs',
-      description: 'Individual piece/item',
-      isActive: true,
-    },
-    {
-      name: 'Meter',
-      slug: 'meter',
-      symbol: 'm',
-      description: 'Length in meters',
-      isActive: true,
-    },
-    {
-      name: 'Box',
-      slug: 'box',
-      symbol: 'box',
-      description: 'Box of items',
-      isActive: true,
-    },
-  ];
-  const createdUnitOfMeasures = [];
-  for (const unitData of unitOfMeasures) {
-    const unitOfMeasure = await prisma.unitOfMeasure.upsert({
-      where: { slug: unitData.slug },
-      update: {},
-      create: unitData,
-    });
-    createdUnitOfMeasures.push(unitOfMeasure);
-    console.log(`✅ Created unit of measure: ${unitOfMeasure.name}`);
-  }
-
-  // Products
-  console.log('Creating products...');
-  const products = [
-    {
-      name: 'Toilet Paper',
-      sku: 'TP001',
-      barcode: '123456789012',
-      typeId: createdProductTypes[0].id, // Sanitary
-      unitId: createdUnitOfMeasures[0].id, // Piece
-      purchasePrice: 5.99,
-      salePrice: 9.99,
-      minStockAlert: 10,
-      categoryId: createdCategories[0].id,
-      companyId: createdCompanies[0].id,
-    },
-    {
-      name: 'Hand Soap',
-      sku: 'HS002',
-      barcode: '123456789013',
-      typeId: createdProductTypes[0].id, // Sanitary
-      unitId: createdUnitOfMeasures[0].id, // Piece
-      purchasePrice: 2.5,
-      salePrice: 4.99,
-      minStockAlert: 20,
-      categoryId: createdCategories[0].id,
-      companyId: createdCompanies[0].id,
-    },
-    {
-      name: 'Light Bulb',
-      sku: 'LB003',
-      barcode: '123456789014',
-      typeId: createdProductTypes[1].id, // Electrical
-      unitId: createdUnitOfMeasures[0].id, // Piece
-      purchasePrice: 1.99,
-      salePrice: 3.99,
-      minStockAlert: 30,
-      categoryId: createdCategories[1].id,
-      companyId: createdCompanies[1].id,
-    },
-    {
-      name: 'Extension Cord',
-      sku: 'EC004',
-      barcode: '123456789015',
-      typeId: createdProductTypes[1].id, // Electrical
-      unitId: createdUnitOfMeasures[1].id, // Meter
-      purchasePrice: 8.0,
-      salePrice: 15.0,
-      minStockAlert: 5,
-      categoryId: createdCategories[1].id,
-      companyId: createdCompanies[1].id,
-    },
-    {
-      name: 'Pipe Fitting',
-      sku: 'PF005',
-      barcode: '123456789016',
-      typeId: createdProductTypes[0].id, // Sanitary
-      unitId: createdUnitOfMeasures[0].id, // Piece
-      purchasePrice: 3.25,
-      salePrice: 6.5,
-      minStockAlert: 15,
-      categoryId: createdCategories[2].id,
-      companyId: createdCompanies[0].id,
-    },
-    {
-      name: 'Faucet',
-      sku: 'FC006',
-      barcode: '123456789017',
-      typeId: createdProductTypes[0].id, // Sanitary
-      unitId: createdUnitOfMeasures[0].id, // Piece
-      purchasePrice: 12.0,
-      salePrice: 24.99,
-      minStockAlert: 8,
-      categoryId: createdCategories[2].id,
-      companyId: createdCompanies[1].id,
-    },
-    {
-      name: 'Wire Roll',
-      sku: 'WR007',
-      barcode: '123456789018',
-      typeId: createdProductTypes[1].id, // Electrical
-      unitId: createdUnitOfMeasures[1].id, // Meter
-      purchasePrice: 4.75,
-      salePrice: 9.5,
-      minStockAlert: 12,
-      categoryId: createdCategories[1].id,
-      companyId: createdCompanies[0].id,
-    },
-    {
-      name: 'Disinfectant Spray',
-      sku: 'DS008',
-      barcode: '123456789019',
-      typeId: createdProductTypes[0].id, // Sanitary
-      unitId: createdUnitOfMeasures[2].id, // Box
-      purchasePrice: 7.8,
-      salePrice: 14.99,
-      minStockAlert: 6,
-      categoryId: createdCategories[0].id,
-      companyId: createdCompanies[1].id,
-    },
-    {
-      name: 'Circuit Breaker',
-      sku: 'CB009',
-      barcode: '123456789020',
-      typeId: createdProductTypes[1].id, // Electrical
-      unitId: createdUnitOfMeasures[0].id, // Piece
-      purchasePrice: 18.5,
-      salePrice: 35.0,
-      minStockAlert: 4,
-      categoryId: createdCategories[1].id,
-      companyId: createdCompanies[0].id,
-    },
-    {
-      name: 'Plunger',
-      sku: 'PL010',
-      barcode: '123456789021',
-      typeId: createdProductTypes[0].id, // Sanitary
-      unitId: createdUnitOfMeasures[0].id, // Piece
-      purchasePrice: 3.99,
-      salePrice: 7.99,
-      minStockAlert: 25,
-      categoryId: createdCategories[2].id,
-      companyId: createdCompanies[1].id,
-    },
-  ];
-  const createdProducts = [];
-  for (const productData of products) {
-    const product = await prisma.product.upsert({
-      where: { sku: productData.sku },
-      update: {},
-      create: {
-        ...productData,
-        purchasePrice: productData.purchasePrice.toString(),
-        salePrice: productData.salePrice.toString(),
-      },
-    });
-    createdProducts.push(product);
-    console.log(`✅ Created product: ${product.name}`);
-  }
-
-  // Product variants (optional)
-  console.log('Creating product variants...');
-  const variants = [
-    {
-      productId: createdProducts[0].id,
-      size: 'Large',
-      color: 'White',
-      sku: 'TP001-L',
-      barcode: '123456789022',
-    },
-    {
-      productId: createdProducts[0].id,
-      size: 'Small',
-      color: 'White',
-      sku: 'TP001-S',
-      barcode: '123456789023',
-    },
-    {
-      productId: createdProducts[2].id,
-      size: '60W',
-      color: 'Warm White',
-      sku: 'LB003-60W',
-      barcode: '123456789024',
-    },
-    {
-      productId: createdProducts[2].id,
-      size: '100W',
-      color: 'Cool White',
-      sku: 'LB003-100W',
-      barcode: '123456789025',
-    },
-  ];
-  const createdVariants = [];
-  for (const variantData of variants) {
-    const variant = await prisma.productVariant.upsert({
-      where: { sku: variantData.sku },
-      update: {},
-      create: variantData,
-    });
-    createdVariants.push(variant);
-    console.log(`✅ Created variant: ${variant.sku}`);
-  }
-
-  // Inventory items for products and variants
-  console.log('Creating inventory items...');
-  const inventoryItems = [];
-  for (const product of createdProducts) {
-    const inventory = await prisma.inventoryItem.upsert({
-      where: { productId: product.id },
-      update: {},
-      create: {
-        productId: product.id,
-        stockQuantity: 100,
-        reservedQuantity: 0,
-      },
-    });
-    inventoryItems.push(inventory);
-    console.log(`✅ Created inventory for product: ${product.name}`);
-  }
-  for (const variant of createdVariants) {
-    const inventory = await prisma.inventoryItem.upsert({
-      where: { variantId: variant.id },
-      update: {},
-      create: {
-        variantId: variant.id,
-        stockQuantity: 50,
-        reservedQuantity: 0,
-      },
-    });
-    inventoryItems.push(inventory);
-    console.log(`✅ Created inventory for variant: ${variant.sku}`);
-  }
-
-  // Inventory transactions (initial stock)
-  console.log('Creating inventory transactions...');
-  for (const item of inventoryItems) {
-    await prisma.inventoryTransaction.create({
-      data: {
-        inventoryItemId: item.id,
-        type: 'PURCHASE',
-        quantityDelta: item.stockQuantity,
-        reference: 'INITIAL_STOCK',
-        note: 'Initial stock seeding',
-        createdByUserId,
-      },
-    });
-  }
-  console.log(`✅ Created ${inventoryItems.length} inventory transactions`);
-
-  // Orders
-  console.log('Creating orders...');
-  const orders = [
-    {
-      orderNumber: 'ORD-001',
-      status: OrderStatus.CONFIRMED,
-      subtotal: 45.97,
-      discountTotal: 0,
-      taxTotal: 4.6,
-      total: 50.57,
-    },
-    {
-      orderNumber: 'ORD-002',
-      status: OrderStatus.DRAFT,
-      subtotal: 120.5,
-      discountTotal: 10.0,
-      taxTotal: 11.05,
-      total: 121.55,
-    },
-    {
-      orderNumber: 'ORD-003',
-      status: OrderStatus.PAID,
-      subtotal: 89.99,
-      discountTotal: 5.0,
-      taxTotal: 8.5,
-      total: 93.49,
-    },
-    {
-      orderNumber: 'ORD-004',
-      status: OrderStatus.CANCELLED,
-      subtotal: 30.0,
-      discountTotal: 0,
-      taxTotal: 3.0,
-      total: 33.0,
-    },
-    {
-      orderNumber: 'ORD-005',
-      status: OrderStatus.CONFIRMED,
-      subtotal: 200.0,
-      discountTotal: 20.0,
-      taxTotal: 18.0,
-      total: 198.0,
-    },
-  ];
-  const createdOrders = [];
-  for (const orderData of orders) {
-    const order = await prisma.order.upsert({
-      where: { orderNumber: orderData.orderNumber },
-      update: {},
-      create: {
-        ...orderData,
-        subtotal: orderData.subtotal.toString(),
-        discountTotal: orderData.discountTotal.toString(),
-        taxTotal: orderData.taxTotal.toString(),
-        total: orderData.total.toString(),
-        createdByUserId,
-      },
-    });
-    createdOrders.push(order);
-    console.log(`✅ Created order: ${order.orderNumber}`);
-  }
-
-  // Order items
-  console.log('Creating order items...');
-  const orderItemsData = [
-    {
-      orderId: createdOrders[0].id,
-      productId: createdProducts[0].id,
-      quantity: 5,
-      unitPrice: 9.99,
-      lineTotal: 49.95,
-    },
-    {
-      orderId: createdOrders[0].id,
-      productId: createdProducts[1].id,
-      quantity: 2,
-      unitPrice: 4.99,
-      lineTotal: 9.98,
-    },
-    {
-      orderId: createdOrders[1].id,
-      productId: createdProducts[2].id,
-      quantity: 10,
-      unitPrice: 3.99,
-      lineTotal: 39.9,
-    },
-    {
-      orderId: createdOrders[1].id,
-      productId: createdProducts[3].id,
-      quantity: 3,
-      unitPrice: 15.0,
-      lineTotal: 45.0,
-    },
-    {
-      orderId: createdOrders[2].id,
-      productId: createdProducts[4].id,
-      quantity: 7,
-      unitPrice: 6.5,
-      lineTotal: 45.5,
-    },
-    {
-      orderId: createdOrders[3].id,
-      productId: createdProducts[5].id,
-      quantity: 1,
-      unitPrice: 24.99,
-      lineTotal: 24.99,
-    },
-    {
-      orderId: createdOrders[4].id,
-      productId: createdProducts[6].id,
-      quantity: 15,
-      unitPrice: 9.5,
-      lineTotal: 142.5,
-    },
-  ];
-  for (const itemData of orderItemsData) {
-    await prisma.orderItem.create({
-      data: {
-        ...itemData,
-        unitPrice: itemData.unitPrice.toString(),
-        lineTotal: itemData.lineTotal.toString(),
-      },
-    });
-  }
-  console.log(`✅ Created ${orderItemsData.length} order items`);
-
-  console.log('🎉 Database seeding completed!');
+  console.log('✅ Database seeding completed successfully!');
 }
 
+// ==================== EXECUTION ====================
 main()
   .catch((e) => {
     console.error('❌ Seeding failed:', e);

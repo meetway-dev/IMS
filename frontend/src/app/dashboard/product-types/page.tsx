@@ -30,10 +30,12 @@ import { ActionMenu } from '@/components/ui/action-menu';
 import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { formatDate } from '@/lib/utils';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export default function ProductTypesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canWrite, canDelete } = usePermissions();
   const {
     search,
     debouncedSearch,
@@ -142,19 +144,23 @@ export default function ProductTypesPage() {
         <ActionMenu
           trigger={{ icon: MoreHorizontal, variant: 'ghost', size: 'icon-sm' }}
           items={[
-            {
-              label: 'Edit',
-              icon: Edit,
-              iconPosition: 'start',
-              onClick: () => handleEditProductType(row.original),
-            },
-            {
-              label: 'Delete',
-              icon: Trash2,
-              iconPosition: 'start',
-              variant: 'destructive',
-              onClick: () => handleDeleteProductType(row.original.id),
-            },
+            ...(canWrite('product-types')
+              ? [{
+                  label: 'Edit',
+                  icon: Edit,
+                  iconPosition: 'start' as const,
+                  onClick: () => handleEditProductType(row.original),
+                }]
+              : []),
+            ...(canDelete('product-types')
+              ? [{
+                  label: 'Delete',
+                  icon: Trash2,
+                  iconPosition: 'start' as const,
+                  variant: 'destructive' as const,
+                  onClick: () => handleDeleteProductType(row.original.id),
+                }]
+              : []),
           ]}
           align="end"
         />
@@ -263,13 +269,15 @@ export default function ProductTypesPage() {
           title="Product Types"
           description="Manage product classification types"
           actions={
-            <Button onClick={() => {
-              setEditingProductType(null);
-              setIsDialogOpen(true);
-            }}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Product Type
-            </Button>
+            canWrite('product-types') ? (
+              <Button onClick={() => {
+                setEditingProductType(null);
+                setIsDialogOpen(true);
+              }}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Product Type
+              </Button>
+            ) : undefined
           }
         />
       </motion.div>
