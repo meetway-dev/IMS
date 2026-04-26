@@ -17,7 +17,6 @@ export interface StatsCardProps {
     isPositive: boolean;
     label?: string;
   };
-  /** Optional gradient class for the icon container background (e.g. "from-blue-500 to-cyan-500") */
   color?: string;
   className?: string;
   loading?: boolean;
@@ -27,14 +26,14 @@ const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
   ({ title, value, description, icon: Icon, trend, color, className, loading = false }, ref) => {
     if (loading) {
       return (
-        <Card ref={ref} className={cn('p-6', className)}>
+        <Card ref={ref} className={cn('p-5', className)}>
           <div className="flex items-center justify-between">
             <div className="space-y-3">
               <Skeleton className="h-3 w-20" />
               <Skeleton className="h-7 w-28" />
               <Skeleton className="h-3 w-32" />
             </div>
-            <Skeleton className="h-10 w-10 rounded-xl" />
+            <Skeleton className="h-10 w-10 rounded-lg" />
           </div>
         </Card>
       );
@@ -49,21 +48,21 @@ const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
         <Card
           ref={ref}
           className={cn(
-            'group p-6 transition-shadow duration-200 hover:shadow-medium',
+            'group p-5 transition-all duration-200 hover:shadow-md',
             className
           )}
         >
           <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">
                 {title}
               </p>
-              <p className="text-2xl font-bold tracking-tight">{value}</p>
-              <div className="flex items-center gap-2">
+              <p className="text-2xl font-semibold tracking-tight">{value}</p>
+              <div className="flex items-center gap-1.5">
                 {trend && (
                   <span
                     className={cn(
-                      'inline-flex items-center text-xs font-semibold',
+                      'inline-flex items-center text-xs font-medium',
                       trend.isPositive ? 'text-success' : 'text-destructive'
                     )}
                   >
@@ -84,7 +83,7 @@ const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
             </div>
             {Icon && (
               <div className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-xl',
+                'flex h-10 w-10 items-center justify-center rounded-lg',
                 color ? `bg-gradient-to-br ${color}` : 'bg-muted'
               )}>
                 <Icon className={cn('h-5 w-5', color ? 'text-white' : 'text-muted-foreground')} />

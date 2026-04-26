@@ -16,10 +16,8 @@ import {
   Package,
   ShoppingCart,
   Users,
-  TrendingUp,
   AlertTriangle,
   DollarSign,
-  BarChart3,
   ArrowUpRight,
   ArrowDownRight,
   CheckCircle,
@@ -28,7 +26,7 @@ import {
   Activity,
   PackageOpen,
   ShieldCheck,
-  TrendingDown,
+  TrendingUp,
   MoreVertical,
   Download,
   Filter,
@@ -154,9 +152,9 @@ export default function DashboardPage() {
   };
 
   const urgencyConfig: Record<string, { label: string; variant: 'destructive' | 'warning' | 'info' | 'success'; color: string }> = {
-    high: { label: 'Critical', variant: 'destructive', color: 'bg-destructive/20 text-destructive' },
-    medium: { label: 'Medium', variant: 'warning', color: 'bg-warning/20 text-warning' },
-    low: { label: 'Low', variant: 'info', color: 'bg-info/20 text-info' },
+    high: { label: 'Critical', variant: 'destructive', color: 'bg-destructive/10 text-destructive' },
+    medium: { label: 'Medium', variant: 'warning', color: 'bg-warning/10 text-warning' },
+    low: { label: 'Low', variant: 'info', color: 'bg-info/10 text-info' },
   };
 
   if (isError) {
@@ -178,12 +176,12 @@ export default function DashboardPage() {
         />
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="gap-2">
-            <Calendar className="h-4 w-4" />
+            <Calendar className="h-3.5 w-3.5" />
             Last 30 days
-            <ChevronDown className="h-3.5 w-3.5 ml-1" />
+            <ChevronDown className="h-3 w-3 ml-0.5" />
           </Button>
           <Button variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" />
+            <Download className="h-3.5 w-3.5" />
             Export
           </Button>
         </div>
@@ -236,30 +234,25 @@ export default function DashboardPage() {
       {/* Charts & Tables */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Revenue Trend */}
-        <Card className="overflow-hidden border shadow-sm hover:shadow-md transition-shadow duration-300">
+        <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold">Revenue & Orders</CardTitle>
-                <CardDescription className="mt-1">Monthly performance vs target</CardDescription>
+                <CardTitle className="text-base font-semibold">Revenue & Orders</CardTitle>
+                <CardDescription className="mt-1 text-xs">Monthly performance vs target</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon-sm">
-                  <Filter className="h-4 w-4" />
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View details</DropdownMenuItem>
-                    <DropdownMenuItem>Export data</DropdownMenuItem>
-                    <DropdownMenuItem>Set alerts</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>View details</DropdownMenuItem>
+                  <DropdownMenuItem>Export data</DropdownMenuItem>
+                  <DropdownMenuItem>Set alerts</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardHeader>
           <CardContent>
@@ -278,41 +271,36 @@ export default function DashboardPage() {
                   const revenuePercentage = (item.revenue / item.target) * 100;
                   const orderPercentage = (item.orders / 250) * 100;
                   return (
-                    <div key={item.month} className="space-y-3">
+                    <div key={item.month} className="space-y-2.5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 text-sm font-medium text-foreground">{item.month}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <span className="w-8 text-sm font-medium text-foreground">{item.month}</span>
+                          <span className="text-xs text-muted-foreground">
                             {formatCurrency(item.revenue)}
-                          </div>
+                          </span>
                         </div>
-                        <div className="text-xs font-medium">
+                        <span className="text-xs font-medium">
                           {revenuePercentage >= 100 ? (
-                            <span className="text-success flex items-center gap-1">
+                            <span className="text-success flex items-center gap-0.5">
                               <ArrowUpRight className="h-3 w-3" />
                               {revenuePercentage.toFixed(0)}%
                             </span>
                           ) : (
-                            <span className="text-warning flex items-center gap-1">
+                            <span className="text-warning flex items-center gap-0.5">
                               <ArrowDownRight className="h-3 w-3" />
                               {revenuePercentage.toFixed(0)}%
                             </span>
                           )}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <Progress value={Math.min(revenuePercentage, 100)} className="h-1.5" />
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                          <span>{item.orders} orders</span>
+                          <span>{revenuePercentage.toFixed(0)}% of target</span>
                         </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">Revenue progress</span>
-                          <span className="font-medium">{revenuePercentage.toFixed(1)}%</span>
-                        </div>
-                        <Progress value={Math.min(revenuePercentage, 100)} className="h-2" />
-                        <div className="flex items-center justify-between text-xs mt-2">
-                          <span className="text-muted-foreground">{item.orders} orders</span>
-                          <span className="font-medium">{orderPercentage.toFixed(0)}% of capacity</span>
-                        </div>
-                        <Progress value={orderPercentage} className="h-1.5 bg-muted" indicatorClassName="bg-info" />
-                      </div>
-                      <Separator className="last:hidden" />
+                      {item.month !== 'May' && <Separator />}
                     </div>
                   );
                 })}
@@ -322,14 +310,14 @@ export default function DashboardPage() {
         </Card>
 
         {/* Low Stock Alert */}
-        <Card className="overflow-hidden border shadow-sm hover:shadow-md transition-shadow duration-300">
+        <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold">Low Stock Alert</CardTitle>
-                <CardDescription className="mt-1">Items needing immediate attention</CardDescription>
+                <CardTitle className="text-base font-semibold">Low Stock Alert</CardTitle>
+                <CardDescription className="mt-1 text-xs">Items needing attention</CardDescription>
               </div>
-              <AlertTriangle className="h-5 w-5 text-warning" />
+              <AlertTriangle className="h-4 w-4 text-warning" />
             </div>
           </CardHeader>
           <CardContent>
@@ -340,29 +328,29 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {lowStockItems.map((item) => {
                   const config = urgencyConfig[item.urgency];
                   return (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between rounded-xl p-3 transition-all duration-200 hover:bg-accent/50 border border-border/50"
+                      className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-muted/50 border border-border/50"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg', config.color)}>
-                          <PackageOpen className="h-4.5 w-4.5" />
+                        <div className={cn('flex h-8 w-8 items-center justify-center rounded-lg', config.color)}>
+                          <PackageOpen className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate text-foreground">{item.name}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{item.category}</p>
+                          <p className="text-sm font-medium truncate">{item.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{item.category}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right">
-                          <p className="text-sm font-semibold">
+                          <p className="text-sm font-medium tabular-nums">
                             {item.stock} <span className="text-muted-foreground font-normal">/ {item.minStock}</span>
                           </p>
-                          <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden mt-1">
+                          <div className="w-14 h-1 bg-muted rounded-full overflow-hidden mt-1">
                             <div 
                               className={cn('h-full rounded-full', {
                                 'bg-destructive': item.urgency === 'high',
@@ -373,14 +361,14 @@ export default function DashboardPage() {
                             />
                           </div>
                         </div>
-                        <Badge variant={config.variant} className="px-2 py-0.5 h-6 text-xs font-medium">
+                        <Badge variant={config.variant} className="text-[10px] px-1.5 py-0 h-5">
                           {config.label}
                         </Badge>
                       </div>
                     </div>
                   );
                 })}
-                <Button variant="ghost" className="w-full mt-2 text-sm text-primary hover:text-primary hover:bg-primary/5">
+                <Button variant="ghost" className="w-full mt-1 text-sm text-muted-foreground hover:text-foreground">
                   View all low stock items
                   <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
                 </Button>
@@ -390,19 +378,17 @@ export default function DashboardPage() {
         </Card>
 
         {/* Recent Orders */}
-        <Card className="lg:col-span-2 overflow-hidden border shadow-sm hover:shadow-md transition-shadow duration-300">
+        <Card className="lg:col-span-2">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold">Recent Orders</CardTitle>
-                <CardDescription className="mt-1">Latest transactions and their status</CardDescription>
+                <CardTitle className="text-base font-semibold">Recent Orders</CardTitle>
+                <CardDescription className="mt-1 text-xs">Latest transactions and their status</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Eye className="h-4 w-4" />
-                  View all
-                </Button>
-              </div>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Eye className="h-3.5 w-3.5" />
+                View all
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -424,13 +410,13 @@ export default function DashboardPage() {
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="font-semibold">Order ID</TableHead>
-                    <TableHead className="font-semibold">Customer</TableHead>
-                    <TableHead className="font-semibold">Total</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold">Date</TableHead>
-                    <TableHead className="font-semibold text-right">Actions</TableHead>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-xs font-medium text-muted-foreground">Order ID</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground">Customer</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground">Total</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground">Date</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -438,15 +424,15 @@ export default function DashboardPage() {
                     const config = statusConfig[order.status] || statusConfig.Pending;
                     const StatusIcon = config.icon;
                     return (
-                      <TableRow key={order.id} className="hover:bg-accent/50 transition-colors">
-                        <TableCell className="font-medium text-primary">{order.id}</TableCell>
-                        <TableCell className="font-medium">{order.customer}</TableCell>
-                        <TableCell className="font-semibold">{order.total}</TableCell>
+                      <TableRow key={order.id} className="hover:bg-muted/50">
+                        <TableCell className="font-medium text-sm">{order.id}</TableCell>
+                        <TableCell className="text-sm">{order.customer}</TableCell>
+                        <TableCell className="text-sm font-medium tabular-nums">{order.total}</TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
                             className={cn(
-                              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
+                              'inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full border-0',
                               config.bgColor,
                               config.color
                             )}
@@ -455,9 +441,9 @@ export default function DashboardPage() {
                             {order.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{order.date}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{order.date}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon-sm" className="h-8 w-8">
+                          <Button variant="ghost" size="icon-sm" className="h-7 w-7">
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
                         </TableCell>

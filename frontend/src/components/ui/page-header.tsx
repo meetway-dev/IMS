@@ -23,8 +23,8 @@ export function PageHeader({
     <div className={cn('flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between', className)}>
       <div className="flex items-center gap-3">
         {Icon && (
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <Icon className="h-5 w-5 text-primary" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+            <Icon className="h-5 w-5 text-muted-foreground" />
           </div>
         )}
         <div>
