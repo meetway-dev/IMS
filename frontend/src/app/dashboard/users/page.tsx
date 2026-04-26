@@ -18,8 +18,10 @@ import { useAuthStore } from '@/store/auth-store';
 import { UserFormModal } from './UserFormModal';
 import { UserDetailsModal } from './UserDetailsModal';
 import { SimpleAssignRolesModal } from './SimpleAssignRolesModal';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { roleService, permissionService } from '@/services/role-permission.service';
 import { useServerSearch } from '@/hooks/use-server-search';
+import { menuItem, menuSeparator, menuLabel } from '@/components/ui/action-menu';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -64,6 +66,8 @@ export default function UsersPage() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editUser, setEditUser] = React.useState<UserType | null>(null);
   const { user, initializeAuth } = useAuthStore();
+  const deleteConfirm = useConfirmation<UserType>();
+  const bulkDeleteConfirm = useConfirmation<UserType[]>();
   const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');
 
   React.useEffect(() => {
@@ -110,14 +114,19 @@ export default function UsersPage() {
     enabled: !!user,
   });
 
-  const handleBulkDelete = async (selectedUsers: UserType[]) => {
-    if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} user(s)? This action cannot be undone.`)) {
+  const handleBulkDelete = (selectedUsers: UserType[]) => {
+    bulkDeleteConfirm.open(selectedUsers);
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    if (bulkDeleteConfirm.data) {
       try {
-        await Promise.all(selectedUsers.map(u => userService.deleteUser(u.id)));
+        await Promise.all(bulkDeleteConfirm.data.map(u => userService.deleteUser(u.id)));
         refetch();
       } catch (error) {
         console.error('Failed to delete users:', error);
       }
+      bulkDeleteConfirm.close();
     }
   };
 
@@ -162,10 +171,15 @@ export default function UsersPage() {
     setModalOpen(true);
   };
 
-  const handleDelete = async (u: UserType) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      await userService.deleteUser(u.id);
+  const handleDelete = (u: UserType) => {
+    deleteConfirm.open(u);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirm.data) {
+      await userService.deleteUser(deleteConfirm.data.id);
       refetch();
+      deleteConfirm.close();
     }
   };
 
@@ -223,8 +237,6 @@ export default function UsersPage() {
     {
       id: 'actions',
       cell: ({ row }: any) => {
-        const { menuItem, menuSeparator, menuLabel } = require('@/components/ui/action-menu');
-
         const items = [
           menuLabel({ label: 'Actions' }),
           menuItem({
@@ -459,6 +471,24 @@ export default function UsersPage() {
           </Card>
         </div>
       </motion.div>
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete User"
+        description={`Are you sure you want to delete${deleteConfirm.data?.name ? ` "${deleteConfirm.data.name}"` : ' this user'}? This action cannot be undone.`}
+        confirmLabel="Delete User"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+      />
+
+      <ConfirmationDialog
+        {...bulkDeleteConfirm.dialogProps}
+        title="Delete Users"
+        description={`Are you sure you want to delete ${bulkDeleteConfirm.data?.length || 0} user(s)? This action cannot be undone.`}
+        confirmLabel="Delete All"
+        variant="destructive"
+        onConfirm={handleBulkDeleteConfirm}
+      />
     </motion.div>
   );
 }

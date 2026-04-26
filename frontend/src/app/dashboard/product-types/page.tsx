@@ -27,6 +27,7 @@ import { ErrorState } from '@/components/ui/states';
 import { productTypeService, ProductType } from '@/services/product-type.service';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { formatDate } from '@/lib/utils';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 
@@ -49,15 +50,21 @@ export default function ProductTypesPage() {
   } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProductType, setEditingProductType] = useState<ProductType | null>(null);
+  const deleteConfirm = useConfirmation<string>();
 
   const handleEditProductType = (productType: ProductType) => {
     setEditingProductType(productType);
     setIsDialogOpen(true);
   };
 
-  const handleDeleteProductType = async (id: string) => {
-    if (confirm('Are you sure you want to delete this product type?')) {
-      await deleteProductTypeMutation.mutateAsync(id);
+  const handleDeleteProductType = (id: string) => {
+    deleteConfirm.open(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteConfirm.data) {
+      await deleteProductTypeMutation.mutateAsync(deleteConfirm.data);
+      deleteConfirm.close();
     }
   };
 
@@ -362,6 +369,16 @@ export default function ProductTypesPage() {
           </div>
         </form>
       </FormModal>
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete Product Type"
+        description="Are you sure you want to delete this product type? This action cannot be undone."
+        confirmLabel="Delete Product Type"
+        variant="destructive"
+        isLoading={deleteProductTypeMutation.isPending}
+        onConfirm={handleDeleteConfirm}
+      />
     </motion.div>
   );
 }

@@ -33,6 +33,7 @@ import { purchaseOrderService } from '@/services/purchase-order.service';
 import { PurchaseOrder, PurchaseOrderStatus } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { ActionMenu } from '@/components/ui/action-menu';
+import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import {
   Select,
@@ -82,6 +83,8 @@ export default function PurchaseOrdersPage() {
   } = useServerSearch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPurchaseOrder, setEditingPurchaseOrder] = useState<PurchaseOrder | null>(null);
+  const deleteConfirm = useConfirmation<string>();
+  const approveConfirm = useConfirmation<string>();
 
   // Fetch purchase orders
   const {
@@ -185,14 +188,24 @@ export default function PurchaseOrdersPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this purchase order?')) {
-      deletePurchaseOrderMutation.mutate(id);
+    deleteConfirm.open(id);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteConfirm.data) {
+      deletePurchaseOrderMutation.mutate(deleteConfirm.data);
+      deleteConfirm.close();
     }
   };
 
   const handleApprove = (id: string) => {
-    if (confirm('Are you sure you want to approve this purchase order?')) {
-      approvePurchaseOrderMutation.mutate(id);
+    approveConfirm.open(id);
+  };
+
+  const handleApproveConfirm = () => {
+    if (approveConfirm.data) {
+      approvePurchaseOrderMutation.mutate(approveConfirm.data);
+      approveConfirm.close();
     }
   };
 
@@ -474,6 +487,26 @@ export default function PurchaseOrdersPage() {
           </div>
         </form>
       </FormModal>
+
+      <ConfirmationDialog
+        {...deleteConfirm.dialogProps}
+        title="Delete Purchase Order"
+        description="Are you sure you want to delete this purchase order? This action cannot be undone."
+        confirmLabel="Delete Purchase Order"
+        variant="destructive"
+        isLoading={deletePurchaseOrderMutation.isPending}
+        onConfirm={handleDeleteConfirm}
+      />
+
+      <ConfirmationDialog
+        {...approveConfirm.dialogProps}
+        title="Approve Purchase Order"
+        description="Are you sure you want to approve this purchase order?"
+        confirmLabel="Approve"
+        variant="default"
+        isLoading={approvePurchaseOrderMutation.isPending}
+        onConfirm={handleApproveConfirm}
+      />
     </motion.div>
   );
 }
