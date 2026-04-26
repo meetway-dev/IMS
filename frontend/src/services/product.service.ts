@@ -1,6 +1,20 @@
+/**
+ * Product API service.
+ *
+ * Handles the FE <-> BE data transformation layer for products.
+ * The backend uses `purchasePrice` / `salePrice` (string decimals)
+ * while the frontend works with `cost` / `price` (numbers).
+ *
+ * @module product.service
+ */
+
 import apiClient from '@/lib/api-client';
 import { API_ENDPOINTS } from '@/lib/constants';
-import { Product, PaginatedResponse, PaginationParams } from '@/types';
+import type { Product, PaginatedResponse, PaginationParams } from '@/types';
+
+// ---------------------------------------------------------------------------
+// DTO types (frontend-facing)
+// ---------------------------------------------------------------------------
 
 interface CreateProductData {
   name: string;
@@ -18,64 +32,72 @@ interface UpdateProductData extends Partial<CreateProductData> {
   isActive?: boolean;
 }
 
-// Transform frontend data to backend format
-// NOTE: The backend CreateProductDto does NOT accept `description` — it is not in the
-// Prisma Product model either. Do NOT send it or the ValidationPipe (forbidNonWhitelisted)
-// will reject the entire request with 400.
-function toBackendFormat(data: CreateProductData | UpdateProductData): any {
-  const result: any = {};
-  
+// ---------------------------------------------------------------------------
+// Transformers
+// ---------------------------------------------------------------------------
+
+/**
+ * Map frontend field names to the backend DTO shape.
+ *
+ * NOTE: The backend `CreateProductDto` does NOT accept `description`.
+ * Sending it will trigger a 400 from the `ValidationPipe`.
+ */
+function toBackendFormat(data: CreateProductData | UpdateProductData): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+
   if (data.name !== undefined) result.name = data.name;
   if (data.sku !== undefined) result.sku = data.sku;
   if (data.barcode !== undefined) result.barcode = data.barcode;
-  // description intentionally omitted — not supported by backend DTO / Prisma schema
   if (data.categoryId !== undefined) result.categoryId = data.categoryId;
   if (data.typeId !== undefined) result.typeId = data.typeId;
   if (data.unitId !== undefined) result.unitId = data.unitId;
-  
   if (data.cost !== undefined) result.purchasePrice = data.cost.toString();
   if (data.price !== undefined) result.salePrice = data.price.toString();
   if (data.minStockLevel !== undefined) result.minStockAlert = data.minStockLevel;
-  
+
   return result;
 }
 
-// Transform backend data to frontend format
-function toFrontendFormat(data: any): Product {
+/** Map a backend product row to the frontend `Product` shape. */
+function toFrontendFormat(data: Record<string, unknown>): Product {
   if (!data) {
     throw new Error('Cannot transform undefined/null data to Product');
   }
 
+  const raw = data as Record<string, any>;
+
   return {
-    id: data.id || '',
-    name: data.name || '',
-    sku: data.sku || '',
-    barcode: data.barcode || undefined,
-    categoryId: data.categoryId || '',
-    typeId: data.typeId || '',
-    unitId: data.unitId || '',
-    type: data.type?.name || '', // Display name from relation
-    unit: data.unit?.name || '', // Display name from relation
-    price: data.salePrice ? parseFloat(data.salePrice) : 0,
-    cost: data.purchasePrice ? parseFloat(data.purchasePrice) : 0,
-    minStockLevel: data.minStockAlert || 0,
-    stock: data.inventory?.stockQuantity || 0,
-    isActive: !data.deletedAt,
-    companyId: data.companyId || '',
-    createdAt: data.createdAt || '',
-    updatedAt: data.updatedAt || '',
-    category: data.category,
+    id: raw.id ?? '',
+    name: raw.name ?? '',
+    sku: raw.sku ?? '',
+    barcode: raw.barcode ?? undefined,
+    categoryId: raw.categoryId ?? '',
+    typeId: raw.typeId ?? '',
+    unitId: raw.unitId ?? '',
+    type: raw.type?.name ?? '',
+    unit: raw.unit?.name ?? '',
+    price: raw.salePrice ? parseFloat(raw.salePrice) : 0,
+    cost: raw.purchasePrice ? parseFloat(raw.purchasePrice) : 0,
+    minStockLevel: raw.minStockAlert ?? 0,
+    stock: raw.inventory?.stockQuantity ?? 0,
+    isActive: !raw.deletedAt,
+    companyId: raw.companyId ?? '',
+    createdAt: raw.createdAt ?? '',
+    updatedAt: raw.updatedAt ?? '',
+    category: raw.category,
   };
 }
 
+// ---------------------------------------------------------------------------
+// Service
+// ---------------------------------------------------------------------------
+
 export const productService = {
-  /**
-   * Get all products with pagination
-   */
+  /** List products with pagination. */
   async getProducts(params?: PaginationParams): Promise<PaginatedResponse<Product>> {
     const response = await apiClient.getPaginated<any>(
       API_ENDPOINTS.PRODUCTS.LIST,
-      params
+      params,
     );
     return {
       ...response,
@@ -83,78 +105,58 @@ export const productService = {
     };
   },
 
-  /**
-   * Get product by ID
-   */
+  /** Fetch a single product by ID. */
   async getProduct(id: string): Promise<Product> {
     const response = await apiClient.get<any>(API_ENDPOINTS.PRODUCTS.DETAIL(id));
-    // Determine if response is wrapped (has data property)
     const data = response.data !== undefined ? response.data : response;
-    if (data === null || data === undefined) {
-      throw new Error('API response data is null or undefined. Product may not exist.');
+    if (data == null) {
+      throw new Error('Product not found or API returned empty data.');
     }
     return toFrontendFormat(data);
   },
 
-  /**
-   * Create new product
-   */
+  /** Create a new product. */
   async createProduct(data: CreateProductData): Promise<Product> {
     const backendData = toBackendFormat(data);
-    console.log('Creating product with backend data:', backendData);
-    console.log('Endpoint:', API_ENDPOINTS.PRODUCTS.CREATE);
-    try {
-      const response = await apiClient.post<any>(API_ENDPOINTS.PRODUCTS.CREATE, backendData);
-      console.log('API response (body):', response);
-      // Determine if response is wrapped (has data property)
-      const data = response.data !== undefined ? response.data : response;
-      console.log('Data to transform:', data);
-      if (data === null || data === undefined) {
-        throw new Error('API response data is null or undefined. Check backend validation and permissions.');
-      }
-      return toFrontendFormat(data);
-    } catch (error) {
-      console.error('Error in createProduct:', error);
-      throw error;
+    const response = await apiClient.post<any>(
+      API_ENDPOINTS.PRODUCTS.CREATE,
+      backendData,
+    );
+    const result = response.data !== undefined ? response.data : response;
+    if (result == null) {
+      throw new Error('Create failed: API returned empty data. Check backend validation and permissions.');
     }
+    return toFrontendFormat(result);
   },
 
-  /**
-   * Update product
-   */
+  /** Update an existing product. */
   async updateProduct(id: string, data: UpdateProductData): Promise<Product> {
     const backendData = toBackendFormat(data);
-    const response = await apiClient.patch<any>(API_ENDPOINTS.PRODUCTS.UPDATE(id), backendData);
-    // Determine if response is wrapped (has data property)
-    const responseData = response.data !== undefined ? response.data : response;
-    if (responseData === null || responseData === undefined) {
-      throw new Error('API response data is null or undefined. Update may have failed.');
+    const response = await apiClient.patch<any>(
+      API_ENDPOINTS.PRODUCTS.UPDATE(id),
+      backendData,
+    );
+    const result = response.data !== undefined ? response.data : response;
+    if (result == null) {
+      throw new Error('Update failed: API returned empty data.');
     }
-    return toFrontendFormat(responseData);
+    return toFrontendFormat(result);
   },
 
-  /**
-   * Delete product
-   */
+  /** Soft-delete a product. */
   async deleteProduct(id: string): Promise<void> {
     await apiClient.delete(API_ENDPOINTS.PRODUCTS.DELETE(id));
   },
 
-  /**
-   * Search products
-   */
+  /** Quick search for products (e.g. autocomplete). */
   async searchProducts(query: string): Promise<Product[]> {
     const response = await apiClient.get<any>(API_ENDPOINTS.PRODUCTS.LIST, {
       search: query,
       limit: 20,
     });
-    // Determine if response is wrapped (has data property)
     const data = response.data !== undefined ? response.data : response;
-    if (data === null || data === undefined) {
-      return [];
-    }
-    // Handle both array and object responses
-    const items = Array.isArray(data) ? data : (data.data || []);
+    if (data == null) return [];
+    const items = Array.isArray(data) ? data : (data.data ?? []);
     return items.map(toFrontendFormat);
   },
 };

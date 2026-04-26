@@ -1,4 +1,15 @@
-// Error Enums
+/**
+ * Standardised error codes and messages.
+ *
+ * Backend error filters map exceptions to these codes; the frontend
+ * error handler uses them for user-facing messages.
+ *
+ * @module error.enums
+ */
+
+// ---------------------------------------------------------------------------
+// Application-level error codes
+// ---------------------------------------------------------------------------
 
 export enum ErrorCode {
   VALIDATION_ERROR = 'VALIDATION_ERROR',
@@ -10,7 +21,8 @@ export enum ErrorCode {
   BAD_REQUEST = 'BAD_REQUEST',
 }
 
-export const ERROR_MESSAGES: Record<ErrorCode, string> = {
+/** Default human-readable message for each error code. */
+export const ERROR_MESSAGES: Readonly<Record<ErrorCode, string>> = {
   [ErrorCode.VALIDATION_ERROR]: 'Validation failed',
   [ErrorCode.NOT_FOUND]: 'Resource not found',
   [ErrorCode.CONFLICT]: 'Resource already exists',
@@ -20,6 +32,10 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.BAD_REQUEST]: 'Bad request',
 };
 
+// ---------------------------------------------------------------------------
+// Prisma-specific error codes (P-series)
+// ---------------------------------------------------------------------------
+
 export enum PrismaErrorCode {
   UNIQUE_CONSTRAINT = 'P2002',
   RECORD_NOT_FOUND = 'P2025',
@@ -27,7 +43,8 @@ export enum PrismaErrorCode {
   QUERY_INTERPRETATION_ERROR = 'P2005',
 }
 
-export const PRISMA_ERROR_MESSAGES: Record<PrismaErrorCode, string> = {
+/** User-friendly descriptions of common Prisma errors. */
+export const PRISMA_ERROR_MESSAGES: Readonly<Record<PrismaErrorCode, string>> = {
   [PrismaErrorCode.UNIQUE_CONSTRAINT]: 'A record with this value already exists',
   [PrismaErrorCode.RECORD_NOT_FOUND]: 'Record not found',
   [PrismaErrorCode.FOREIGN_KEY_CONSTRAINT]: 'Related record not found',

@@ -1,8 +1,20 @@
+/**
+ * Generic CRUD service base class.
+ *
+ * Extend this class for simple domain modules that follow the
+ * standard list / get / create / update / soft-delete pattern.
+ * Override the abstract methods to supply model-specific behaviour.
+ *
+ * Services with non-trivial business logic (e.g. Orders, Inventory)
+ * should implement their own service instead of extending this base.
+ *
+ * @module crud.service.base
+ */
+
 import {
   ConflictException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { buildPaginatedResult } from '../dto/pagination.dto';
@@ -10,32 +22,41 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../../modules/audit/audit.service';
 import type { AuthUser } from '../../types/express';
 import { ErrorHandler } from '../errors/error-handler';
-import {
+import type {
   PaginationQuery,
   PaginatedResult,
-  SearchOptions,
-  FilterOptions,
   SortOptions,
 } from '@ims/shared';
 
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+
 export interface CrudServiceOptions {
+  /** Prisma model name (must match the PrismaService delegate key). */
   modelName: string;
+  /** Fields to search across when `query.search` is provided. */
   searchFields: string[];
+  /** Constraint-name -> human-readable label map for P2002 errors. */
   uniqueConstraints: Record<string, string>;
+  /** Default sort when the caller does not specify one. */
   defaultSort?: SortOptions;
+  /** Default page size. */
   defaultLimit?: number;
+  /** Maximum allowed page size. */
   maxLimit?: number;
 }
 
 export interface QueryOptions {
-  search?: SearchOptions;
-  filters?: FilterOptions;
+  search?: { term?: string; fields: string[] };
+  filters?: Record<string, unknown>;
   sort?: SortOptions;
-  pagination?: {
-    page: number;
-    limit: number;
-  };
+  pagination?: { page: number; limit: number };
 }
+
+// ---------------------------------------------------------------------------
+// Base class
+// ---------------------------------------------------------------------------
 
 @Injectable()
 export abstract class CrudServiceBase<
@@ -53,57 +74,49 @@ export abstract class CrudServiceBase<
     protected readonly audit: AuditService,
     protected readonly options: CrudServiceOptions,
   ) {
-    this.defaultLimit = options.defaultLimit || 20;
-    this.maxLimit = options.maxLimit || 100;
-    this.defaultSort = options.defaultSort || {
+    this.defaultLimit = options.defaultLimit ?? 20;
+    this.maxLimit = options.maxLimit ?? 100;
+    this.defaultSort = options.defaultSort ?? {
       field: 'createdAt',
       order: 'desc',
     };
   }
 
-  /**
-   * Get include object for queries (to be implemented by child classes)
-   */
-  abstract getInclude(): Record<string, any>;
+  // ── Abstract hooks ──────────────────────────────────────────────────────
 
-  /**
-   * Transform create DTO to Prisma data (to be implemented by child classes)
-   */
+  /** Relations to include in every query. */
+  abstract getInclude(): Record<string, unknown>;
+
+  /** Map a create DTO to the Prisma `data` argument. */
   abstract transformCreateDto(
     dto: TCreateDto,
   ): Prisma.Args<TModel, 'create'>['data'];
 
-  /**
-   * Transform update DTO to Prisma data (to be implemented by child classes)
-   */
+  /** Map an update DTO to the Prisma `data` argument. */
   abstract transformUpdateDto(
     dto: TUpdateDto,
   ): Prisma.Args<TModel, 'update'>['data'];
 
-  /**
-   * Get metadata for audit logging (to be implemented by child classes)
-   */
-  abstract getAuditMetadata(entity: any): Record<string, any>;
+  /** Return metadata to embed in the audit log entry. */
+  abstract getAuditMetadata(entity: unknown): Record<string, unknown>;
 
-  /**
-   * Build where clause from query options
-   */
+  // ── Query builders ──────────────────────────────────────────────────────
+
+  /** Build the Prisma `where` clause from a query DTO. */
   protected buildWhereClause(
     query: TListQueryDto,
-    additionalFilters?: Record<string, any>,
+    additionalFilters?: Record<string, unknown>,
   ): Prisma.Args<TModel, 'findMany'>['where'] {
     const where: Prisma.Args<TModel, 'findMany'>['where'] = {
       deletedAt: null,
     };
 
-    // Add search filter
     if (query.search && this.options.searchFields.length > 0) {
       where.OR = this.options.searchFields.map((field) => ({
         [field]: { contains: query.search, mode: 'insensitive' as const },
       }));
     }
 
-    // Add additional filters
     if (additionalFilters) {
       Object.assign(where, additionalFilters);
     }
@@ -111,21 +124,19 @@ export abstract class CrudServiceBase<
     return where;
   }
 
-  /**
-   * Build order by clause from query options
-   */
+  /** Build the Prisma `orderBy` clause from a query DTO. */
   protected buildOrderByClause(
     query: TListQueryDto,
   ): Prisma.Args<TModel, 'findMany'>['orderBy'] {
     if (query.sortBy) {
-      return { [query.sortBy]: query.sortOrder || 'asc' };
+      return { [query.sortBy]: query.sortOrder ?? 'asc' };
     }
     return { [this.defaultSort.field]: this.defaultSort.order };
   }
 
-  /**
-   * Create a new record
-   */
+  // ── CRUD operations ─────────────────────────────────────────────────────
+
+  /** Create a new record and log the action. */
   async create(
     dto: TCreateDto,
     user: AuthUser,
@@ -134,9 +145,7 @@ export abstract class CrudServiceBase<
   ): Promise<TModel> {
     try {
       const data = this.transformCreateDto(dto);
-      const model = this.prisma[
-        this.options.modelName as keyof PrismaService
-      ] as any;
+      const model = this.getDelegate();
 
       const row = await model.create({
         data,
@@ -155,27 +164,14 @@ export abstract class CrudServiceBase<
 
       return row;
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === 'P2002') {
-          const field =
-            ErrorHandler.getUniqueConstraintField(
-              e,
-              this.options.uniqueConstraints,
-            ) || 'field';
-          throw new ConflictException(`${field} already exists`);
-        }
-        ErrorHandler.handlePrismaError(e);
-      }
-      throw e;
+      this.handleWriteError(e);
     }
   }
 
-  /**
-   * Find all records with pagination and search
-   */
+  /** List records with pagination, search, and sorting. */
   async findAll(
     query: TListQueryDto,
-    additionalFilters?: Record<string, any>,
+    additionalFilters?: Record<string, unknown>,
   ): Promise<PaginatedResult<TModel>> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? this.defaultLimit, this.maxLimit);
@@ -183,10 +179,7 @@ export abstract class CrudServiceBase<
 
     const where = this.buildWhereClause(query, additionalFilters);
     const orderBy = this.buildOrderByClause(query);
-
-    const model = this.prisma[
-      this.options.modelName as keyof PrismaService
-    ] as any;
+    const model = this.getDelegate();
 
     const [data, total] = await Promise.all([
       model.findMany({
@@ -202,19 +195,14 @@ export abstract class CrudServiceBase<
     return buildPaginatedResult(data, total, page, limit);
   }
 
-  /**
-   * Find all records without pagination (for exports, etc.)
-   */
+  /** Fetch all records (no pagination) -- useful for exports. */
   async findAllWithoutPagination(
     query: TListQueryDto,
-    additionalFilters?: Record<string, any>,
+    additionalFilters?: Record<string, unknown>,
   ): Promise<TModel[]> {
     const where = this.buildWhereClause(query, additionalFilters);
     const orderBy = this.buildOrderByClause(query);
-
-    const model = this.prisma[
-      this.options.modelName as keyof PrismaService
-    ] as any;
+    const model = this.getDelegate();
 
     return model.findMany({
       where,
@@ -223,13 +211,9 @@ export abstract class CrudServiceBase<
     });
   }
 
-  /**
-   * Find one record by ID
-   */
+  /** Find a single record by ID. Throws 404 if missing or soft-deleted. */
   async findOne(id: string): Promise<TModel> {
-    const model = this.prisma[
-      this.options.modelName as keyof PrismaService
-    ] as any;
+    const model = this.getDelegate();
 
     const row = await model.findFirst({
       where: { id, deletedAt: null },
@@ -243,9 +227,7 @@ export abstract class CrudServiceBase<
     return row;
   }
 
-  /**
-   * Update a record
-   */
+  /** Update a record and log the action. */
   async update(
     id: string,
     dto: TUpdateDto,
@@ -254,12 +236,10 @@ export abstract class CrudServiceBase<
     userAgent?: string,
   ): Promise<TModel> {
     try {
-      await this.findOne(id); // Check if exists
+      await this.findOne(id);
 
       const data = this.transformUpdateDto(dto);
-      const model = this.prisma[
-        this.options.modelName as keyof PrismaService
-      ] as any;
+      const model = this.getDelegate();
 
       const row = await model.update({
         where: { id },
@@ -279,35 +259,20 @@ export abstract class CrudServiceBase<
 
       return row;
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === 'P2002') {
-          const field =
-            ErrorHandler.getUniqueConstraintField(
-              e,
-              this.options.uniqueConstraints,
-            ) || 'field';
-          throw new ConflictException(`${field} already exists`);
-        }
-        ErrorHandler.handlePrismaError(e);
-      }
-      throw e;
+      this.handleWriteError(e);
     }
   }
 
-  /**
-   * Soft delete a record
-   */
+  /** Soft-delete a record and log the action. */
   async remove(
     id: string,
     user: AuthUser,
     ip?: string,
     userAgent?: string,
   ): Promise<void> {
-    await this.findOne(id); // Check if exists
+    await this.findOne(id);
 
-    const model = this.prisma[
-      this.options.modelName as keyof PrismaService
-    ] as any;
+    const model = this.getDelegate();
 
     await model.update({
       where: { id },
@@ -323,5 +288,28 @@ export abstract class CrudServiceBase<
       ip,
       userAgent,
     });
+  }
+
+  // ── Internals ───────────────────────────────────────────────────────────
+
+  /** Return the Prisma delegate for `this.options.modelName`. */
+  private getDelegate(): any {
+    return this.prisma[this.options.modelName as keyof PrismaService] as any;
+  }
+
+  /** Handle Prisma write errors with user-friendly messages. */
+  private handleWriteError(e: unknown): never {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === 'P2002') {
+        const field =
+          ErrorHandler.getUniqueConstraintField(
+            e,
+            this.options.uniqueConstraints,
+          ) || 'field';
+        throw new ConflictException(`${field} already exists`);
+      }
+      ErrorHandler.handlePrismaError(e);
+    }
+    throw e;
   }
 }

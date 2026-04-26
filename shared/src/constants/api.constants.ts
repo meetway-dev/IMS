@@ -1,10 +1,24 @@
-// API Constants
+/**
+ * API constants shared between backend and frontend.
+ *
+ * Endpoint paths are relative to the API base URL (`/api/v1`).
+ * Both packages import from here so route strings stay in sync.
+ *
+ * @module api.constants
+ */
+
+// ---------------------------------------------------------------------------
+// Versioning
+// ---------------------------------------------------------------------------
 
 export const API_VERSION = 'v1';
 export const API_PREFIX = `/api/${API_VERSION}`;
 
+// ---------------------------------------------------------------------------
+// Endpoint map
+// ---------------------------------------------------------------------------
+
 export const API_ENDPOINTS = {
-  // Auth
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/signup',
@@ -12,7 +26,7 @@ export const API_ENDPOINTS = {
     LOGOUT: '/auth/logout',
     ME: '/auth/me',
   },
-  // Products
+
   PRODUCTS: {
     LIST: '/products',
     DETAIL: (id: string) => `/products/${id}`,
@@ -20,7 +34,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/products/${id}`,
     DELETE: (id: string) => `/products/${id}`,
   },
-  // Categories
+
   CATEGORIES: {
     LIST: '/categories',
     DETAIL: (id: string) => `/categories/${id}`,
@@ -29,7 +43,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/categories/${id}`,
     TREE: '/categories/tree',
   },
-  // Inventory
+
   INVENTORY: {
     LIST: '/inventory',
     DETAIL: (id: string) => `/inventory/${id}`,
@@ -39,7 +53,7 @@ export const API_ENDPOINTS = {
     TRANSACTIONS: '/inventory/transactions',
     ADJUST: '/inventory/adjust',
   },
-  // Orders
+
   ORDERS: {
     LIST: '/orders',
     DETAIL: (id: string) => `/orders/${id}`,
@@ -48,7 +62,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/orders/${id}`,
     STATS: '/orders/stats',
   },
-  // Users
+
   USERS: {
     LIST: '/users',
     DETAIL: (id: string) => `/users/${id}`,
@@ -56,7 +70,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/users/${id}`,
     DELETE: (id: string) => `/users/${id}`,
   },
-  // Companies
+
   COMPANIES: {
     LIST: '/companies',
     DETAIL: (id: string) => `/companies/${id}`,
@@ -64,7 +78,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/companies/${id}`,
     DELETE: (id: string) => `/companies/${id}`,
   },
-  // Suppliers
+
   SUPPLIERS: {
     LIST: '/suppliers',
     DETAIL: (id: string) => `/suppliers/${id}`,
@@ -72,19 +86,27 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/suppliers/${id}`,
     DELETE: (id: string) => `/suppliers/${id}`,
   },
-  // Audit
+
   AUDIT: {
     LIST: '/audit',
   },
-  // Health
+
   HEALTH: '/health',
 } as const;
+
+// ---------------------------------------------------------------------------
+// Pagination defaults
+// ---------------------------------------------------------------------------
 
 export const DEFAULT_PAGINATION = {
   PAGE: 1,
   LIMIT: 20,
   MAX_LIMIT: 100,
 } as const;
+
+// ---------------------------------------------------------------------------
+// Client-side storage keys
+// ---------------------------------------------------------------------------
 
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',

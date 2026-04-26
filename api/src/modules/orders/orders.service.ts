@@ -11,7 +11,11 @@ import { AuditService } from '../audit/audit.service';
 import type { AuthUser } from '../../types/express';
 import type { CreateOrderDto, OrderListQueryDto } from './dto/order.dto';
 
-function d(v: string | number | Prisma.Decimal) {
+/**
+ * Shorthand: coerce a string, number, or existing Decimal into a Prisma Decimal.
+ * Keeps the service code concise while remaining explicit about intent.
+ */
+function toDecimal(v: string | number | Prisma.Decimal): Prisma.Decimal {
   return new Prisma.Decimal(v.toString());
 }
 
@@ -57,7 +61,7 @@ export class OrdersService {
           });
           if (!p)
             throw new NotFoundException(`Product ${item.productId} not found`);
-          unitPrice = item.unitPrice ? d(item.unitPrice) : d(p.salePrice);
+          unitPrice = item.unitPrice ? toDecimal(item.unitPrice) : toDecimal(p.salePrice);
         } else {
           const v = await this.prisma.productVariant.findFirst({
             where: { id: item.variantId!, deletedAt: null },
@@ -67,8 +71,8 @@ export class OrdersService {
             throw new NotFoundException(`Variant ${item.variantId} not found`);
           }
           unitPrice = item.unitPrice
-            ? d(item.unitPrice)
-            : d(v.product.salePrice);
+            ? toDecimal(item.unitPrice)
+            : toDecimal(v.product.salePrice);
         }
 
         const lineTotal = unitPrice.mul(item.quantity);
@@ -82,9 +86,9 @@ export class OrdersService {
       }),
     );
 
-    const subtotal = lines.reduce((acc, l) => acc.add(l.lineTotal), d(0));
-    const discountTotal = dto.discountTotal ? d(dto.discountTotal) : d(0);
-    const taxTotal = dto.taxTotal ? d(dto.taxTotal) : d(0);
+    const subtotal = lines.reduce((acc, l) => acc.add(l.lineTotal), toDecimal(0));
+    const discountTotal = dto.discountTotal ? toDecimal(dto.discountTotal) : toDecimal(0);
+    const taxTotal = dto.taxTotal ? toDecimal(dto.taxTotal) : toDecimal(0);
     const total = subtotal.sub(discountTotal).add(taxTotal);
 
     const order = await this.prisma.$transaction(async (tx) => {

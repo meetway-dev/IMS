@@ -1,64 +1,89 @@
-﻿# IMS — Inventory Management System
+﻿# IMS -- Inventory Management System
 
-A full-stack inventory management system built with NestJS, Next.js, and PostgreSQL.
+A full-stack inventory management system built with **NestJS**, **Next.js**, and **PostgreSQL**.
 
 ## Architecture
 
 ```
 ims/
-├── api/          NestJS backend (Prisma + PostgreSQL)
-├── frontend/     Next.js frontend (Tailwind + shadcn/ui)
-├── shared/       Shared types, constants, and utilities
+├── api/            NestJS backend (Prisma ORM + PostgreSQL)
+│   ├── src/
+│   │   ├── common/         Shared decorators, DTOs, guards, utils
+│   │   ├── core/           App config and env validation
+│   │   ├── infrastructure/ Prisma service and database layer
+│   │   └── modules/        Feature modules (auth, products, orders, ...)
+│   ├── prisma/             Schema, migrations, seed
+│   └── test/               E2E tests
+│
+├── frontend/       Next.js 16 frontend (Tailwind + shadcn/ui)
+│   └── src/
+│       ├── app/            Pages and layouts (App Router)
+│       ├── components/     Reusable UI components
+│       ├── hooks/          Custom React hooks
+│       ├── lib/            API client, constants, utilities
+│       ├── schemas/        Form validation schemas
+│       ├── services/       API service layer
+│       ├── store/          Zustand stores
+│       └── types/          TypeScript type definitions
+│
+├── shared/         Shared types, enums, constants, and utilities
+│   └── src/
+│       ├── constants/      API endpoints, pagination defaults
+│       ├── enums/          Permission, role, and error enums
+│       ├── types/          API, entity, auth, and pagination types
+│       └── utils/          Format and validation helpers
+│
 └── docker-compose.yml
 ```
 
+## Tech Stack
+
+| Layer    | Technology                                          |
+| -------- | --------------------------------------------------- |
+| Backend  | NestJS 11, Prisma 7, PostgreSQL, JWT, Passport      |
+| Frontend | Next.js 16, React 19, Tailwind CSS, shadcn/ui       |
+| Shared   | TypeScript types, enums, constants, and utilities    |
+| Infra    | Docker, Docker Compose                               |
+
 ## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL running locally (default: `postgresql://ims:ims@localhost:5432/ims`)
 
 ### First-Time Setup
 
-Run one of these from the repo root:
-
-```powershell
-# PowerShell (recommended)
-.\setup.ps1
-
-# Command Prompt
-setup.bat
-
-# Or via npm
+```bash
+# Install all packages, generate Prisma client, run migrations, and seed
 npm run setup
 ```
 
-This will:
-1. Install & build the `shared` package
-2. Install API dependencies
-3. Create `api/.env` from `.env.local.example`
-4. Run Prisma generate + migrate + seed
-5. Install frontend dependencies
-6. Create `frontend/.env.local` from `.env.local.example`
-
-> **Note:** Make sure PostgreSQL is running locally before setup. Default connection: `postgresql://ims:ims@localhost:5432/ims`
+The setup script:
+1. Installs and builds the `shared` package
+2. Installs API dependencies
+3. Runs `prisma generate`, `prisma db push`, and `prisma db seed`
+4. Installs frontend dependencies
 
 ### Daily Development
 
-Start both servers with:
-
-```powershell
-# PowerShell (opens separate windows)
-.\dev.ps1
-
-# Command Prompt
-dev.bat
-```
-
-Or start individually:
+Start all three dev servers concurrently:
 
 ```bash
-# Terminal 1 — API (http://localhost:8080)
+npm run app
+```
+
+Or start them individually:
+
+```bash
+# Terminal 1 -- API (http://localhost:8080)
 npm run dev:api
 
-# Terminal 2 — Frontend (http://localhost:3001)
+# Terminal 2 -- Frontend (http://localhost:3001)
 npm run dev:frontend
+
+# Terminal 3 -- Shared (watch mode)
+npm run dev:shared
 ```
 
 ### Docker
@@ -70,22 +95,28 @@ npm run docker:up
 
 ## NPM Scripts
 
-| Command              | Description                          |
-|----------------------|--------------------------------------|
-| `npm run setup`      | First-time install, migrate, seed    |
-| `npm run dev:api`    | Start API in watch mode              |
-| `npm run dev:frontend` | Start frontend dev server          |
-| `npm run build`      | Build all packages                   |
-| `npm run db:migrate` | Run Prisma migrations                |
-| `npm run db:seed`    | Seed the database                    |
-| `npm run docker:up`  | Start all Docker containers          |
-| `npm run docker:down`| Stop all Docker containers           |
+| Command                | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `npm run setup`        | First-time install, migrate, seed        |
+| `npm run app`          | Start all three dev servers concurrently |
+| `npm run dev:api`      | Start API in watch mode                  |
+| `npm run dev:frontend` | Start frontend dev server                |
+| `npm run dev:shared`   | Watch-build the shared package           |
+| `npm run build`        | Build all packages                       |
+| `npm run build:shared` | Build shared package only                |
+| `npm run build:api`    | Build API only                           |
+| `npm run build:frontend` | Build frontend only                    |
+| `npm run db:migrate`   | Run Prisma migrations                    |
+| `npm run db:seed`      | Seed the database                        |
+| `npm run db:generate`  | Regenerate Prisma client                 |
+| `npm run db:reset`     | Reset database and re-seed               |
+| `npm run docker:up`    | Start all Docker containers              |
+| `npm run docker:down`  | Stop all Docker containers               |
 
-## Tech Stack
+## Project Conventions
 
-| Layer    | Technology                          |
-|----------|-------------------------------------|
-| Backend  | NestJS, Prisma, PostgreSQL, JWT     |
-| Frontend | Next.js 14, Tailwind CSS, shadcn/ui |
-| Shared   | TypeScript types and constants      |
-| Infra    | Docker, Docker Compose              |
+- **Soft deletes** -- all entities use `deletedAt` rather than hard deletes.
+- **Audit logging** -- every write operation records an audit trail.
+- **RBAC** -- role-based access control with database-backed permissions.
+- **Pagination** -- all list endpoints return `{ data, meta }` with consistent pagination metadata.
+- **Shared package** -- types, enums, and utilities live in `shared/` so both API and frontend stay in sync.

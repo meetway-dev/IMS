@@ -1,3 +1,14 @@
+/**
+ * Generate a URL-safe slug from arbitrary text.
+ *
+ * @example
+ * ```ts
+ * slugify('Hello World!'); // "hello-world"
+ * slugify('  ');           // "item"
+ * ```
+ *
+ * @module slug
+ */
 export function slugify(input: string): string {
   const s = input
     .trim()
