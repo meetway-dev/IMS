@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { useAuthStore } from '@/store/auth-store';
+import { useProfile } from '@/hooks/use-auth';
 import { LoadingState } from '@/components/ui/states';
 
 export default function DashboardLayout({
@@ -15,6 +16,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, isLoading: authLoading, isInitialized, initializeAuth } = useAuthStore();
+  const { isLoading: profileLoading } = useProfile();
   const [isCheckingAuth, setIsCheckingAuth] = React.useState(true);
   const [hasRedirected, setHasRedirected] = React.useState(false);
 
@@ -39,8 +41,8 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, authLoading, isInitialized, router, hasRedirected, pathname]);
 
-  // Loading state while checking auth or initializing
-  if (isCheckingAuth || authLoading || !isInitialized) {
+  // Loading state while checking auth, initializing, or fetching profile
+  if (isCheckingAuth || authLoading || !isInitialized || (isAuthenticated && profileLoading)) {
     return <LoadingState text="Loading dashboard..." className="h-screen" />;
   }
 

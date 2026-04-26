@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import argon2 from 'argon2';
 import crypto from 'crypto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { RbacService } from '../rbac/rbac.service';
 
 type JwtAccessPayload = { sub: string; email: string };
 type JwtRefreshPayload = { sub: string; sid: string };
@@ -19,6 +20,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly rbac: RbacService,
   ) {}
 
   async signup(input: { email: string; password: string; name?: string }) {
@@ -133,6 +135,10 @@ export class AuthService {
       },
     });
     if (!user) throw new UnauthorizedException();
+
+    // Get permissions using RBAC service
+    const rbac = await this.rbac.getUserRbac(userId);
+
     return {
       id: user.id,
       email: user.email,
@@ -141,7 +147,8 @@ export class AuthService {
       isEmailVerified: user.isEmailVerified,
       lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
-      roles: user.roles.map((ur) => ur.role.name),
+      roles: rbac.roleNames,
+      permissions: rbac.permissionKeys,
     };
   }
 

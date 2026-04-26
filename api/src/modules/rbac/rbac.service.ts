@@ -43,6 +43,7 @@ export class RbacService implements OnModuleInit {
       where: { id: userId, deletedAt: null, status: 'ACTIVE' },
       include: {
         roles: {
+          where: { role: { deletedAt: null } },
           include: {
             role: {
               include: {
@@ -52,7 +53,6 @@ export class RbacService implements OnModuleInit {
                 },
                 parentRole: true,
               },
-              where: { deletedAt: null },
             },
           },
         },
