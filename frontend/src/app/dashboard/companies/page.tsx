@@ -103,9 +103,10 @@ export default function CompaniesPage() {
   const createCompanyMutation = useMutation({
     mutationFn: companyService.createCompany,
     onSuccess: () => {
-      toast({ 
-        title: 'Success', 
+      toast({
+        title: 'Success',
         description: 'Company created successfully.',
+        variant: 'success',
       });
       setIsDialogOpen(false);
       setEditingCompany(null);
@@ -115,7 +116,7 @@ export default function CompaniesPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create company.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -125,9 +126,10 @@ export default function CompaniesPage() {
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       companyService.updateCompany(id, data),
     onSuccess: () => {
-      toast({ 
-        title: 'Success', 
+      toast({
+        title: 'Success',
         description: 'Company updated successfully.',
+        variant: 'success',
       });
       setIsDialogOpen(false);
       setEditingCompany(null);
@@ -137,7 +139,7 @@ export default function CompaniesPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update company.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -146,9 +148,10 @@ export default function CompaniesPage() {
   const deleteCompanyMutation = useMutation({
     mutationFn: companyService.deleteCompany,
     onSuccess: () => {
-      toast({ 
-        title: 'Success', 
+      toast({
+        title: 'Success',
         description: 'Company deleted successfully.',
+        variant: 'success',
       });
       setDeleteDialogOpen(false);
       setCompanyToDelete(null);
@@ -158,7 +161,7 @@ export default function CompaniesPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete company.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -171,6 +174,7 @@ export default function CompaniesPage() {
       toast({
         title: 'Success',
         description: `Company ${variables.isActive ? 'activated' : 'deactivated'} successfully.`,
+        variant: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['companies'] });
     },
@@ -178,7 +182,7 @@ export default function CompaniesPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update company status.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });

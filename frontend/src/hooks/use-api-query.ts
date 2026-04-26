@@ -53,6 +53,7 @@ export function useApiMutation<TData = any, TVariables = any>(
         toast({
           title: 'Success',
           description: successMessage,
+          variant: 'success',
         });
       }
 
@@ -68,7 +69,7 @@ export function useApiMutation<TData = any, TVariables = any>(
         toast({
           title: 'Error',
           description: errorMessage || error?.message || 'Operation failed',
-          variant: 'destructive',
+          variant: 'error',
         });
       }
     },

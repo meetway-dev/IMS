@@ -77,9 +77,9 @@ export function Topbar() {
   const handleLogout = async () => {
     try {
       await logout.mutateAsync();
-      toast({ title: 'Logged out', description: 'You have been logged out successfully.' });
+      toast({ title: 'Logged out', description: 'You have been logged out successfully.', variant: 'success' });
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'Failed to logout.', variant: 'destructive' });
+      toast({ title: 'Error', description: error.message || 'Failed to logout.', variant: 'error' });
     }
   };
 

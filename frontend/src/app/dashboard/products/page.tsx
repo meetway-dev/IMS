@@ -236,7 +236,7 @@ export default function ProductsPage() {
   const createProductMutation = useMutation({
     mutationFn: productService.createProduct,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Product created successfully.' });
+      toast({ title: 'Success', description: 'Product created successfully.', variant: 'success' });
       setIsDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
@@ -244,7 +244,7 @@ export default function ProductsPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create product.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -254,7 +254,7 @@ export default function ProductsPage() {
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       productService.updateProduct(id, data),
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Product updated successfully.' });
+      toast({ title: 'Success', description: 'Product updated successfully.', variant: 'success' });
       setIsDialogOpen(false);
       setEditingProduct(null);
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -263,7 +263,7 @@ export default function ProductsPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update product.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -272,14 +272,14 @@ export default function ProductsPage() {
   const deleteProductMutation = useMutation({
     mutationFn: productService.deleteProduct,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Product deleted successfully.' });
+      toast({ title: 'Success', description: 'Product deleted successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete product.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });

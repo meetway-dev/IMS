@@ -104,7 +104,7 @@ export default function PurchaseOrdersPage() {
   const createPurchaseOrderMutation = useMutation({
     mutationFn: purchaseOrderService.createPurchaseOrder,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Purchase order created successfully.' });
+      toast({ title: 'Success', description: 'Purchase order created successfully.', variant: 'success' });
       setIsDialogOpen(false);
       setEditingPurchaseOrder(null);
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
@@ -113,7 +113,7 @@ export default function PurchaseOrdersPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create purchase order.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -123,7 +123,7 @@ export default function PurchaseOrdersPage() {
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       purchaseOrderService.updatePurchaseOrder(id, data),
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Purchase order updated successfully.' });
+      toast({ title: 'Success', description: 'Purchase order updated successfully.', variant: 'success' });
       setIsDialogOpen(false);
       setEditingPurchaseOrder(null);
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
@@ -132,7 +132,7 @@ export default function PurchaseOrdersPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update purchase order.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -141,14 +141,14 @@ export default function PurchaseOrdersPage() {
   const deletePurchaseOrderMutation = useMutation({
     mutationFn: purchaseOrderService.deletePurchaseOrder,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Purchase order deleted successfully.' });
+      toast({ title: 'Success', description: 'Purchase order deleted successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete purchase order.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -157,14 +157,14 @@ export default function PurchaseOrdersPage() {
   const approvePurchaseOrderMutation = useMutation({
     mutationFn: purchaseOrderService.approvePurchaseOrder,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Purchase order approved successfully.' });
+      toast({ title: 'Success', description: 'Purchase order approved successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to approve purchase order.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });

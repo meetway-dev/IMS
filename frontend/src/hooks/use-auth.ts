@@ -130,13 +130,13 @@ export function useUpdateProfile() {
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data));
       }
       queryClient.invalidateQueries({ queryKey: ['user', 'profile'] });
-      toast({ title: 'Success', description: 'Profile updated successfully.' });
+      toast({ title: 'Success', description: 'Profile updated successfully.', variant: 'success' });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error?.message || 'Failed to update profile.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -148,13 +148,13 @@ export function useChangePassword() {
   return useMutation({
     mutationFn: authService.changePassword,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Password changed successfully.' });
+      toast({ title: 'Success', description: 'Password changed successfully.', variant: 'success' });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error?.message || 'Failed to change password.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });

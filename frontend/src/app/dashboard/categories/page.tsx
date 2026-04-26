@@ -79,7 +79,7 @@ export default function CategoriesPage() {
   const createCategoryMutation = useMutation({
     mutationFn: categoryService.createCategory,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Category created successfully.' });
+      toast({ title: 'Success', description: 'Category created successfully.', variant: 'success' });
       setIsCreateModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
@@ -87,7 +87,7 @@ export default function CategoriesPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create category.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -97,7 +97,7 @@ export default function CategoriesPage() {
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       categoryService.updateCategory(id, data),
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Category updated successfully.' });
+      toast({ title: 'Success', description: 'Category updated successfully.', variant: 'success' });
       setIsEditModalOpen(false);
       setEditingCategory(null);
       queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -106,7 +106,7 @@ export default function CategoriesPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update category.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -115,14 +115,14 @@ export default function CategoriesPage() {
   const deleteCategoryMutation = useMutation({
     mutationFn: categoryService.deleteCategory,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Category deleted successfully.' });
+      toast({ title: 'Success', description: 'Category deleted successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete category.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });

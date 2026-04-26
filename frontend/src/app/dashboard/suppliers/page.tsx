@@ -72,7 +72,7 @@ export default function SuppliersPage() {
   const createSupplierMutation = useMutation({
     mutationFn: supplierService.createSupplier,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Supplier created successfully.' });
+      toast({ title: 'Success', description: 'Supplier created successfully.', variant: 'success' });
       setIsDialogOpen(false);
       setEditingSupplier(null);
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
@@ -81,7 +81,7 @@ export default function SuppliersPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create supplier.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -91,7 +91,7 @@ export default function SuppliersPage() {
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       supplierService.updateSupplier(id, data),
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Supplier updated successfully.' });
+      toast({ title: 'Success', description: 'Supplier updated successfully.', variant: 'success' });
       setIsDialogOpen(false);
       setEditingSupplier(null);
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
@@ -100,7 +100,7 @@ export default function SuppliersPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update supplier.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -109,14 +109,14 @@ export default function SuppliersPage() {
   const deleteSupplierMutation = useMutation({
     mutationFn: supplierService.deleteSupplier,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Supplier deleted successfully.' });
+      toast({ title: 'Success', description: 'Supplier deleted successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete supplier.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });

@@ -95,7 +95,7 @@ export default function GoodsReceiptsPage() {
   const createGoodsReceiptMutation = useMutation({
     mutationFn: goodsReceiptService.createGoodsReceipt,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Goods receipt created successfully.' });
+      toast({ title: 'Success', description: 'Goods receipt created successfully.', variant: 'success' });
       setIsDialogOpen(false);
       setEditingGoodsReceipt(null);
       queryClient.invalidateQueries({ queryKey: ['goods-receipts'] });
@@ -104,7 +104,7 @@ export default function GoodsReceiptsPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create goods receipt.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -114,7 +114,7 @@ export default function GoodsReceiptsPage() {
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       goodsReceiptService.updateGoodsReceipt(id, data),
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Goods receipt updated successfully.' });
+      toast({ title: 'Success', description: 'Goods receipt updated successfully.', variant: 'success' });
       setIsDialogOpen(false);
       setEditingGoodsReceipt(null);
       queryClient.invalidateQueries({ queryKey: ['goods-receipts'] });
@@ -123,7 +123,7 @@ export default function GoodsReceiptsPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update goods receipt.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -132,14 +132,14 @@ export default function GoodsReceiptsPage() {
   const deleteGoodsReceiptMutation = useMutation({
     mutationFn: goodsReceiptService.deleteGoodsReceipt,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Goods receipt deleted successfully.' });
+      toast({ title: 'Success', description: 'Goods receipt deleted successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['goods-receipts'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete goods receipt.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -148,14 +148,14 @@ export default function GoodsReceiptsPage() {
   const completeGoodsReceiptMutation = useMutation({
     mutationFn: goodsReceiptService.completeGoodsReceipt,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Goods receipt completed successfully.' });
+      toast({ title: 'Success', description: 'Goods receipt completed successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['goods-receipts'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to complete goods receipt.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });

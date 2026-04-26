@@ -176,7 +176,7 @@ export default function ProductTypesPage() {
   const createProductTypeMutation = useMutation({
     mutationFn: productTypeService.createProductType,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Product type created successfully.' });
+      toast({ title: 'Success', description: 'Product type created successfully.', variant: 'success' });
       setIsDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['product-types'] });
     },
@@ -184,7 +184,7 @@ export default function ProductTypesPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create product type.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -194,7 +194,7 @@ export default function ProductTypesPage() {
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       productTypeService.updateProductType(id, data),
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Product type updated successfully.' });
+      toast({ title: 'Success', description: 'Product type updated successfully.', variant: 'success' });
       setIsDialogOpen(false);
       setEditingProductType(null);
       queryClient.invalidateQueries({ queryKey: ['product-types'] });
@@ -203,7 +203,7 @@ export default function ProductTypesPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update product type.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -212,14 +212,14 @@ export default function ProductTypesPage() {
   const deleteProductTypeMutation = useMutation({
     mutationFn: productTypeService.deleteProductType,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Product type deleted successfully.' });
+      toast({ title: 'Success', description: 'Product type deleted successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['product-types'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete product type.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });

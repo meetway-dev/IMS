@@ -374,7 +374,7 @@ export default function WarehousesPage() {
   const createMutation = useMutation({
     mutationFn: warehouseService.createWarehouse,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Warehouse created successfully.' });
+      toast({ title: 'Success', description: 'Warehouse created successfully.', variant: 'success' });
       setIsFormModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['warehouses'] });
     },
@@ -382,7 +382,7 @@ export default function WarehousesPage() {
       toast({
         title: 'Error',
         description: err.message || 'Failed to create warehouse.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -391,7 +391,7 @@ export default function WarehousesPage() {
     mutationFn: ({ id, data }: { id: string; data: UpdateWarehouseData }) =>
       warehouseService.updateWarehouse(id, data),
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Warehouse updated successfully.' });
+      toast({ title: 'Success', description: 'Warehouse updated successfully.', variant: 'success' });
       setIsFormModalOpen(false);
       setEditingWarehouse(null);
       queryClient.invalidateQueries({ queryKey: ['warehouses'] });
@@ -400,7 +400,7 @@ export default function WarehousesPage() {
       toast({
         title: 'Error',
         description: err.message || 'Failed to update warehouse.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -408,14 +408,14 @@ export default function WarehousesPage() {
   const deleteMutation = useMutation({
     mutationFn: warehouseService.deleteWarehouse,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Warehouse deleted successfully.' });
+      toast({ title: 'Success', description: 'Warehouse deleted successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['warehouses'] });
     },
     onError: (err: any) => {
       toast({
         title: 'Error',
         description: err.message || 'Failed to delete warehouse.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -423,14 +423,14 @@ export default function WarehousesPage() {
   const archiveMutation = useMutation({
     mutationFn: warehouseService.archiveWarehouse,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Warehouse archived successfully.' });
+      toast({ title: 'Success', description: 'Warehouse archived successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['warehouses'] });
     },
     onError: (err: any) => {
       toast({
         title: 'Error',
         description: err.message || 'Failed to archive warehouse.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });

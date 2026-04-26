@@ -193,7 +193,7 @@ export default function UnitOfMeasuresPage() {
   const createUnitMutation = useMutation({
     mutationFn: unitOfMeasureService.createUnitOfMeasure,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Unit of measure created successfully.' });
+      toast({ title: 'Success', description: 'Unit of measure created successfully.', variant: 'success' });
       setIsDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['unit-of-measures'] });
     },
@@ -201,7 +201,7 @@ export default function UnitOfMeasuresPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create unit of measure.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -211,7 +211,7 @@ export default function UnitOfMeasuresPage() {
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       unitOfMeasureService.updateUnitOfMeasure(id, data),
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Unit of measure updated successfully.' });
+      toast({ title: 'Success', description: 'Unit of measure updated successfully.', variant: 'success' });
       setIsDialogOpen(false);
       setEditingUnit(null);
       queryClient.invalidateQueries({ queryKey: ['unit-of-measures'] });
@@ -220,7 +220,7 @@ export default function UnitOfMeasuresPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update unit of measure.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
@@ -229,14 +229,14 @@ export default function UnitOfMeasuresPage() {
   const deleteUnitMutation = useMutation({
     mutationFn: unitOfMeasureService.deleteUnitOfMeasure,
     onSuccess: () => {
-      toast({ title: 'Success', description: 'Unit of measure deleted successfully.' });
+      toast({ title: 'Success', description: 'Unit of measure deleted successfully.', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['unit-of-measures'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete unit of measure.',
-        variant: 'destructive',
+        variant: 'error',
       });
     },
   });
