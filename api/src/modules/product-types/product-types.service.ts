@@ -108,7 +108,9 @@ export class ProductTypesService {
         orderBy,
         skip,
         take: limit,
-        include: { _count: { select: { products: { where: { deletedAt: null } } } } },
+        include: {
+          _count: { select: { products: { where: { deletedAt: null } } } },
+        },
       }),
       this.prisma.productType.count({ where }),
     ]);
@@ -141,7 +143,9 @@ export class ProductTypesService {
   async findOne(id: string) {
     const row = await this.prisma.productType.findFirst({
       where: { id, deletedAt: null },
-      include: { _count: { select: { products: { where: { deletedAt: null } } } } },
+      include: {
+        _count: { select: { products: { where: { deletedAt: null } } } },
+      },
     });
     if (!row) throw new NotFoundException('Product type not found');
     const { _count, ...rest } = row;

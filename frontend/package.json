@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint --fix",
+    "lint:check": "next lint",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,css}\"",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

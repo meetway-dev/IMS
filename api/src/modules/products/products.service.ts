@@ -252,5 +252,4 @@ export class ProductsService {
       salePrice: decToString(p.salePrice),
     };
   }
-
 }

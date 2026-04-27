@@ -75,7 +75,6 @@ export class OrderListQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(OrderStatus)
   status?: OrderStatus;
-
 }
 
 export class UpdateOrderDto {

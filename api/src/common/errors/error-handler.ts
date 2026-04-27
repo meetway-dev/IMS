@@ -19,9 +19,7 @@ export class ErrorHandler {
    * Translate a `PrismaClientKnownRequestError` into the appropriate
    * NestJS exception. Always throws -- the return type is `never`.
    */
-  static handlePrismaError(
-    error: Prisma.PrismaClientKnownRequestError,
-  ): never {
+  static handlePrismaError(error: Prisma.PrismaClientKnownRequestError): never {
     switch (error.code) {
       case 'P2002':
         throw new ConflictException('Record already exists');

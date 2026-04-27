@@ -75,7 +75,7 @@ export class WarehousesService {
     const skip = (page - 1) * limit;
 
     const where: Prisma.WarehouseWhereInput = { deletedAt: null };
-    
+
     if (query.search) {
       where.OR = [
         { name: { contains: query.search, mode: 'insensitive' } },
@@ -194,19 +194,28 @@ export class WarehousesService {
         where: { id },
         data: {
           name: dto.name !== undefined ? dto.name.trim() : undefined,
-          code: dto.code !== undefined ? (dto.code?.trim() || null) : undefined,
+          code: dto.code !== undefined ? dto.code?.trim() || null : undefined,
           type: dto.type,
-          address: dto.address !== undefined ? (dto.address?.trim() || null) : undefined,
-          city: dto.city !== undefined ? (dto.city?.trim() || null) : undefined,
-          state: dto.state !== undefined ? (dto.state?.trim() || null) : undefined,
-          country: dto.country !== undefined ? (dto.country?.trim() || null) : undefined,
-          postalCode: dto.postalCode !== undefined ? (dto.postalCode?.trim() || null) : undefined,
-          phone: dto.phone !== undefined ? (dto.phone?.trim() || null) : undefined,
-          email: dto.email !== undefined ? (dto.email?.trim() || null) : undefined,
+          address:
+            dto.address !== undefined ? dto.address?.trim() || null : undefined,
+          city: dto.city !== undefined ? dto.city?.trim() || null : undefined,
+          state:
+            dto.state !== undefined ? dto.state?.trim() || null : undefined,
+          country:
+            dto.country !== undefined ? dto.country?.trim() || null : undefined,
+          postalCode:
+            dto.postalCode !== undefined
+              ? dto.postalCode?.trim() || null
+              : undefined,
+          phone:
+            dto.phone !== undefined ? dto.phone?.trim() || null : undefined,
+          email:
+            dto.email !== undefined ? dto.email?.trim() || null : undefined,
           managerId: dto.managerId !== undefined ? dto.managerId : undefined,
           isActive: dto.isActive,
           capacity: dto.capacity,
-          notes: dto.notes !== undefined ? (dto.notes?.trim() || null) : undefined,
+          notes:
+            dto.notes !== undefined ? dto.notes?.trim() || null : undefined,
         },
       });
 
@@ -243,7 +252,9 @@ export class WarehousesService {
 
     // Check if warehouse has locations or stock levels
     const [locationCount, stockLevelCount] = await Promise.all([
-      this.prisma.location.count({ where: { warehouseId: id, deletedAt: null } }),
+      this.prisma.location.count({
+        where: { warehouseId: id, deletedAt: null },
+      }),
       this.prisma.stockLevel.count({ where: { warehouseId: id } }),
     ]);
 
@@ -341,7 +352,8 @@ export class WarehousesService {
         totalStockItems: warehouse._count.stockLevels,
         totalQuantity: stockStats._sum.quantity || 0,
         totalReserved: stockStats._sum.reserved || 0,
-        availableQuantity: (stockStats._sum.quantity || 0) - (stockStats._sum.reserved || 0),
+        availableQuantity:
+          (stockStats._sum.quantity || 0) - (stockStats._sum.reserved || 0),
         averageStockPerItem: stockStats._avg.quantity || 0,
         locationTypes,
       },

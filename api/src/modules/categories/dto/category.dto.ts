@@ -75,5 +75,4 @@ export class CategoryListQueryDto extends PaginationQueryDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   rootOnly?: boolean;
-
 }

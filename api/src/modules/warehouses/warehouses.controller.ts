@@ -66,7 +66,11 @@ export class WarehousesController {
   @Get(':id')
   @Permissions('warehouses.read')
   @ApiOperation({ summary: 'Get warehouse by ID' })
-  @ApiParam({ name: 'id', type: String, example: 'f1e2d3c4-b5a6-7890-fedc-ba9876543210' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    example: 'f1e2d3c4-b5a6-7890-fedc-ba9876543210',
+  })
   @ApiResponse({
     status: 200,
     description: 'Warehouse details',

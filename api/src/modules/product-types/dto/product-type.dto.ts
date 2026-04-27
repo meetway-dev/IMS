@@ -67,5 +67,4 @@ export class ProductTypeListQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
-
 }

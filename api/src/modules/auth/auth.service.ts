@@ -194,8 +194,7 @@ export class AuthService {
     if (!user?.passwordHash) throw new UnauthorizedException();
 
     const ok = await argon2.verify(user.passwordHash, input.currentPassword);
-    if (!ok)
-      throw new BadRequestException('Current password is incorrect');
+    if (!ok) throw new BadRequestException('Current password is incorrect');
 
     const newHash = await argon2.hash(input.newPassword);
     await this.prisma.user.update({

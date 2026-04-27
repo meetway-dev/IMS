@@ -95,6 +95,8 @@ npm run docker:up
 
 ## NPM Scripts
 
+### Development
+
 | Command                | Description                              |
 | ---------------------- | ---------------------------------------- |
 | `npm run setup`        | First-time install, migrate, seed        |
@@ -102,14 +104,40 @@ npm run docker:up
 | `npm run dev:api`      | Start API in watch mode                  |
 | `npm run dev:frontend` | Start frontend dev server                |
 | `npm run dev:shared`   | Watch-build the shared package           |
+
+### Building
+
+| Command                | Description                              |
+| ---------------------- | ---------------------------------------- |
 | `npm run build`        | Build all packages                       |
 | `npm run build:shared` | Build shared package only                |
 | `npm run build:api`    | Build API only                           |
 | `npm run build:frontend` | Build frontend only                    |
+
+### Linting & Code Quality
+
+| Command                  | Description                                    |
+| ----------------------   | ---------------------------------------------- |
+| `npm run lint:all`       | Fix linting issues in all workspaces           |
+| `npm run lint:api`       | Fix linting issues in API only                 |
+| `npm run lint:frontend`  | Fix linting issues in frontend only            |
+| `npm run lint:shared`    | Fix linting issues in shared only              |
+| `npm run lint:check:all` | Check linting (no fix) in all workspaces       |
+| `npm run format:all`     | Format code with Prettier in all workspaces    |
+
+### Database
+
+| Command                | Description                              |
+| ---------------------- | ---------------------------------------- |
 | `npm run db:migrate`   | Run Prisma migrations                    |
 | `npm run db:seed`      | Seed the database                        |
 | `npm run db:generate`  | Regenerate Prisma client                 |
 | `npm run db:reset`     | Reset database and re-seed               |
+
+### Docker
+
+| Command                | Description                              |
+| ---------------------- | ---------------------------------------- |
 | `npm run docker:up`    | Start all Docker containers              |
 | `npm run docker:down`  | Stop all Docker containers               |
 

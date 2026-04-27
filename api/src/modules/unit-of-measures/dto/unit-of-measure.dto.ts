@@ -82,5 +82,4 @@ export class UnitOfMeasureListQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
-
 }

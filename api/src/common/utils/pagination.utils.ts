@@ -20,7 +20,11 @@
  */
 
 import { Prisma } from '@prisma/client';
-import { PaginationQueryDto, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../dto/pagination.dto';
+import {
+  PaginationQueryDto,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+} from '../dto/pagination.dto';
 
 // ---------------------------------------------------------------------------
 // Types

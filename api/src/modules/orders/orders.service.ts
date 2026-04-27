@@ -61,7 +61,9 @@ export class OrdersService {
           });
           if (!p)
             throw new NotFoundException(`Product ${item.productId} not found`);
-          unitPrice = item.unitPrice ? toDecimal(item.unitPrice) : toDecimal(p.salePrice);
+          unitPrice = item.unitPrice
+            ? toDecimal(item.unitPrice)
+            : toDecimal(p.salePrice);
         } else {
           const v = await this.prisma.productVariant.findFirst({
             where: { id: item.variantId!, deletedAt: null },
@@ -86,8 +88,13 @@ export class OrdersService {
       }),
     );
 
-    const subtotal = lines.reduce((acc, l) => acc.add(l.lineTotal), toDecimal(0));
-    const discountTotal = dto.discountTotal ? toDecimal(dto.discountTotal) : toDecimal(0);
+    const subtotal = lines.reduce(
+      (acc, l) => acc.add(l.lineTotal),
+      toDecimal(0),
+    );
+    const discountTotal = dto.discountTotal
+      ? toDecimal(dto.discountTotal)
+      : toDecimal(0);
     const taxTotal = dto.taxTotal ? toDecimal(dto.taxTotal) : toDecimal(0);
     const total = subtotal.sub(discountTotal).add(taxTotal);
 
