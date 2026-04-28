@@ -397,19 +397,45 @@ export interface CreateLocationData {
   notes?: string;
 }
 
-export interface UpdateLocationData extends Partial<CreateLocationData> {}
+export interface UpdateLocationData {
+  name?: string;
+  code?: string;
+  type?: LocationType;
+  aisle?: string;
+  row?: string;
+  section?: string;
+  level?: string;
+  position?: string;
+  capacity?: number;
+  isActive?: boolean;
+  notes?: string;
+}
 
 // =========================================================================
 // Stock Levels
 // =========================================================================
 
+export type StockMovementType =
+  | 'PURCHASE'
+  | 'SALE'
+  | 'ADJUSTMENT'
+  | 'RETURN'
+  | 'TRANSFER_IN'
+  | 'TRANSFER_OUT'
+  | 'DAMAGE'
+  | 'EXPIRY';
+
+export type AlertStatus = 'ACTIVE' | 'RESOLVED' | 'DISMISSED';
+
 export interface StockLevel {
   id: string;
-  inventoryItemId: string;
+  productId?: string;
+  variantId?: string;
   warehouseId: string;
   locationId?: string;
   quantity: number;
   reserved: number;
+  available: number;
   minQuantity: number;
   maxQuantity?: number;
   reorderPoint?: number;
@@ -417,15 +443,55 @@ export interface StockLevel {
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
-  inventoryItem?: Inventory;
+  product?: Product;
+  variant?: ProductVariant;
   warehouse?: Warehouse;
   location?: WarehouseLocation;
+  stockMovements?: StockMovement[];
+  alerts?: StockAlert[];
+}
+
+export interface StockMovement {
+  id: string;
+  stockLevelId: string;
+  type: StockMovementType;
+  quantity: number;
+  previousQuantity: number;
+  newQuantity: number;
+  referenceType?: string;
+  referenceId?: string;
+  warehouseId: string;
+  locationId?: string;
+  productId?: string;
+  variantId?: string;
+  notes?: string;
+  createdByUserId?: string;
+  createdAt: string;
+  stockLevel?: StockLevel;
+  createdByUser?: User;
+}
+
+export interface StockAlert {
+  id: string;
+  stockLevelId: string;
+  alertType: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  message: string;
+  status: AlertStatus;
+  resolvedAt?: string;
+  resolvedByUserId?: string;
+  createdAt: string;
+  updatedAt: string;
+  stockLevel?: StockLevel;
+  resolvedByUser?: User;
 }
 
 export interface StockLevelListParams extends PaginationParams {
+  productId?: string;
+  variantId?: string;
   warehouseId?: string;
   locationId?: string;
-  lowStock?: boolean;
+  filter?: 'low' | 'out' | 'normal';
 }
 
 // =========================================================================

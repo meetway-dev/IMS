@@ -22,7 +22,12 @@ import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthUser } from '../../types/express';
 import { Permissions } from '../../common/decorators/permissions.decorator';
-import { AdjustStockDto, TransactionListQueryDto } from './dto/inventory.dto';
+import {
+  AdjustStockDto,
+  StockMovementListQueryDto,
+  LowStockQueryDto,
+  StockLevelQueryDto
+} from './dto/inventory.dto';
 import { InventoryService } from './inventory.service';
 
 @ApiTags('Inventory')
@@ -77,14 +82,14 @@ export class InventoryController {
     @Req() req: Request,
   ) {
     const userAgent = req.headers['user-agent'];
-    return await this.inventory.adjust(dto, user, ip, userAgent);
+    return await this.inventory.adjustStockLevel(dto, user, ip, userAgent);
   }
 
-  @Get('transactions')
+  @Get('movements')
   @Permissions('inventory.read')
-  @ApiOperation({ summary: 'Inventory transaction history (paginated)' })
-  async transactions(@Query() query: TransactionListQueryDto) {
-    return await this.inventory.listTransactions(query);
+  @ApiOperation({ summary: 'Stock movement history (paginated)' })
+  async movements(@Query() query: StockMovementListQueryDto) {
+    return await this.inventory.listStockMovements(query);
   }
 
   @Get('alerts/low-stock')
@@ -96,60 +101,43 @@ export class InventoryController {
       example: {
         data: [
           {
-            inventoryItemId: 'f1e2d3c4-b5a6-7890-fedc-ba9876543210',
-            stockQuantity: 5,
-            minStockAlert: 20,
+            stockLevelId: 'f1e2d3c4-b5a6-7890-fedc-ba9876543210',
+            quantity: 5,
+            minQuantity: 20,
             productId: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
             variantId: null,
             sku: 'PVC-PIPE-001',
             name: 'PVC Pipe',
+            alertSeverity: 'HIGH',
           },
         ],
       },
     },
   })
-  async lowStock() {
-    return await this.inventory.minStockAlerts();
+  async lowStock(@Query() query: LowStockQueryDto) {
+    return await this.inventory.getLowStockAlerts(query);
   }
 
-  @Get('items')
+  @Get('levels')
   @Permissions('inventory.read')
-  @ApiOperation({ summary: 'List inventory items (paginated)' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'productId', required: false, type: String })
-  @ApiQuery({ name: 'variantId', required: false, type: String })
+  @ApiOperation({ summary: 'List stock levels (paginated)' })
   @ApiResponse({
     status: 200,
-    description: 'Paginated inventory items',
+    description: 'Paginated stock levels',
   })
-  async listItems(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('productId') productId?: string,
-    @Query('variantId') variantId?: string,
-    @Query('search') search?: string,
-  ) {
-    const pageNum = page ? parseInt(page, 10) : 1;
-    const limitNum = limit ? parseInt(limit, 10) : 20;
-    return await this.inventory.findAllItems(
-      pageNum,
-      limitNum,
-      productId,
-      variantId,
-      search,
-    );
+  async listLevels(@Query() query: StockLevelQueryDto) {
+    return await this.inventory.listStockLevels(query);
   }
 
-  @Get('items/:id')
+  @Get('levels/:id')
   @Permissions('inventory.read')
-  @ApiOperation({ summary: 'Get inventory item by ID' })
+  @ApiOperation({ summary: 'Get stock level by ID' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
   @ApiResponse({
     status: 200,
-    description: 'Inventory item details',
+    description: 'Stock level details',
   })
-  async getItem(@Param('id', ParseUUIDPipe) id: string) {
-    return await this.inventory.findOneItem(id);
+  async getLevel(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.inventory.getStockLevel(id);
   }
 }

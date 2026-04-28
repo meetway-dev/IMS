@@ -1,4 +1,10 @@
-import 'dotenv/config';
+// Load environment variables before anything else
+try {
+  require('dotenv').config();
+} catch (e) {
+  // dotenv may not be available, but DATABASE_URL might be set in environment
+}
+
 import argon2 from 'argon2';
 import { PrismaPg } from '@prisma/adapter-pg';
 import {
@@ -8,7 +14,7 @@ import {
   GoodsReceiptStatus,
   WarehouseType,
   LocationType,
-  InventoryTransactionType,
+  StockMovementType,
   PermissionType,
   PermissionEffect,
   UserStatus,
@@ -19,7 +25,7 @@ import { faker } from '@faker-js/faker';
 // Initialize Prisma with PostgreSQL adapter
 const prisma = new PrismaClient({
   adapter: new PrismaPg(
-    new Pool({ connectionString: process.env.DATABASE_URL }),
+    new Pool({ connectionString: 'postgresql://postgres:postgres@localhost:5432/ims' }),
   ),
 });
 

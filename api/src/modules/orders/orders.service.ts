@@ -3,7 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, Prisma, AuditAction } from '@prisma/client';
+import {
+  OrderStatus,
+  Prisma,
+  AuditAction,
+  StockMovementType,
+} from '@prisma/client';
 import crypto from 'crypto';
 import { buildPaginatedResult } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
@@ -303,44 +308,51 @@ export class OrdersService {
     if (!order) throw new NotFoundException('Order not found');
 
     for (const line of order.items) {
-      const inv = await tx.inventoryItem.findFirst({
+      const stockLevel = await tx.stockLevel.findFirst({
         where: line.productId
           ? { productId: line.productId, deletedAt: null }
           : { variantId: line.variantId!, deletedAt: null },
       });
-      if (!inv) {
+      if (!stockLevel) {
         throw new BadRequestException(
-          `No inventory row for line (product ${line.productId ?? '—'} / variant ${line.variantId ?? '—'})`,
+          `No stock level for line (product ${line.productId ?? '—'} / variant ${line.variantId ?? '—'})`,
         );
       }
 
       const delta = mode === 'SALE' ? -line.quantity : line.quantity;
 
-      if (mode === 'SALE' && inv.stockQuantity < line.quantity) {
+      if (mode === 'SALE' && stockLevel.quantity < line.quantity) {
         throw new BadRequestException(
-          `Insufficient stock for inventory ${inv.id}`,
+          `Insufficient stock for stock level ${stockLevel.id}`,
         );
       }
 
-      const next = inv.stockQuantity + delta;
+      const next = stockLevel.quantity + delta;
       if (next < 0) {
         throw new BadRequestException(
-          `Stock would go negative for inventory ${inv.id}`,
+          `Stock would go negative for stock level ${stockLevel.id}`,
         );
       }
 
-      await tx.inventoryItem.update({
-        where: { id: inv.id },
-        data: { stockQuantity: next },
+      await tx.stockLevel.update({
+        where: { id: stockLevel.id },
+        data: { quantity: next },
       });
 
-      await tx.inventoryTransaction.create({
+      await tx.stockMovement.create({
         data: {
-          inventoryItemId: inv.id,
-          type: mode === 'SALE' ? 'SALE' : 'RETURN',
-          quantityDelta: delta,
-          reference: order.orderNumber,
-          note: `Order ${order.orderNumber}`,
+          stockLevelId: stockLevel.id,
+          type:
+            mode === 'SALE' ? StockMovementType.SALE : StockMovementType.RETURN,
+          quantity: Math.abs(delta),
+          previousQuantity: stockLevel.quantity,
+          newQuantity: next,
+          warehouseId: stockLevel.warehouseId,
+          productId: stockLevel.productId,
+          variantId: stockLevel.variantId,
+          referenceType: 'ORDER',
+          referenceId: order.orderNumber,
+          notes: `Order ${order.orderNumber}`,
           createdByUserId: userId,
         },
       });

@@ -1,70 +1,79 @@
 import apiClient from '@/lib/api-client';
 import { API_ENDPOINTS } from '@/lib/constants';
-import { Inventory, InventoryTransaction, PaginatedResponse, PaginationParams } from '@/types';
+import { StockLevel, StockMovement, StockAlert, PaginatedResponse, PaginationParams, StockMovementType } from '@/types';
 
-interface CreateInventoryData {
-  productId: string;
-  quantity: number;
-  location?: string;
+interface AdjustStockDto {
+  stockLevelId: string;
+  quantityDelta: number;
+  type?: StockMovementType;
+  reference?: string;
+  note?: string;
 }
 
-interface UpdateInventoryData extends Partial<CreateInventoryData> {}
-
-interface AdjustInventoryData {
-  productId: string;
+interface CreateStockMovementDto {
+  stockLevelId: string;
+  type: StockMovementType;
   quantity: number;
-  type: 'IN' | 'OUT' | 'ADJUSTMENT';
-  reason?: string;
+  referenceType?: string;
+  referenceId?: string;
+  note?: string;
+}
+
+interface TransferStockDto {
+  fromStockLevelId: string;
+  toStockLevelId: string;
+  quantity: number;
+  note?: string;
+}
+
+interface StockMovementListQueryDto extends PaginationParams {
+  stockLevelId?: string;
+  productId?: string;
+  variantId?: string;
+  warehouseId?: string;
+  type?: StockMovementType;
+  startDate?: string;
+  endDate?: string;
+}
+
+interface LowStockQueryDto extends PaginationParams {
+  warehouseId?: string;
+  threshold?: number;
+}
+
+interface StockLevelQueryDto extends PaginationParams {
+  productId?: string;
+  variantId?: string;
+  warehouseId?: string;
+  locationId?: string;
+  filter?: 'low' | 'out' | 'normal';
 }
 
 export const inventoryService = {
   /**
-   * Get all inventory items with pagination
+   * Get all stock levels with pagination and filtering
    */
-  async getInventory(params?: PaginationParams): Promise<PaginatedResponse<Inventory>> {
-    const response = await apiClient.getPaginated<Inventory>(
-      API_ENDPOINTS.INVENTORY.LIST,
+  async getStockLevels(params?: StockLevelQueryDto): Promise<PaginatedResponse<StockLevel>> {
+    const response = await apiClient.getPaginated<StockLevel>(
+      API_ENDPOINTS.INVENTORY.LEVELS,
       params
     );
     return response;
   },
 
   /**
-   * Get inventory item by ID
+   * Get stock level by ID
    */
-  async getInventoryItem(id: string): Promise<Inventory> {
-    const response = await apiClient.get<Inventory>(API_ENDPOINTS.INVENTORY.DETAIL(id));
+  async getStockLevel(id: string): Promise<StockLevel> {
+    const response = await apiClient.get<StockLevel>(API_ENDPOINTS.INVENTORY.LEVEL_DETAIL(id));
     return response.data;
   },
 
   /**
-   * Create inventory item
+   * Adjust stock level quantity
    */
-  async createInventory(data: CreateInventoryData): Promise<Inventory> {
-    const response = await apiClient.post<Inventory>(API_ENDPOINTS.INVENTORY.CREATE, data);
-    return response.data;
-  },
-
-  /**
-   * Update inventory item
-   */
-  async updateInventory(id: string, data: UpdateInventoryData): Promise<Inventory> {
-    const response = await apiClient.patch<Inventory>(API_ENDPOINTS.INVENTORY.UPDATE(id), data);
-    return response.data;
-  },
-
-  /**
-   * Delete inventory item
-   */
-  async deleteInventory(id: string): Promise<void> {
-    await apiClient.delete(API_ENDPOINTS.INVENTORY.DELETE(id));
-  },
-
-  /**
-   * Adjust inventory quantity
-   */
-  async adjustInventory(data: AdjustInventoryData): Promise<InventoryTransaction> {
-    const response = await apiClient.post<InventoryTransaction>(
+  async adjustStock(data: AdjustStockDto): Promise<{ stockLevel: StockLevel; movement: StockMovement }> {
+    const response = await apiClient.post<{ stockLevel: StockLevel; movement: StockMovement }>(
       API_ENDPOINTS.INVENTORY.ADJUST,
       data
     );
@@ -72,27 +81,57 @@ export const inventoryService = {
   },
 
   /**
-   * Get inventory transactions
+   * Create a stock movement record
    */
-  async getTransactions(params?: PaginationParams): Promise<PaginatedResponse<InventoryTransaction>> {
-    const response = await apiClient.getPaginated<InventoryTransaction>(
-      API_ENDPOINTS.INVENTORY.TRANSACTIONS,
+  async createStockMovement(data: CreateStockMovementDto): Promise<{ stockLevel: StockLevel; movement: StockMovement }> {
+    const response = await apiClient.post<{ stockLevel: StockLevel; movement: StockMovement }>(
+      `${API_ENDPOINTS.INVENTORY.MOVEMENTS}/create`,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * List stock movements with pagination
+   */
+  async getStockMovements(params?: StockMovementListQueryDto): Promise<PaginatedResponse<StockMovement>> {
+    const response = await apiClient.getPaginated<StockMovement>(
+      API_ENDPOINTS.INVENTORY.MOVEMENTS,
       params
     );
     return response;
   },
 
   /**
-   * Get low stock items
+   * Get low stock items/variants
    */
-  async getLowStockItems(): Promise<Inventory[]> {
-    const response = await apiClient.get<Inventory[]>(API_ENDPOINTS.INVENTORY.LIST, {
-      lowStock: true,
-    });
-    // Handle both wrapped and direct array responses
-    if (Array.isArray(response)) {
-      return response;
-    }
+  async getLowStockAlerts(params?: LowStockQueryDto): Promise<PaginatedResponse<StockLevel>> {
+    const response = await apiClient.getPaginated<StockLevel>(
+      API_ENDPOINTS.INVENTORY.LOW_STOCK,
+      params
+    );
+    return response;
+  },
+
+  /**
+   * Transfer stock between warehouses/locations
+   */
+  async transferStock(data: TransferStockDto): Promise<{ from: StockLevel; to: StockLevel; outMovement: StockMovement; inMovement: StockMovement }> {
+    const response = await apiClient.post<{ from: StockLevel; to: StockLevel; outMovement: StockMovement; inMovement: StockMovement }>(
+      API_ENDPOINTS.INVENTORY.TRANSFER,
+      data
+    );
     return response.data;
+  },
+
+  /**
+   * Get stock history for a product/variant
+   */
+  async getStockHistory(params?: StockMovementListQueryDto): Promise<StockMovement[]> {
+    const response = await apiClient.get<StockMovement[]>(
+      `${API_ENDPOINTS.INVENTORY.MOVEMENTS}/history`,
+      params
+    );
+    return Array.isArray(response) ? response : response.data || [];
   },
 };

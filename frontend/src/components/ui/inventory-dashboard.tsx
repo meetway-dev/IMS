@@ -19,7 +19,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { inventoryService } from '@/services/inventory.service';
 import { formatCurrency, formatNumber } from '@/lib/utils';
-import { Inventory } from '@/types';
+import { StockLevel } from '@/types';
 
 interface InventoryDashboardProps {
   showActions?: boolean;
@@ -38,31 +38,31 @@ interface DashboardStats {
 }
 
 export function InventoryDashboard({ showActions = true, compact = false }: InventoryDashboardProps) {
-  const { data: inventoryData, isLoading } = useQuery({
-    queryKey: ['inventory', 'dashboard'],
-    queryFn: () => inventoryService.getInventory({ page: 1, limit: 50 }),
+  const { data: stockLevelsData, isLoading } = useQuery({
+    queryKey: ['stock-levels', 'dashboard'],
+    queryFn: () => inventoryService.getStockLevels({ page: 1, limit: 100 }),
   });
 
   const { data: lowStockData } = useQuery({
-    queryKey: ['inventory', 'low-stock'],
-    queryFn: () => inventoryService.getLowStockItems(),
+    queryKey: ['stock-levels', 'low-stock'],
+    queryFn: () => inventoryService.getLowStockAlerts({ page: 1, limit: 100 }),
   });
 
   // Mock data for demonstration
   const dashboardStats: DashboardStats = {
     totalValue: 1254300,
-    totalItems: 2456,
-    lowStockItems: lowStockData?.length || 12,
-    outOfStockItems: 8,
+    totalItems: stockLevelsData?.data?.length || 2456,
+    lowStockItems: lowStockData?.data?.length || 12,
+    outOfStockItems: stockLevelsData?.data?.filter(s => s.quantity === 0).length || 8,
     monthlyMovement: 456,
     warehouseCount: 4,
     totalValueChange: 12.5,
     itemsChange: 3.2,
   };
 
-  const inventoryItems: Inventory[] = inventoryData?.data || [];
-  const totalStock = inventoryItems.reduce((sum: number, item: Inventory) => sum + (item.quantity || 0), 0);
-  const averageStockLevel = inventoryItems.length > 0 ? totalStock / inventoryItems.length : 0;
+  const stockLevels: StockLevel[] = stockLevelsData?.data || [];
+  const totalStock = stockLevels.reduce((sum: number, level: StockLevel) => sum + (level.quantity || 0), 0);
+  const averageStockLevel = stockLevels.length > 0 ? totalStock / stockLevels.length : 0;
 
   const getStockStatusColor = (quantity: number, minStock: number = 10) => {
     if (quantity === 0) return 'destructive';
@@ -76,7 +76,7 @@ export function InventoryDashboard({ showActions = true, compact = false }: Inve
     return 'In Stock';
   };
 
-  if (isLoading && !inventoryData) {
+  if (isLoading && !stockLevelsData) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -189,13 +189,13 @@ export function InventoryDashboard({ showActions = true, compact = false }: Inve
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">In Stock</span>
                   <span className="text-sm font-semibold">
-                    {inventoryItems.filter(item => (item.quantity || 0) > 10).length} items
+                    {stockLevels.filter(item => (item.quantity || 0) > 10).length} items
                   </span>
                 </div>
                 <Progress 
                   value={
-                    (inventoryItems.filter(item => (item.quantity || 0) > 10).length / 
-                    inventoryItems.length) * 100 || 0
+                    (stockLevels.filter(item => (item.quantity || 0) > 10).length / 
+                    stockLevels.length) * 100 || 0
                   } 
                   className="h-2"
                 />
@@ -205,13 +205,13 @@ export function InventoryDashboard({ showActions = true, compact = false }: Inve
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Low Stock</span>
                   <span className="text-sm font-semibold">
-                    {inventoryItems.filter(item => (item.quantity || 0) > 0 && (item.quantity || 0) <= 10).length} items
+                    {stockLevels.filter(item => (item.quantity || 0) > 0 && (item.quantity || 0) <= 10).length} items
                   </span>
                 </div>
                 <Progress 
                   value={
-                    (inventoryItems.filter(item => (item.quantity || 0) > 0 && (item.quantity || 0) <= 10).length / 
-                    inventoryItems.length) * 100 || 0
+                    (stockLevels.filter(item => (item.quantity || 0) > 0 && (item.quantity || 0) <= 10).length / 
+                    stockLevels.length) * 100 || 0
                   } 
                   className="h-2"
                   indicatorClassName="bg-orange-500"
@@ -222,13 +222,13 @@ export function InventoryDashboard({ showActions = true, compact = false }: Inve
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Out of Stock</span>
                   <span className="text-sm font-semibold">
-                    {inventoryItems.filter(item => (item.quantity || 0) === 0).length} items
+                    {stockLevels.filter(item => (item.quantity || 0) === 0).length} items
                   </span>
                 </div>
                 <Progress 
                   value={
-                    (inventoryItems.filter(item => (item.quantity || 0) === 0).length / 
-                    inventoryItems.length) * 100 || 0
+                    (stockLevels.filter(item => (item.quantity || 0) === 0).length / 
+                    stockLevels.length) * 100 || 0
                   } 
                   className="h-2"
                   indicatorClassName="bg-red-500"
@@ -275,7 +275,7 @@ export function InventoryDashboard({ showActions = true, compact = false }: Inve
                     <span className="text-sm">Healthy Stock</span>
                   </div>
                   <Badge variant="outline" className="font-normal">
-                    {inventoryItems.filter(item => (item.quantity || 0) > 20).length} items
+                    {stockLevels.filter(item => (item.quantity || 0) > 20).length} items
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
@@ -284,7 +284,7 @@ export function InventoryDashboard({ showActions = true, compact = false }: Inve
                     <span className="text-sm">Needs Reorder</span>
                   </div>
                   <Badge variant="outline" className="font-normal">
-                    {inventoryItems.filter(item => (item.quantity || 0) > 0 && (item.quantity || 0) <= 20).length} items
+                    {stockLevels.filter(item => (item.quantity || 0) > 0 && (item.quantity || 0) <= 20).length} items
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
@@ -293,7 +293,7 @@ export function InventoryDashboard({ showActions = true, compact = false }: Inve
                     <span className="text-sm">Critical</span>
                   </div>
                   <Badge variant="outline" className="font-normal">
-                    {inventoryItems.filter(item => (item.quantity || 0) === 0).length} items
+                    {stockLevels.filter(item => (item.quantity || 0) === 0).length} items
                   </Badge>
                 </div>
                 <div className="pt-4 border-t">
@@ -317,7 +317,7 @@ export function InventoryDashboard({ showActions = true, compact = false }: Inve
       )}
 
       {/* Low Stock Alert Banner */}
-      {lowStockData && lowStockData.length > 0 && (
+      {lowStockData && lowStockData.data && lowStockData.data.length > 0 && (
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -325,7 +325,7 @@ export function InventoryDashboard({ showActions = true, compact = false }: Inve
                 <AlertTriangle className="h-5 w-5 text-orange-600" />
                 <div>
                   <h4 className="font-semibold text-orange-800">
-                    {lowStockData.length} items need immediate attention
+                    {lowStockData.data.length} items need immediate attention
                   </h4>
                   <p className="text-sm text-orange-700">
                     These items are below minimum stock levels and may need reordering.

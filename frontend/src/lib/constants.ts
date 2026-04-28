@@ -40,13 +40,12 @@ export const API_ENDPOINTS = {
   },
   // Inventory
   INVENTORY: {
-    LIST: '/inventory/items',
-    DETAIL: (id: string) => `/inventory/items/${id}`,
-    CREATE: '/inventory/items',
-    UPDATE: (id: string) => `/inventory/items/${id}`,
-    DELETE: (id: string) => `/inventory/items/${id}`,
-    TRANSACTIONS: '/inventory/transactions',
+    LEVELS: '/inventory/levels',
+    LEVEL_DETAIL: (id: string) => `/inventory/levels/${id}`,
     ADJUST: '/inventory/adjustments',
+    MOVEMENTS: '/inventory/movements',
+    LOW_STOCK: '/inventory/alerts/low-stock',
+    TRANSFER: '/inventory/transfers',
   },
   // Orders
   ORDERS: {

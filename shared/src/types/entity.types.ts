@@ -50,7 +50,7 @@ export interface Product extends BaseEntity {
   company?: Company;
   type?: ProductType;
   unit?: UnitOfMeasure;
-  inventory?: InventoryItem;
+  stockLevels?: StockLevel[];
   variants?: ProductVariant[];
 }
 
@@ -61,7 +61,7 @@ export interface ProductVariant extends BaseEntity {
   material?: string;
   sku?: string;
   barcode?: string;
-  inventory?: InventoryItem;
+  stockLevels?: StockLevel[];
   product?: Product;
 }
 
@@ -105,23 +105,110 @@ export interface Supplier extends BaseEntity {
 // Inventory
 // ---------------------------------------------------------------------------
 
-export interface InventoryItem extends BaseEntity {
+export interface StockLevel extends BaseEntity {
   productId?: string;
   variantId?: string;
-  stockQuantity: number;
+  warehouseId: string;
+  locationId?: string;
+  quantity: number;
+  reserved: number;
+  available: number;
+  minQuantity: number;
+  maxQuantity?: number;
+  reorderPoint?: number;
+  lastCountedAt?: Date | string;
   product?: Product;
   variant?: ProductVariant;
+  warehouse?: Warehouse;
+  location?: Location;
+  stockMovements?: StockMovement[];
+  alerts?: StockAlert[];
 }
 
-export interface InventoryTransaction extends BaseEntity {
-  inventoryItemId: string;
-  type: 'SALE' | 'RETURN' | 'ADJUSTMENT' | 'PURCHASE';
-  quantityDelta: number;
-  reference?: string;
-  note?: string;
+export interface StockMovement extends BaseEntity {
+  stockLevelId: string;
+  type: StockMovementType;
+  quantity: number;
+  previousQuantity: number;
+  newQuantity: number;
+  referenceType?: string;
+  referenceId?: string;
+  warehouseId: string;
+  locationId?: string;
+  productId?: string;
+  variantId?: string;
+  notes?: string;
   createdByUserId?: string;
-  inventoryItem?: InventoryItem;
+  stockLevel?: StockLevel;
+  warehouse?: Warehouse;
+  location?: Location;
+  product?: Product;
+  variant?: ProductVariant;
+  createdByUser?: User;
 }
+
+export interface StockAlert extends BaseEntity {
+  stockLevelId: string;
+  alertType: string;
+  severity: string;
+  message: string;
+  status: AlertStatus;
+  resolvedAt?: Date | string;
+  resolvedByUserId?: string;
+  stockLevel?: StockLevel;
+  resolvedByUser?: User;
+}
+
+export type StockMovementType =
+  | 'PURCHASE'
+  | 'SALE'
+  | 'ADJUSTMENT'
+  | 'RETURN'
+  | 'TRANSFER_IN'
+  | 'TRANSFER_OUT'
+  | 'DAMAGE'
+  | 'EXPIRY';
+
+export type AlertStatus = 'ACTIVE' | 'RESOLVED' | 'DISMISSED';
+
+// ---------------------------------------------------------------------------
+// Warehouse & Location
+// ---------------------------------------------------------------------------
+
+export interface Warehouse extends BaseEntity {
+  name: string;
+  code: string;
+  type: WarehouseType;
+  address?: string;
+  contact?: string;
+  phone?: string;
+  email?: string;
+  isActive: boolean;
+  managerId?: string;
+  manager?: User;
+  locations?: Location[];
+  stockLevels?: StockLevel[];
+}
+
+export interface Location extends BaseEntity {
+  warehouseId: string;
+  code: string;
+  name: string;
+  type: LocationType;
+  aisle?: string;
+  row?: string;
+  section?: string;
+  level?: string;
+  position?: string;
+  capacity?: number;
+  isActive: boolean;
+  notes?: string;
+  warehouse?: Warehouse;
+  stockLevels?: StockLevel[];
+}
+
+export type WarehouseType = 'MAIN' | 'DISTRIBUTION' | 'RETAIL' | 'COLD_STORAGE' | 'BONDED';
+export type LocationType = 'SHELF' | 'BIN' | 'PALLET' | 'RACK' | 'FLOOR' | 'COLD_ROOM';
 
 // ---------------------------------------------------------------------------
 // Orders

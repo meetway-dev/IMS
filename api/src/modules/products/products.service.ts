@@ -17,8 +17,8 @@ const productInclude = {
   unit: true,
   category: true,
   company: true,
-  inventory: true,
-  variants: { where: { deletedAt: null }, include: { inventory: true } },
+  stockLevels: true,
+  variants: { where: { deletedAt: null }, include: { stockLevels: true } },
 } as const;
 
 type ProductRow = Prisma.ProductGetPayload<{ include: typeof productInclude }>;
@@ -95,14 +95,28 @@ export class ProductsService {
                 barcode: v.barcode,
               },
             });
-            await tx.inventoryItem.create({
-              data: { variantId: variant.id, stockQuantity: 0 },
-            });
+            // TODO: Create stock level for variant - requires warehouseId
+            // await tx.stockLevel.create({
+            //   data: {
+            //     variantId: variant.id,
+            //     quantity: 0,
+            //     warehouseId: 'TODO', // Need to get default warehouse
+            //     minQuantity: 0,
+            //     maxQuantity: 1000,
+            //   },
+            // });
           }
         } else {
-          await tx.inventoryItem.create({
-            data: { productId: product.id, stockQuantity: 0 },
-          });
+          // TODO: Create stock level for product - requires warehouseId
+          // await tx.stockLevel.create({
+          //   data: {
+          //     productId: product.id,
+          //     quantity: 0,
+          //     warehouseId: 'TODO', // Need to get default warehouse
+          //     minQuantity: 0,
+          //     maxQuantity: 1000,
+          //   },
+          // });
         }
 
         return tx.product.findUniqueOrThrow({

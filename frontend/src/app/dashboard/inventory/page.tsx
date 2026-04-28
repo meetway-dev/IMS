@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { inventoryService } from '@/services/inventory.service';
-import { Inventory } from '@/types';
+import { StockLevel } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { ResponsiveModal } from '@/components/ui/responsive-modal';
@@ -56,10 +56,10 @@ export default function InventoryPage() {
     setPageSize,
   } = useServerSearch();
 
-  // Fetch inventory with pagination and sorting
-  const { data: inventoryData, isLoading } = useQuery({
+  // Fetch stock levels with pagination and sorting
+  const { data: stockLevelsData, isLoading } = useQuery({
     queryKey: [
-      'inventory',
+      'stock-levels',
       {
         search: debouncedSearch,
         sortBy,
@@ -68,64 +68,64 @@ export default function InventoryPage() {
         pageSize,
       },
     ],
-    queryFn: () => inventoryService.getInventory({
+    queryFn: () => inventoryService.getStockLevels({
       page,
       limit: pageSize,
-      search: debouncedSearch || undefined,
-      sortBy: sortBy || undefined,
-      sortOrder: sortOrder || undefined,
+      productId: debouncedSearch || undefined,
+      filter: undefined,
     }),
   });
 
   // Fetch low stock items
   const { data: lowStockData } = useQuery({
-    queryKey: ['inventory', 'low-stock'],
-    queryFn: () => inventoryService.getLowStockItems(),
+    queryKey: ['stock-levels', 'low-stock'],
+    queryFn: () => inventoryService.getLowStockAlerts({ page: 1, limit: 100 }),
   });
 
-  // Adjust inventory mutation
-  const adjustInventoryMutation = useMutation({
-    mutationFn: inventoryService.adjustInventory,
+  // Adjust stock mutation
+  const adjustStockMutation = useMutation({
+    mutationFn: inventoryService.adjustStock,
     onSuccess: () => {
       toast({
         title: 'Success',
-        description: 'Inventory adjusted successfully.',
+        description: 'Stock adjusted successfully.',
       });
       setIsAdjustModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory', 'low-stock'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-levels'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-levels', 'low-stock'] });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to adjust inventory.',
+        description: error.message || 'Failed to adjust stock.',
         variant: 'destructive',
       });
     },
   });
 
-  const handleAdjustInventory = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAdjustStock = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = {
-      productId: formData.get('productId') as string,
-      quantity: parseInt(formData.get('quantity') as string),
-      type: formData.get('type') as 'IN' | 'OUT',
-      reason: formData.get('reason') as string,
+      stockLevelId: formData.get('stockLevelId') as string,
+      quantityDelta: parseInt(formData.get('quantity') as string),
+      type: formData.get('type') as 'ADJUSTMENT' | 'PURCHASE' | 'SALE',
+      note: formData.get('reason') as string,
     };
-    await adjustInventoryMutation.mutateAsync(data);
+    await adjustStockMutation.mutateAsync(data);
   };
 
-  const handleBulkExport = (selectedRows: Inventory[]) => {
+  const handleBulkExport = (selectedRows: StockLevel[]) => {
     const csvContent = [
-      ['ID', 'Product', 'SKU', 'Quantity', 'Min Stock', 'Status'].join(','),
+      ['ID', 'Product', 'SKU', 'Quantity', 'Warehouse', 'Min Stock', 'Status'].join(','),
       ...selectedRows.map(row => [
         row.id,
         row.product?.name || '',
         row.product?.sku || '',
         row.quantity,
-        row.product?.minStockLevel || '',
-        row.quantity <= (row.product?.minStockLevel || 0) ? 'Low Stock' : 'In Stock'
+        row.warehouse?.name || '',
+        row.minQuantity || '',
+        row.quantity <= (row.minQuantity || 0) ? 'Low Stock' : 'In Stock'
       ].join(','))
     ].join('\n');
     
@@ -133,7 +133,7 @@ export default function InventoryPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `inventory-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `stock-levels-export-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     
     toast({
@@ -142,7 +142,7 @@ export default function InventoryPage() {
     });
   };
 
-  const handleBulkUpdate = (selectedRows: Inventory[]) => {
+  const handleBulkUpdate = (selectedRows: StockLevel[]) => {
     toast({
       title: 'Bulk Update',
       description: `Update functionality for ${selectedRows.length} items would open here.`,
@@ -150,7 +150,7 @@ export default function InventoryPage() {
   };
 
   // Define columns for the advanced table
-  const columns: ColumnDef<Inventory>[] = [
+  const columns: ColumnDef<StockLevel>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -204,26 +204,26 @@ export default function InventoryPage() {
       header: 'Stock Level',
       cell: ({ row }) => {
         const quantity = row.original.quantity || 0;
-        const minStock = row.original.product?.minStockLevel || 10;
+        const minStock = row.original.minQuantity || 10;
         return <StockBadge quantity={quantity} minStock={minStock} />;
       },
     },
     {
-      accessorKey: 'product.price',
-      header: 'Price',
-      cell: ({ row }) => formatCurrency(row.original.product?.price || 0),
+      accessorKey: 'warehouse.name',
+      header: 'Warehouse',
+      cell: ({ row }) => row.original.warehouse?.name || '-',
     },
     {
-      accessorKey: 'location',
+      accessorKey: 'location.name',
       header: 'Location',
-      cell: ({ row }) => row.original.location || 'Main Warehouse',
+      cell: ({ row }) => row.original.location?.name || 'Main',
     },
     {
       id: 'status',
       header: 'Status',
       cell: ({ row }) => {
         const quantity = row.original.quantity || 0;
-        const minStock = row.original.product?.minStockLevel || 10;
+        const minStock = row.original.minQuantity || 10;
         
         if (quantity === 0) {
           return <Badge variant="destructive">Out of Stock</Badge>;
@@ -237,14 +237,14 @@ export default function InventoryPage() {
     {
       id: 'actions',
       cell: ({ row }) => {
-        const inventory = row.original;
+        const stockLevel = row.original;
         return (
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
-                setSelectedProduct(inventory.id);
+                setSelectedProduct(stockLevel.id);
                 setIsAdjustModalOpen(true);
               }}
             >
@@ -259,8 +259,8 @@ export default function InventoryPage() {
     },
   ];
 
-  const inventoryItems = inventoryData?.data || [];
-  const lowStockCount = lowStockData?.length || 0;
+  const stockLevels = stockLevelsData?.data || [];
+  const lowStockCount = lowStockData?.data?.length || 0;
 
   return (
     <div className="space-y-6">
@@ -323,22 +323,22 @@ export default function InventoryPage() {
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              Inventory Items
+              Stock Levels
             </div>
             <Badge variant="outline">
-              {inventoryItems.length} items
+              {stockLevels.length} levels
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <DataTable
             columns={columns}
-            data={inventoryItems}
-            searchPlaceholder="Search products, SKU, or category..."
+            data={stockLevels}
+            searchPlaceholder="Search products, SKU, or warehouse..."
             searchKey="product.name"
             onSearchChange={setSearch}
             searchValue={search}
-            totalCount={inventoryData?.meta?.total}
+            totalCount={stockLevelsData?.meta?.total}
             enableSelection={true}
             enableBulkActions={true}
             bulkActions={[
@@ -398,7 +398,7 @@ export default function InventoryPage() {
                 <p className="text-sm font-medium text-muted-foreground">Total Value</p>
                 <p className="text-2xl font-bold">
                   {formatCurrency(
-                    inventoryItems.reduce((sum, item) => 
+                    stockLevels.reduce((sum, item) => 
                       sum + ((item.quantity || 0) * (item.product?.price || 0)), 0
                     )
                   )}
@@ -416,7 +416,7 @@ export default function InventoryPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Items</p>
-                <p className="text-2xl font-bold">{inventoryItems.length}</p>
+                <p className="text-2xl font-bold">{stockLevelsData?.meta.total || 0}</p>
               </div>
               <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                 <Package className="h-5 w-5 text-blue-600" />
@@ -444,20 +444,20 @@ export default function InventoryPage() {
       <ResponsiveModal
         open={isAdjustModalOpen}
         onClose={() => setIsAdjustModalOpen(false)}
-        title="Adjust Inventory"
+        title="Adjust Stock Level"
         size="md"
       >
-        <form onSubmit={handleAdjustInventory} className="space-y-4">
+        <form onSubmit={handleAdjustStock} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="productId">Product</Label>
-            <Select name="productId" required defaultValue={selectedProduct}>
+            <Label htmlFor="stockLevelId">Stock Level</Label>
+            <Select name="stockLevelId" required defaultValue={selectedProduct}>
               <SelectTrigger>
-                <SelectValue placeholder="Select product" />
+                <SelectValue placeholder="Select stock level" />
               </SelectTrigger>
               <SelectContent>
-                {inventoryItems.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.product?.name} ({item.product?.sku})
+                {stockLevels.map((level) => (
+                  <SelectItem key={level.id} value={level.id}>
+                    {level.product?.name || 'Unknown'} @ {level.warehouse?.name} ({level.product?.sku})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -465,22 +465,28 @@ export default function InventoryPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="type">Adjustment Type</Label>
-            <Select name="type" required defaultValue="IN">
+            <Label htmlFor="type">Movement Type</Label>
+            <Select name="type" required defaultValue="ADJUSTMENT">
               <SelectTrigger>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="IN">
+                <SelectItem value="PURCHASE">
                   <div className="flex items-center gap-2">
                     <ArrowUpRight className="h-4 w-4 text-green-600" />
-                    <span>Stock In (Add)</span>
+                    <span>Purchase (Add)</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="OUT">
+                <SelectItem value="SALE">
                   <div className="flex items-center gap-2">
                     <ArrowDownRight className="h-4 w-4 text-red-600" />
-                    <span>Stock Out (Remove)</span>
+                    <span>Sale (Remove)</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="ADJUSTMENT">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                    <span>Adjustment</span>
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -488,18 +494,17 @@ export default function InventoryPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="quantity">Quantity</Label>
+            <Label htmlFor="quantity">Quantity Change</Label>
             <Input
               name="quantity"
               type="number"
-              min="1"
               required
-              placeholder="Enter quantity"
+              placeholder="Positive or negative number"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="reason">Reason (Optional)</Label>
+            <Label htmlFor="reason">Notes (Optional)</Label>
             <Input
               name="reason"
               placeholder="Enter reason for adjustment"
@@ -514,8 +519,8 @@ export default function InventoryPage() {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={adjustInventoryMutation.isPending}>
-              {adjustInventoryMutation.isPending ? 'Processing...' : 'Adjust Stock'}
+            <Button type="submit" disabled={adjustStockMutation.isPending}>
+              {adjustStockMutation.isPending ? 'Processing...' : 'Adjust Stock'}
             </Button>
           </div>
         </form>
