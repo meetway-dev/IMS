@@ -22,6 +22,7 @@ import { RolesModule } from './modules/roles/roles.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { ProductTypesModule } from './modules/product-types/product-types.module';
 import { UnitOfMeasuresModule } from './modules/unit-of-measures/unit-of-measures.module';
+import { GoodsReceiptsModule } from './modules/goods-receipts/goods-receipts.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { UnitOfMeasuresModule } from './modules/unit-of-measures/unit-of-measure
     UsersModule,
     RolesModule,
     PermissionsModule,
+    GoodsReceiptsModule,
   ],
   controllers: [AppController],
   providers: [

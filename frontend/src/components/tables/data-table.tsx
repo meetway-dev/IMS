@@ -340,6 +340,10 @@ export function DataTable<TData, TValue>({
 
   const hasActiveCustomFilters = Object.keys(activeFilters).length > 0;
 
+  // Find actions column index for sticky positioning
+  const actionsColumnIndex = columns.findIndex(col => col.id === 'actions' || (col as any).accessorKey === 'actions');
+  const hasActionsColumn = actionsColumnIndex !== -1;
+
   return (
     <div className={cn('w-full space-y-4', className)}>
       {/* Toolbar */}
@@ -392,114 +396,168 @@ export function DataTable<TData, TValue>({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Custom Filters Dropdown */}
+          {/* Enhanced Filter System */}
           {filters.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filters
-                  {hasActiveCustomFilters && (
-                    <Badge variant="secondary" className="ml-2">
-                      {Object.keys(activeFilters).length}
-                    </Badge>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {filters.map((filter) => (
-                  <div key={filter.column} className="p-2">
-                    <label className="text-sm font-medium mb-2 block">
-                      {filter.label}
-                    </label>
-                    <Select
-                      value={activeFilters[filter.column] || 'all'}
-                      onValueChange={(value) => handleFilterChange(filter.column, value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="All" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        {filter.options.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-                {hasActiveCustomFilters && (
-                  <div className="p-2 border-t">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearAllFilters}
-                      className="w-full justify-center"
-                    >
-                      Clear All Filters
+            <div className="flex items-center gap-2">
+              {/* Quick Filters - Show first 2 filters inline */}
+              {filters.slice(0, 2).map((filter) => (
+                <div key={filter.column} className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    {filter.label}:
+                  </span>
+                  <Select
+                    value={activeFilters[filter.column] || 'all'}
+                    onValueChange={(value) => handleFilterChange(filter.column, value)}
+                  >
+                    <SelectTrigger className="w-32 h-8 text-xs">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {filter.options.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+
+              {/* More Filters Dropdown for additional filters */}
+              {filters.length > 2 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8">
+                      <Filter className="h-3.5 w-3.5 mr-1.5" />
+                      More
+                      {Object.keys(activeFilters).length > 2 && (
+                        <Badge variant="secondary" className="ml-1.5 h-4 w-4 p-0 text-[10px]">
+                          {Object.keys(activeFilters).length - 2}
+                        </Badge>
+                      )}
                     </Button>
-                  </div>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="text-xs">Additional Filters</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {filters.slice(2).map((filter) => (
+                      <div key={filter.column} className="p-2">
+                        <label className="text-xs font-medium mb-1.5 block">
+                          {filter.label}
+                        </label>
+                        <Select
+                          value={activeFilters[filter.column] || 'all'}
+                          onValueChange={(value) => handleFilterChange(filter.column, value)}
+                        >
+                          <SelectTrigger className="w-full h-7 text-xs">
+                            <SelectValue placeholder="All" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            {filter.options.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           )}
 
-          {/* Column Filters Popover */}
+          {/* Advanced Filters Button */}
           <Popover open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9"
+                className="h-8"
               >
-                <Settings className="h-4 w-4 mr-2" />
+                <Settings className="h-3.5 w-3.5 mr-1.5" />
                 Advanced
-                {columnFilters.length > 0 && (
-                  <Badge variant="muted" className="ml-2 h-5 w-5 p-0 text-[10px] flex items-center justify-center">
-                    {columnFilters.length}
+                {(columnFilters.length > 0 || hasActiveCustomFilters) && (
+                  <Badge variant="muted" className="ml-1.5 h-4 w-4 p-0 text-[10px] flex items-center justify-center">
+                    {columnFilters.length + Object.keys(activeFilters).length}
                   </Badge>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
+            <PopoverContent className="w-96 p-0" align="end">
               <div className="p-4">
-                <h4 className="text-sm font-medium mb-3">Column Filters</h4>
-                <ScrollArea className="max-h-64">
-                  <div className="space-y-3">
-                    {table.getAllColumns()
-                      .filter((column) => column.getCanFilter())
-                      .map((column) => (
-                        <div key={column.id} className="space-y-1.5">
-                          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            {column.id}
-                          </label>
-                          <Input
-                            placeholder={`Filter ${column.id}...`}
-                            value={(column.getFilterValue() as string) ?? ''}
-                            onChange={(event) =>
-                              column.setFilterValue(event.target.value)
-                            }
-                            className="h-8"
-                          />
-                        </div>
-                      ))}
-                  </div>
-                </ScrollArea>
-                {columnFilters.length > 0 && (
-                  <>
-                    <Separator className="my-3" />
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-medium">Advanced Filters</h4>
+                  {(columnFilters.length > 0 || hasActiveCustomFilters) && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setColumnFilters([])}
-                      className="w-full h-8 text-xs"
+                      onClick={clearAllFilters}
+                      className="h-7 text-xs"
                     >
-                      Clear all filters
+                      Clear All
                     </Button>
-                  </>
-                )}
+                  )}
+                </div>
+                
+                {/* Column Filters */}
+                <div className="space-y-4">
+                  <div>
+                    <h5 className="text-xs font-medium text-muted-foreground mb-2">Column Filters</h5>
+                    <div className="space-y-2">
+                      {table.getAllColumns()
+                        .filter((column) => column.getCanFilter())
+                        .map((column) => (
+                          <div key={column.id} className="space-y-1">
+                            <label className="text-xs font-medium">
+                              {column.id.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                            </label>
+                            <Input
+                              placeholder={`Search ${column.id}...`}
+                              value={(column.getFilterValue() as string) ?? ''}
+                              onChange={(event) =>
+                                column.setFilterValue(event.target.value)
+                              }
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Custom Filters */}
+                  {filters.length > 0 && (
+                    <div>
+                      <h5 className="text-xs font-medium text-muted-foreground mb-2">Custom Filters</h5>
+                      <div className="space-y-2">
+                        {filters.map((filter) => (
+                          <div key={filter.column} className="space-y-1">
+                            <label className="text-xs font-medium">{filter.label}</label>
+                            <Select
+                              value={activeFilters[filter.column] || 'all'}
+                              onValueChange={(value) => handleFilterChange(filter.column, value)}
+                            >
+                              <SelectTrigger className="w-full h-7 text-xs">
+                                <SelectValue placeholder="All" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                {filter.options.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </PopoverContent>
           </Popover>
@@ -510,9 +568,9 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9"
+                className="h-8"
               >
-                <Columns className="h-4 w-4 mr-2" />
+                <Columns className="h-3.5 w-3.5 mr-1.5" />
                 Columns
               </Button>
             </DropdownMenuTrigger>
@@ -526,50 +584,20 @@ export function DataTable<TData, TValue>({
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
-                      className="capitalize text-sm"
+                      className="capitalize text-xs"
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {column.id.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Density Toggle */}
-          {onDensityChange && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Density
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuCheckboxItem
-                  checked={density === 'comfortable'}
-                  onCheckedChange={() => onDensityChange('comfortable')}
-                >
-                  Comfortable
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={density === 'compact'}
-                  onCheckedChange={() => onDensityChange('compact')}
-                >
-                  Compact
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {/* Export Action - Always show export button */}
+          {/* Export Action */}
           <Button
             variant="outline"
             size="sm"
@@ -581,41 +609,87 @@ export function DataTable<TData, TValue>({
                 exportToCsv();
               }
             }}
-            className="h-9"
+            className="h-8"
           >
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="h-3.5 w-3.5 mr-1.5" />
             {exportAction?.label || 'Export'}
           </Button>
         </div>
       </div>
 
-      {/* Active custom filters display */}
-      {hasActiveCustomFilters && (
-        <div className="flex flex-wrap gap-2">
+      {/* Active filters display - Enhanced */}
+      {(hasActiveCustomFilters || columnFilters.length > 0 || searchValue) && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="flex flex-wrap items-center gap-2 p-3 rounded-lg border bg-muted/30"
+        >
+          <div className="flex items-center gap-2">
+            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium">Active Filters:</span>
+          </div>
+          
+          {/* Search filter */}
+          {searchValue && (
+            <Badge variant="outline" className="gap-1 pl-2 pr-1 py-1">
+              <Search className="h-3 w-3" />
+              <span className="text-xs">"{searchValue}"</span>
+              <button
+                onClick={() => setSearchValue('')}
+                className="ml-1 hover:text-destructive rounded-full h-4 w-4 flex items-center justify-center"
+              >
+                ×
+              </button>
+            </Badge>
+          )}
+
+          {/* Custom filters */}
           {Object.entries(activeFilters).map(([column, value]) => {
             const filter = filters.find(f => f.column === column);
             const option = filter?.options.find(o => o.value === value);
             return (
-              <Badge key={column} variant="secondary" className="gap-1">
-                {filter?.label}: {option?.label || value}
+              <Badge key={column} variant="secondary" className="gap-1 pl-2 pr-1 py-1">
+                <span className="text-xs font-medium">{filter?.label}:</span>
+                <span className="text-xs">{option?.label || value}</span>
                 <button
                   onClick={() => handleFilterChange(column, 'all')}
-                  className="ml-1 hover:text-destructive"
+                  className="ml-1 hover:text-destructive rounded-full h-4 w-4 flex items-center justify-center"
                 >
                   ×
                 </button>
               </Badge>
             );
           })}
+
+          {/* Column filters */}
+          {columnFilters.map((filter) => (
+            <Badge key={filter.id} variant="outline" className="gap-1 pl-2 pr-1 py-1">
+              <span className="text-xs font-medium">
+                {filter.id?.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
+              </span>
+              <span className="text-xs">"{String(filter.value)}"</span>
+              <button
+                onClick={() => {
+                  const newFilters = columnFilters.filter(f => f.id !== filter.id);
+                  setColumnFilters(newFilters);
+                }}
+                className="ml-1 hover:text-destructive rounded-full h-4 w-4 flex items-center justify-center"
+              >
+                ×
+              </button>
+            </Badge>
+          ))}
+
           <Button
             variant="ghost"
             size="sm"
             onClick={clearAllFilters}
-            className="h-6 px-2 text-xs"
+            className="h-7 px-2 text-xs ml-auto"
           >
             Clear All
           </Button>
-        </div>
+        </motion.div>
       )}
 
       {/* Bulk Actions Bar */}
@@ -654,9 +728,11 @@ export function DataTable<TData, TValue>({
       </AnimatePresence>
 
       {/* Table Container */}
-      <div className="rounded-xl border shadow-soft overflow-hidden">
+      <div className="rounded-xl border shadow-soft overflow-hidden relative">
+        {/* Scroll shadow indicator for sticky column */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-30 w-px bg-gradient-to-l from-border to-transparent" />
         <ScrollArea className="w-full scrollbar-thin">
-          <table className="w-full">
+          <table className="w-full" style={{ minWidth: 'max-content' }}>
             {/* Header */}
             <thead className="bg-muted/30 border-b">
               {table.getHeaderGroups().map((headerGroup) => (
@@ -665,13 +741,18 @@ export function DataTable<TData, TValue>({
                     const canSort = header.column.getCanSort();
                     const isSorted = header.column.getIsSorted();
 
+                    // Check if this is the actions column
+                    const isActionsColumn = header.column.id === 'actions';
+
                     return (
                       <th
                         key={header.id}
                         className={cn(
                           'text-left align-middle font-medium text-muted-foreground uppercase tracking-wider',
                           densityClasses.header,
-                          canSort && 'cursor-pointer select-none hover:bg-muted/50 transition-colors'
+                          canSort && 'cursor-pointer select-none hover:bg-muted/50 transition-colors',
+                          isActionsColumn && 'sticky right-0 z-20 bg-muted/30 backdrop-blur-sm box-border',
+                          isActionsColumn && 'before:absolute before:left-0 before:inset-y-0 before:w-px before:-ml-px before:bg-border/50'
                         )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
@@ -770,20 +851,25 @@ export function DataTable<TData, TValue>({
                       )}
                       onClick={() => onRowClick?.(row.original)}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          key={cell.id}
-                          className={cn(
-                            'align-middle',
-                            densityClasses.cell
-                          )}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </td>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const isActionsColumn = cell.column.id === 'actions';
+                        return (
+                          <td
+                            key={cell.id}
+                            className={cn(
+                              'align-middle',
+                              densityClasses.cell,
+                              isActionsColumn && 'sticky right-0 z-20 bg-background backdrop-blur-sm box-border',
+                              isActionsColumn && 'before:absolute before:left-0 before:inset-y-0 before:w-px before:-ml-px before:bg-border/50'
+                            )}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </td>
+                        );
+                      })}
                     </motion.tr>
                   ))
                 ) : (
