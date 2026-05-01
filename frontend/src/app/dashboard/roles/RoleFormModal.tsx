@@ -1,29 +1,28 @@
 'use client';
 
-import * as React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { FormModal } from '@/components/ui/responsive-modal';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+import { FormModal } from '@/components/ui/responsive-modal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Key, Loader2, Shield, X } from 'lucide-react';
-import { roleService, permissionService } from '@/services/role-permission.service';
-import { Role, Permission } from '@/types';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
+import { permissionService, roleService } from '@/services/role-permission.service';
+import { Permission, Role } from '@/types';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Key, Shield, X } from 'lucide-react';
+import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
 const roleFormSchema = z.object({
   name: z.string().min(1, 'Role name is required'),
@@ -151,8 +150,7 @@ export function RoleFormModal({ open, onClose, onSuccess, role }: RoleFormModalP
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" form="role-form" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button type="submit" form="role-form" loading={loading}>
             {role ? 'Update Role' : 'Create Role'}
           </Button>
         </div>

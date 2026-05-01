@@ -9,6 +9,7 @@
  * @module types
  */
 
+
 // =========================================================================
 // Auth & Users
 // =========================================================================
@@ -109,15 +110,7 @@ export interface PaginationParams {
   lowStock?: boolean;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+// PaginatedResponse is imported from '@ims/shared'
 
 export interface FilterParams extends PaginationParams {
   [key: string]: unknown;
@@ -474,7 +467,7 @@ export interface StockMovement {
 export interface StockAlert {
   id: string;
   stockLevelId: string;
-  alertType: string;
+  alertType: 'LOW_STOCK' | 'OUT_OF_STOCK' | 'EXPIRY' | 'DAMAGE';
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   message: string;
   status: AlertStatus;

@@ -8,148 +8,167 @@ A full-stack inventory management system built with **NestJS**, **Next.js**, and
 ims/
 ├── api/            NestJS backend (Prisma ORM + PostgreSQL)
 │   ├── src/
-│   │   ├── common/         Shared decorators, DTOs, guards, utils
-│   │   ├── core/           App config and env validation
-│   │   ├── infrastructure/ Prisma service and database layer
-│   │   └── modules/        Feature modules (auth, products, orders, ...)
-│   ├── prisma/             Schema, migrations, seed
-│   └── test/               E2E tests
-│
-├── frontend/       Next.js 16 frontend (Tailwind + shadcn/ui)
+│   ├── prisma/
+│   └── test/
+├── frontend/       Next.js frontend
+│   ├── src/
+│   ├── next.config.js
+│   └── tsconfig.json
+├── shared/         Workspace package for shared types and utils
 │   └── src/
-│       ├── app/            Pages and layouts (App Router)
-│       ├── components/     Reusable UI components
-│       ├── hooks/          Custom React hooks
-│       ├── lib/            API client, constants, utilities
-│       ├── schemas/        Form validation schemas
-│       ├── services/       API service layer
-│       ├── store/          Zustand stores
-│       └── types/          TypeScript type definitions
-│
-├── shared/         Shared types, enums, constants, and utilities
-│   └── src/
-│       ├── constants/      API endpoints, pagination defaults
-│       ├── enums/          Permission, role, and error enums
-│       ├── types/          API, entity, auth, and pagination types
-│       └── utils/          Format and validation helpers
-│
-└── docker-compose.yml
+├── docker-compose.yml
+├── package.json
+├── .env.example
+├── .env.development.example
+└── .env.production.example
 ```
 
 ## Tech Stack
 
 | Layer    | Technology                                          |
 | -------- | --------------------------------------------------- |
-| Backend  | NestJS 11, Prisma 7, PostgreSQL, JWT, Passport      |
-| Frontend | Next.js 16, React 19, Tailwind CSS, shadcn/ui       |
-| Shared   | TypeScript types, enums, constants, and utilities    |
-| Infra    | Docker, Docker Compose                               |
+| Backend  | NestJS 11, Prisma 7, PostgreSQL, JWT, Zod          |
+| Frontend | Next.js 16, React 19, Tailwind CSS, MUI            |
+| Shared   | TypeScript shared types, enums, constants          |
+| Infra    | Docker, Docker Compose                             |
+
+## Environment strategy
+
+Use a single set of root env files.
+
+- `.env` for local development
+- `.env.development` for development builds
+- `.env.production` for production builds
+- `.env.example` as the canonical template
+
+Do not commit `.env`, `.env.local`, or `.env.*.local`.
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 20+
-- PostgreSQL running locally (default: `postgresql://ims:ims@localhost:5432/ims`)
+- **Node.js 20+** - [Download](https://nodejs.org/)
+- **PostgreSQL 13+** - Running locally or via Docker
 
-### First-Time Setup
+### 1. Setup PostgreSQL (One-time)
 
+Follow [POSTGRES_SETUP.md](./POSTGRES_SETUP.md) to create the `ims` user and database.
+
+### 2. Install & Run
+
+**Automated setup (recommended):**
 ```bash
-# Install all packages, generate Prisma client, run migrations, and seed
-npm run setup
+npm run setup:local
 ```
 
-The setup script:
-1. Installs and builds the `shared` package
-2. Installs API dependencies
-3. Runs `prisma generate`, `prisma db push`, and `prisma db seed`
-4. Installs frontend dependencies
-
-### Daily Development
-
-Start all three dev servers concurrently:
-
+**Manual setup:**
 ```bash
-npm run app
+npm install
+npm run validate:env        # Verify environment variables
+npm run db:test-connection  # Test database connection
+npm run db:setup            # Generate + migrate + seed
+npm run dev                 # Start all 3 workspaces
 ```
 
-Or start them individually:
+Access:
+- **API:** http://localhost:8080 (Swagger docs: http://localhost:8080/api-docs)
+- **Frontend:** http://localhost:3001
+
+### Troubleshooting
+
+See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for comprehensive troubleshooting and architecture decisions.
+
+## Docker Setup
+
+If you prefer containerized PostgreSQL:
 
 ```bash
-# Terminal 1 -- API (http://localhost:8080)
-npm run dev:api
-
-# Terminal 2 -- Frontend (http://localhost:3001)
-npm run dev:frontend
-
-# Terminal 3 -- Shared (watch mode)
-npm run dev:shared
+cp .env.docker .env
+docker compose up -d postgres  # Start PostgreSQL
+npm run db:setup               # Setup database
+npm run dev                    # Start development
 ```
 
-### Docker
-
+Or start all services:
 ```bash
-cp .env.local.example .env
-npm run docker:up
+docker compose up
 ```
 
-## NPM Scripts
+## NPM scripts
 
-### Development
-
-| Command                | Description                              |
-| ---------------------- | ---------------------------------------- |
-| `npm run setup`        | First-time install, migrate, seed        |
-| `npm run app`          | Start all three dev servers concurrently |
-| `npm run dev:api`      | Start API in watch mode                  |
-| `npm run dev:frontend` | Start frontend dev server                |
-| `npm run dev:shared`   | Watch-build the shared package           |
-
-### Building
-
-| Command                | Description                              |
-| ---------------------- | ---------------------------------------- |
-| `npm run build`        | Build all packages                       |
-| `npm run build:shared` | Build shared package only                |
-| `npm run build:api`    | Build API only                           |
-| `npm run build:frontend` | Build frontend only                    |
-
-### Linting & Code Quality
+### Setup & Development
 
 | Command                  | Description                                    |
-| ----------------------   | ---------------------------------------------- |
-| `npm run lint:all`       | Fix linting issues in all workspaces           |
-| `npm run lint:api`       | Fix linting issues in API only                 |
-| `npm run lint:frontend`  | Fix linting issues in frontend only            |
-| `npm run lint:shared`    | Fix linting issues in shared only              |
-| `npm run lint:check:all` | Check linting (no fix) in all workspaces       |
-| `npm run format:all`     | Format code with Prettier in all workspaces    |
+| ------------------------ | ---------------------------------------------- |
+| `npm run setup:local`    | **Automated setup** (recommended for first time) |
+| `npm run setup`          | Install deps, validate env, initialize DB       |
+| `npm run validate:env`   | Check all env variables are set                |
+| `npm run db:test-connection` | Test PostgreSQL connection                  |
+| `npm run dev`            | Start all 3 workspaces (API, Frontend, Shared) |
 
 ### Database
 
 | Command                | Description                              |
 | ---------------------- | ---------------------------------------- |
-| `npm run db:migrate`   | Run Prisma migrations                    |
-| `npm run db:seed`      | Seed the database                        |
-| `npm run db:generate`  | Regenerate Prisma client                 |
-| `npm run db:reset`     | Reset database and re-seed               |
+| `npm run db:generate`  | Generate Prisma client                   |
+| `npm run db:migrate`   | Apply pending migrations                 |
+| `npm run db:seed`      | Populate seed data                       |
+| `npm run db:reset`     | ⚠️  Drop and recreate entire database     |
+| `npm run db:setup`     | Generate + migrate + seed (full setup)   |
+
+### Build & Deployment
+
+| Command                | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `npm run build`        | Build all workspace packages             |
+| `npm run start`        | Start backend production build           |
+| `npm run lint`         | Lint all workspaces                      |
+| `npm run format`       | Format all workspaces                    |
 
 ### Docker
 
 | Command                | Description                              |
 | ---------------------- | ---------------------------------------- |
-| `npm run docker:up`    | Start all Docker containers              |
-| `npm run docker:down`  | Stop all Docker containers               |
+| `npm run docker:build` | Build Docker images                      |
+| `npm run docker:up`    | Start containers                         |
+| `npm run docker:down`  | Stop containers                          |
+| `npm run docker:logs`  | View container logs                      |
 
-## Project Conventions
+### Per-package scripts
 
-- **Soft deletes** -- all entities use `deletedAt` rather than hard deletes.
-- **Audit logging** -- every write operation records an audit trail.
-- **RBAC** -- role-based access control with database-backed permissions.
-- **Pagination** -- all list endpoints return `{ data, meta }` with consistent pagination metadata.
-- **Shared package** -- types, enums, and utilities live in `shared/` so both API and frontend stay in sync.
+- API: `cd api && npm run build | start:dev | start:prod | lint | format`
+- Frontend: `cd frontend && npm run dev | build | start | lint | format | type-check`
+- Shared: `cd shared && npm run build | watch | lint | format`
 
-```
+## Environment variables
+
+The root `.env` file should contain:
+
+- `NODE_ENV`
+- `API_PORT`
+- `FRONTEND_PORT`
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- `DATABASE_URL`
+- `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
+- `JWT_ACCESS_TTL_SECONDS`, `JWT_REFRESH_TTL_DAYS`
+- `CORS_ORIGIN`
+- `SWAGGER_PATH`
+- `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_APP_URL`
+
+## Project conventions
+
+- Soft deletes use `deletedAt`
+- Audit logging is stored for write operations
+- RBAC is permission-driven
+- Shared types and helpers are centralized under `shared/`
+
+## Notes
+
+- Use `npm run dev` for local development.
+- Use `docker compose` only when you need containerized infra.
+- Keep secrets in `.env.production` or your deployment secret manager.
+
 ims
 ├─ .claude
 │  ├─ ADRs.md

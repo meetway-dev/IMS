@@ -1,52 +1,42 @@
 'use client';
 
-import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/tables/data-table';
-import { ActionMenu, menuItem, menuSeparator, menuLabel } from '@/components/ui/action-menu';
+import { ActionMenu, menuItem, menuLabel, menuSeparator } from '@/components/ui/action-menu';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { ErrorState } from '@/components/ui/states';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsCard } from '@/components/ui/stats-card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import {
-  Plus,
-  Shield,
-  Users,
-  MoreVertical,
   Copy,
-  Edit,
-  Trash2,
-  Eye,
-  GitBranch,
-  ShieldCheck,
-  Layers,
-  Key,
-  Settings,
-  UserCheck,
   Crown,
+  Edit,
+  Eye,
   Lock,
-  Unlock,
-  Filter,
-  Search,
-  Download,
-  Upload,
+  MoreVertical,
+  Plus,
   RefreshCw,
+  Settings,
+  Shield,
+  ShieldCheck,
+  Trash2,
+  Users
 } from 'lucide-react';
+import * as React from 'react';
 
-import { roleService } from '@/services/role-permission.service';
-import { Role } from '@/types';
-import { useAuthStore } from '@/store/auth-store';
-import { RoleFormModal } from './RoleFormModal';
-import { RoleDetailsModal } from './RoleDetailsModal';
-import { AssignPermissionsModal } from './AssignPermissionsModal';
 import { ConfirmationDialog, useConfirmation } from '@/components/ui/confirmation-dialog';
-import { permissionService } from '@/services/role-permission.service';
-import { useServerSearch } from '@/hooks/use-server-search';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useServerSearch } from '@/hooks/use-server-search';
+import { permissionService, roleService } from '@/services/role-permission.service';
+import { useAuthStore } from '@/store/auth-store';
+import { Role } from '@/types';
+import { AssignPermissionsModal } from './AssignPermissionsModal';
+import { RoleDetailsModal } from './RoleDetailsModal';
+import { RoleFormModal } from './RoleFormModal';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -77,7 +67,8 @@ export default function RolesPage() {
   } = useServerSearch();
   const [modalOpen, setModalOpen] = React.useState(false);
   const [editRole, setEditRole] = React.useState<Role | null>(null);
-  const { user, initializeAuth } = useAuthStore();
+  const user = useAuthStore(state => state.user);
+  const initializeAuth = useAuthStore(state => state.initializeAuth);
   const deleteConfirm = useConfirmation<Role>();
   const bulkDeleteConfirm = useConfirmation<Role[]>();
   const [density, setDensity] = React.useState<'compact' | 'comfortable'>('comfortable');

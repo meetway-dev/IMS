@@ -98,11 +98,8 @@ export const API_ENDPOINTS = {
 // Pagination defaults
 // ---------------------------------------------------------------------------
 
-export const DEFAULT_PAGINATION = {
-  PAGE: 1,
-  LIMIT: 20,
-  MAX_LIMIT: 100,
-} as const;
+// Pagination constants are defined in shared/src/types/pagination.types.ts
+// Use DEFAULT_PAGE_SIZE and PAGE_SIZE_OPTIONS from that module.
 
 // ---------------------------------------------------------------------------
 // Client-side storage keys

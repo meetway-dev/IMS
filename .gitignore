@@ -1,5 +1,9 @@
 # Dependencies
 node_modules/
+# Keep only root package-lock.json (monorepo pattern)
+api/package-lock.json
+frontend/package-lock.json
+shared/package-lock.json
 
 # Build outputs
 dist/
@@ -8,6 +12,8 @@ build/
 
 # Environment
 .env
+.env.development
+.env.production
 .env.local
 .env.*.local
 

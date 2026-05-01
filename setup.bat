@@ -10,19 +10,19 @@ echo ========================================
 echo.
 
 REM 1. Build shared package
-echo [1/6] Building shared package...
+echo [1/7] Building shared package...
 cd shared
 call npm install
 call npm run build
 cd ..
 
 REM 2. Install API dependencies
-echo [2/6] Installing API dependencies...
+echo [2/7] Installing API dependencies...
 cd api
 call npm install
 
 REM 3. Copy env file if missing
-echo [3/6] Setting up environment...
+echo [3/7] Setting up environment...
 if not exist .env (
     copy .env.local.example .env
     echo       >> Edit api\.env with your database credentials!
@@ -30,19 +30,23 @@ if not exist .env (
     echo       api\.env already exists, skipping...
 )
 
-REM 4. Generate Prisma client & sync schema
-echo [4/6] Running Prisma generate + db push...
-call npx prisma generate
-call npx prisma db push
+REM 4. Start database container for Prisma operations
+echo [4/7] Starting database container for Prisma operations...
+docker compose up -d db
 
-REM 5. Seed the database
-echo [5/6] Seeding database...
-call npx prisma db seed
+REM 5. Generate Prisma client & sync schema using Docker
+echo [5/7] Running Prisma generate + db push via Docker...
+docker compose run --rm api npx prisma generate
+docker compose run --rm api npx prisma db push
+
+REM 6. Seed the database using Docker
+echo [6/7] Seeding database via Docker...
+docker compose run --rm api npx prisma db seed
 
 cd ..
 
-REM 6. Install frontend dependencies
-echo [6/6] Installing frontend dependencies...
+REM 7. Install frontend dependencies
+echo [7/7] Installing frontend dependencies...
 cd frontend
 call npm install
 

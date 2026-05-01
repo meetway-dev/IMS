@@ -1,22 +1,36 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { UserStatus } from '@prisma/client';
 import {
+  IsArray,
   IsEmail,
+  IsEnum,
   IsOptional,
   IsString,
+  Matches,
   MinLength,
-  IsArray,
-  IsEnum,
 } from 'class-validator';
-import { UserStatus } from '@prisma/client';
 
 export class CreateUserDto {
   @ApiProperty({ description: 'User email address' })
   @IsEmail()
   email!: string;
 
-  @ApiProperty({ description: 'User password', minLength: 8 })
+  @ApiProperty({
+    description: 'User password',
+    minLength: 8,
+    example: 'Password123!',
+    pattern:
+      '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$',
+  })
   @IsString()
   @MinLength(8)
+  @Matches(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+    {
+      message:
+        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)',
+    },
+  )
   password!: string;
 
   @ApiProperty({ description: 'User full name', required: false })

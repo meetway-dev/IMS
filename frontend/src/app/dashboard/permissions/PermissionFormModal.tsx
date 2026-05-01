@@ -1,9 +1,6 @@
 'use client';
 
-import * as React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -19,29 +16,34 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/use-toast';
 import { permissionService } from '@/services/role-permission.service';
 import { Permission } from '@/types';
-import { toast } from '@/components/ui/use-toast';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import * as yup from 'yup';
 
-const permissionFormSchema = z.object({
-  key: z.string().min(1, 'Permission key is required').regex(/^[a-zA-Z0-9_\-\.]+$/, 'Key must contain only letters, numbers, dots, hyphens, and underscores'),
-  name: z.string().min(1, 'Permission name is required'),
-  description: z.string().optional(),
-  type: z.enum(['API', 'UI', 'DATA']),
-  effect: z.enum(['ALLOW', 'DENY']),
-  module: z.string().min(1, 'Module is required'),
-  resource: z.string().optional(),
-  action: z.string().optional(),
-  scope: z.string().optional(),
-  isSystem: z.boolean().default(false),
+const permissionFormSchema = yup.object({
+  key: yup
+    .string()
+    .required('Permission key is required')
+    .matches(/^[a-zA-Z0-9_\-\.]+$/, 'Key must contain only letters, numbers, dots, hyphens, and underscores'),
+  name: yup.string().required('Permission name is required'),
+  description: yup.string().optional(),
+  type: yup.string().oneOf(['API', 'UI', 'DATA']).required('Type is required'),
+  effect: yup.string().oneOf(['ALLOW', 'DENY']).required('Effect is required'),
+  module: yup.string().required('Module is required'),
+  resource: yup.string().optional(),
+  action: yup.string().optional(),
+  scope: yup.string().optional(),
+  isSystem: yup.boolean().default(false),
 });
 
-type PermissionFormData = z.infer<typeof permissionFormSchema>;
+type PermissionFormData = yup.InferType<typeof permissionFormSchema>;
 
 interface PermissionFormModalProps {
   open: boolean;
@@ -54,7 +56,7 @@ export function PermissionFormModal({ open, onClose, onSuccess, permission }: Pe
   const [loading, setLoading] = React.useState(false);
 
   const form = useForm<PermissionFormData>({
-    resolver: zodResolver(permissionFormSchema),
+    resolver: yupResolver(permissionFormSchema),
     defaultValues: {
       key: '',
       name: '',
@@ -319,8 +321,7 @@ export function PermissionFormModal({ open, onClose, onSuccess, permission }: Pe
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" loading={loading}>
                 {permission ? 'Update Permission' : 'Create Permission'}
               </Button>
             </div>

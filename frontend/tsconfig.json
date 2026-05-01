@@ -52,12 +52,6 @@
       ],
       "@/modules/*": [
         "./src/modules/*"
-      ],
-      "@ims/shared": [
-        "../shared/src/index.ts"
-      ],
-      "@ims/shared/*": [
-        "../shared/src/*"
       ]
     }
   },

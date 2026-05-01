@@ -4,10 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, AuditAction } from '@prisma/client';
+import { AuditAction, Prisma } from '@prisma/client';
 import { paginationMeta } from '../../common/dto/pagination.dto';
-import { decToString } from '../../common/utils/decimal';
 import { ErrorHandler } from '../../common/errors/error-handler';
+import { decToString } from '../../common/utils/decimal';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type { CreateProductDto, UpdateProductDto } from './dto/product.dto';
@@ -83,6 +83,12 @@ export class ProductsService {
           },
         });
 
+        // Get all active warehouses to create stock levels
+        const warehouses = await tx.warehouse.findMany({
+          where: { deletedAt: null },
+          select: { id: true },
+        });
+
         if (dto.variants?.length) {
           for (const v of dto.variants) {
             const variant = await tx.productVariant.create({
@@ -95,28 +101,37 @@ export class ProductsService {
                 barcode: v.barcode,
               },
             });
-            // TODO: Create stock level for variant - requires warehouseId
-            // await tx.stockLevel.create({
-            //   data: {
-            //     variantId: variant.id,
-            //     quantity: 0,
-            //     warehouseId: 'TODO', // Need to get default warehouse
-            //     minQuantity: 0,
-            //     maxQuantity: 1000,
-            //   },
-            // });
+
+            // Create stock level for each warehouse for this variant
+            for (const warehouse of warehouses) {
+              await tx.stockLevel.create({
+                data: {
+                  variantId: variant.id,
+                  productId: null,
+                  quantity: 0,
+                  warehouseId: warehouse.id,
+                  minQuantity: 0,
+                  maxQuantity: null, // Can be set later via inventory management
+                  reorderPoint: dto.minStockAlert ?? 0,
+                },
+              });
+            }
           }
         } else {
-          // TODO: Create stock level for product - requires warehouseId
-          // await tx.stockLevel.create({
-          //   data: {
-          //     productId: product.id,
-          //     quantity: 0,
-          //     warehouseId: 'TODO', // Need to get default warehouse
-          //     minQuantity: 0,
-          //     maxQuantity: 1000,
-          //   },
-          // });
+          // Create stock level for each warehouse for the product (no variants)
+          for (const warehouse of warehouses) {
+            await tx.stockLevel.create({
+              data: {
+                productId: product.id,
+                variantId: null,
+                quantity: 0,
+                warehouseId: warehouse.id,
+                minQuantity: 0,
+                maxQuantity: null, // Can be set later via inventory management
+                reorderPoint: dto.minStockAlert ?? 0,
+              },
+            });
+          }
         }
 
         return tx.product.findUniqueOrThrow({

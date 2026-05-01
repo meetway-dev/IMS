@@ -8,6 +8,8 @@
  * @module api.types
  */
 
+import type { PaginatedResult } from './pagination.types';
+
 /** Standard envelope for single-resource API responses. */
 export interface ApiResponse<T> {
   success: boolean;
@@ -27,17 +29,11 @@ export interface ValidationError {
  *
  * The `meta` block mirrors the `PaginationMeta` shape so consumers
  * can drive pagination controls directly from the response.
+ *
+ * @deprecated Use `PaginatedResult` from './pagination.types' instead.
+ * This type is kept for backward compatibility.
  */
-export interface PaginatedResponse<T> {
-  success: boolean;
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+export type PaginatedResponse<T> = PaginatedResult<T>;
 
 /** Standard error response returned by the API. */
 export interface ApiError {

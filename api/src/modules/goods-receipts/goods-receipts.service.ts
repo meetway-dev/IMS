@@ -4,14 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, AuditAction, GoodsReceiptStatus } from '@prisma/client';
+import { AuditAction, GoodsReceiptStatus, Prisma } from '@prisma/client';
 import { buildPaginatedResult } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import { AuditService } from '../audit/audit.service';
 import type { AuthUser } from '../../types/express';
+import { AuditService } from '../audit/audit.service';
 import type {
-  GoodsReceiptListQueryDto,
   CreateGoodsReceiptDto,
+  GoodsReceiptListQueryDto,
   UpdateGoodsReceiptDto,
 } from './dto/goods-receipt.dto';
 
@@ -123,7 +123,11 @@ export class GoodsReceiptsService {
     }
     if (query.toDate) {
       const toDateCondition = { lte: new Date(query.toDate) };
-      if (where.receiptDate && typeof where.receiptDate === 'object' && 'gte' in where.receiptDate) {
+      if (
+        where.receiptDate &&
+        typeof where.receiptDate === 'object' &&
+        'gte' in where.receiptDate
+      ) {
         where.receiptDate = { ...where.receiptDate, ...toDateCondition };
       } else {
         where.receiptDate = toDateCondition;
@@ -254,12 +258,7 @@ export class GoodsReceiptsService {
     return row;
   }
 
-  async remove(
-    id: string,
-    user: AuthUser,
-    ip?: string,
-    userAgent?: string,
-  ) {
+  async remove(id: string, user: AuthUser, ip?: string, userAgent?: string) {
     const existing = await this.findOne(id);
     if (existing.status !== GoodsReceiptStatus.DRAFT) {
       throw new BadRequestException('Only draft receipts can be deleted');
@@ -283,31 +282,98 @@ export class GoodsReceiptsService {
     return row;
   }
 
-  async complete(
-    id: string,
-    user: AuthUser,
-    ip?: string,
-    userAgent?: string,
-  ) {
+  async complete(id: string, user: AuthUser, ip?: string, userAgent?: string) {
     const existing = await this.findOne(id);
     if (existing.status !== GoodsReceiptStatus.DRAFT) {
       throw new BadRequestException('Only draft receipts can be completed');
     }
 
-    // TODO: Update inventory stock levels
-
-    const row = await this.prisma.goodsReceiptNote.update({
-      where: { id },
-      data: { status: GoodsReceiptStatus.COMPLETED },
-      include: {
-        items: {
-          include: {
-            purchaseOrderItem: true,
+    // Update inventory stock levels within a transaction
+    const row = await this.prisma.$transaction(async (tx) => {
+      // Update goods receipt status
+      const updated = await tx.goodsReceiptNote.update({
+        where: { id },
+        data: { status: GoodsReceiptStatus.COMPLETED },
+        include: {
+          items: {
+            include: {
+              purchaseOrderItem: true,
+            },
           },
+          purchaseOrder: true,
+          warehouse: true,
         },
-        purchaseOrder: true,
-        warehouse: true,
-      },
+      });
+
+      // Update stock levels for each item
+      for (const item of updated.items) {
+        const { variantId } = item.purchaseOrderItem;
+        const productId = null;
+        const quantityReceived = item.quantity;
+        const warehouseId = updated.warehouseId;
+
+        if (!variantId) {
+          throw new BadRequestException(
+            `Goods receipt item ${item.id} must have a variantId`,
+          );
+        }
+
+        // Find or create stock level
+        let stockLevel = await tx.stockLevel.findFirst({
+          where: {
+            productId: productId || null,
+            variantId: variantId || null,
+            warehouseId,
+            deletedAt: null,
+          },
+        });
+
+        if (!stockLevel) {
+          // Create stock level if it doesn't exist (should exist from product creation)
+          stockLevel = await tx.stockLevel.create({
+            data: {
+              productId: productId || null,
+              variantId: variantId || null,
+              warehouseId,
+              quantity: 0,
+              minQuantity: 0,
+              reorderPoint: 0,
+            },
+          });
+        }
+
+        // Compute quantities for stock movement
+        const previousQuantity = stockLevel.quantity;
+        const newQuantity = previousQuantity + quantityReceived;
+
+        // Create stock movement record before updating stock level
+        await tx.stockMovement.create({
+          data: {
+            stockLevelId: stockLevel.id,
+            type: 'PURCHASE',
+            quantity: quantityReceived,
+            previousQuantity,
+            newQuantity,
+            warehouseId,
+            productId: productId || null,
+            variantId: variantId || null,
+            referenceType: 'GOODS_RECEIPT',
+            referenceId: updated.id,
+            notes: `Goods receipt ${updated.grnNumber}`,
+          },
+        });
+
+        // Update stock level quantity after creating movement
+        await tx.stockLevel.update({
+          where: { id: stockLevel.id },
+          data: {
+            quantity: { increment: quantityReceived },
+            available: { increment: quantityReceived },
+          },
+        });
+      }
+
+      return updated;
     });
 
     await this.audit.log({
@@ -323,12 +389,7 @@ export class GoodsReceiptsService {
     return row;
   }
 
-  async cancel(
-    id: string,
-    user: AuthUser,
-    ip?: string,
-    userAgent?: string,
-  ) {
+  async cancel(id: string, user: AuthUser, ip?: string, userAgent?: string) {
     const existing = await this.findOne(id);
     if (existing.status === GoodsReceiptStatus.CANCELLED) {
       throw new BadRequestException('Receipt is already cancelled');

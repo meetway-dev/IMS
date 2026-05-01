@@ -5,27 +5,23 @@ try {
   // dotenv may not be available, but DATABASE_URL might be set in environment
 }
 
-import argon2 from 'argon2';
 import { PrismaPg } from '@prisma/adapter-pg';
 import {
-  PrismaClient,
-  OrderStatus,
-  PurchaseOrderStatus,
-  GoodsReceiptStatus,
-  WarehouseType,
-  LocationType,
-  StockMovementType,
-  PermissionType,
   PermissionEffect,
+  PermissionType,
+  PrismaClient,
   UserStatus,
 } from '@prisma/client';
 import { Pool } from 'pg';
-import { faker } from '@faker-js/faker';
 
 // Initialize Prisma with PostgreSQL adapter
+const connectionString =
+  process.env.DATABASE_URL || 'postgresql://ims:ims@db:5432/ims';
 const prisma = new PrismaClient({
   adapter: new PrismaPg(
-    new Pool({ connectionString: 'postgresql://postgres:postgres@localhost:5432/ims' }),
+    new Pool({
+      connectionString,
+    }),
   ),
 });
 
@@ -642,9 +638,9 @@ export const TEST_USERS = [
   },
 ] as const;
 
-// Password hash for test users (argon2id) - "test@123"
+// Password hash for test users (argon2id) - "Test@123"
 export const TEST_PASSWORD_HASH =
-  '$argon2id$v=19$m=65536,t=3,p=4$uHk8StAwDETcOSFpjUzZ4Q$jGmbEIa7KNQD2iDWD819GSVZWlspMKuIQkL765tY8+I';
+  '$argon2id$v=19$m=65536,t=3,p=4$/WHeaPXZ4z3g578MCb7rug$uEJYA83CYIIUC45+Ic3m+JRGrklRjnbdRABs6Y3xa6g';
 
 // ==================== SEEDING FUNCTION ====================
 async function main() {
@@ -834,7 +830,9 @@ async function main() {
       }
     }
 
-    console.log(`  ✓ Created user: ${user.email} with roles: ${userData.roles.join(', ')}`);
+    console.log(
+      `  ✓ Created user: ${user.email} with roles: ${userData.roles.join(', ')}`,
+    );
   }
 
   console.log('✅ Database seeding completed successfully!');

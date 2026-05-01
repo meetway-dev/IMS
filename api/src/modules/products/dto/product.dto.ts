@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   MaxLength,
   Min,
   MinLength,
@@ -79,10 +80,17 @@ export class CreateProductDto {
 
   @ApiProperty({ example: '50.00' })
   @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, {
+    message:
+      'Purchase price must be a positive number with up to 2 decimal places',
+  })
   purchasePrice!: string;
 
   @ApiProperty({ example: '75.00' })
   @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, {
+    message: 'Sale price must be a positive number with up to 2 decimal places',
+  })
   salePrice!: string;
 
   @ApiPropertyOptional({ example: 20, default: 0 })

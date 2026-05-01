@@ -1,12 +1,40 @@
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
+function parseCorsOrigins(originConfig: string): (string | RegExp)[] | boolean {
+  if (originConfig === '*') {
+    return true; // Allow all origins (for development only)
+  }
+
+  if (originConfig === 'false' || originConfig === 'none') {
+    return false; // Disable CORS
+  }
+
+  // Split by comma and trim
+  const origins = originConfig
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  // Convert to regex if pattern contains * or regex syntax
+  return origins.map((origin) => {
+    if (origin.includes('*')) {
+      // Convert wildcard to regex pattern
+      const pattern = origin.replace(/\./g, '\\.').replace(/\*/g, '.*');
+      return new RegExp(`^${pattern}$`);
+    }
+    return origin;
+  });
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const configService = app.get(ConfigService);
 
   app.enableShutdownHooks();
 
@@ -14,11 +42,20 @@ async function bootstrap() {
   app.use(helmet());
   app.use(cookieParser());
 
-  // CORS: keep permissive for local dev; lock down in prod via env later
-  app.enableCors({
-    origin: true,
+  // CORS: configurable via CORS_ORIGIN environment variable
+  const corsOrigin = configService.get<string>('CORS_ORIGIN', '*');
+  const corsOptions = {
+    origin: parseCorsOrigins(corsOrigin),
     credentials: true,
-  });
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'X-Requested-With',
+    ],
+  };
+  app.enableCors(corsOptions);
 
   // API standards
   app.setGlobalPrefix('api');

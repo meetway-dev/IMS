@@ -15,9 +15,9 @@
 /** Fields present on every soft-deletable entity. */
 export interface BaseEntity {
   id: string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-  deletedAt?: Date | string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -116,7 +116,7 @@ export interface StockLevel extends BaseEntity {
   minQuantity: number;
   maxQuantity?: number;
   reorderPoint?: number;
-  lastCountedAt?: Date | string;
+  lastCountedAt?: string;
   product?: Product;
   variant?: ProductVariant;
   warehouse?: Warehouse;
@@ -149,11 +149,11 @@ export interface StockMovement extends BaseEntity {
 
 export interface StockAlert extends BaseEntity {
   stockLevelId: string;
-  alertType: string;
-  severity: string;
+  alertType: AlertType;
+  severity: SeverityLevel;
   message: string;
   status: AlertStatus;
-  resolvedAt?: Date | string;
+  resolvedAt?: string;
   resolvedByUserId?: string;
   stockLevel?: StockLevel;
   resolvedByUser?: User;
@@ -170,6 +170,9 @@ export type StockMovementType =
   | 'EXPIRY';
 
 export type AlertStatus = 'ACTIVE' | 'RESOLVED' | 'DISMISSED';
+
+export type AlertType = 'LOW_STOCK' | 'OUT_OF_STOCK' | 'EXPIRY' | 'DAMAGE';
+export type SeverityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 // ---------------------------------------------------------------------------
 // Warehouse & Location
@@ -207,8 +210,19 @@ export interface Location extends BaseEntity {
   stockLevels?: StockLevel[];
 }
 
-export type WarehouseType = 'MAIN' | 'DISTRIBUTION' | 'RETAIL' | 'COLD_STORAGE' | 'BONDED';
-export type LocationType = 'SHELF' | 'BIN' | 'PALLET' | 'RACK' | 'FLOOR' | 'COLD_ROOM';
+export type WarehouseType =
+  | 'MAIN'
+  | 'DISTRIBUTION'
+  | 'RETAIL'
+  | 'COLD_STORAGE'
+  | 'BONDED';
+export type LocationType =
+  | 'SHELF'
+  | 'BIN'
+  | 'PALLET'
+  | 'RACK'
+  | 'FLOOR'
+  | 'COLD_ROOM';
 
 // ---------------------------------------------------------------------------
 // Orders

@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const protectedRoutes = ['/dashboard', '/dashboard/', '/dashboard/*'];
 const publicRoutes = ['/login', '/register', '/forgot-password', '/terms', '/privacy'];
@@ -7,10 +7,8 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/terms', '/pri
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Check for access token in both cookies and localStorage (via header)
-  const authHeader = request.headers.get('authorization');
-  const accessToken = request.cookies.get('access_token')?.value ||
-                      (authHeader ? authHeader.replace('Bearer ', '') : '');
+  // Check for access token in cookies (server-side only)
+  const accessToken = request.cookies.get('access_token')?.value;
 
   // Check if user is trying to access protected route without token
   const isProtectedRoute = protectedRoutes.some(route => {

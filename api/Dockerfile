@@ -22,9 +22,11 @@ RUN npm install --include=dev && \
 
 # Builder Stage
 FROM base AS builder
-COPY api/package*.json ./
+ARG DATABASE_URL
 ENV NODE_ENV=development \
-    PATH=/app/node_modules/.bin:$PATH
+    PATH=/app/node_modules/.bin:$PATH \
+    DATABASE_URL=${DATABASE_URL}
+COPY api/package*.json ./
 RUN npm ci && \
     npm cache clean --force
 
@@ -36,7 +38,8 @@ COPY api/prisma.config.ts ./
 COPY api/tsconfig.json api/tsconfig.build.json api/nest-cli.json ./
 COPY api/src ./src
 RUN npx prisma generate --schema=./prisma/schema.prisma && \
-    nest build
+    nest build && \
+    npx tsc
 
 # Production Stage
 FROM base AS production

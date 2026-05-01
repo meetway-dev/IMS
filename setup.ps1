@@ -11,20 +11,20 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # 1. Install & build shared package
-Write-Host "[1/6] Building shared package..." -ForegroundColor Yellow
+Write-Host "[1/7] Building shared package..." -ForegroundColor Yellow
 Set-Location shared
 npm install
 npm run build
 Set-Location ..
 
 # 2. Install API dependencies
-Write-Host "[2/6] Installing API dependencies..." -ForegroundColor Yellow
+Write-Host "[2/7] Installing API dependencies..." -ForegroundColor Yellow
 Set-Location api
 npm install
 
 # 3. Copy env file if missing
 if (-not (Test-Path .env)) {
-    Write-Host "[3/6] Creating api/.env from .env.local.example..." -ForegroundColor Yellow
+    Write-Host "[3/7] Creating api/.env from .env.local.example..." -ForegroundColor Yellow
     Copy-Item .env.local.example .env
     Write-Host "      >> Edit api/.env with your database credentials before continuing!" -ForegroundColor Red
     Write-Host "      >> Default: postgresql://ims:ims@localhost:5432/ims" -ForegroundColor Gray
@@ -32,19 +32,23 @@ if (-not (Test-Path .env)) {
     Write-Host "[3/6] api/.env already exists, skipping..." -ForegroundColor Green
 }
 
-# 4. Generate Prisma client & sync schema
-Write-Host "[4/6] Running Prisma generate + db push..." -ForegroundColor Yellow
-npx prisma generate
-npx prisma db push
+# 4. Start database container for Prisma operations
+Write-Host "[4/7] Starting database container for Prisma operations..." -ForegroundColor Yellow
+docker compose up -d db
 
-# 5. Seed the database
-Write-Host "[5/6] Seeding database..." -ForegroundColor Yellow
-npx prisma db seed
+# 5. Generate Prisma client & sync schema using Docker
+Write-Host "[5/7] Running Prisma generate + db push via Docker..." -ForegroundColor Yellow
+docker compose run --rm api npx prisma generate
+docker compose run --rm api npx prisma db push
+
+# 6. Seed the database using Docker
+Write-Host "[6/7] Seeding database via Docker..." -ForegroundColor Yellow
+docker compose run --rm api npx prisma db seed
 
 Set-Location ..
 
-# 6. Install frontend dependencies
-Write-Host "[6/6] Installing frontend dependencies..." -ForegroundColor Yellow
+# 7. Install frontend dependencies
+Write-Host "[7/7] Installing frontend dependencies..." -ForegroundColor Yellow
 Set-Location frontend
 npm install
 

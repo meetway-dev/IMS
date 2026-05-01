@@ -1,28 +1,26 @@
 'use client';
 
-import * as React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Search,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Shield
-} from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 import { roleService } from '@/services/role-permission.service';
 import { Permission } from '@/types';
-import { toast } from '@/components/ui/use-toast';
+import {
+  AlertTriangle,
+  CheckCircle,
+  Search,
+  Shield,
+  XCircle
+} from 'lucide-react';
+import * as React from 'react';
 
 interface AssignPermissionsModalProps {
   open: boolean;
@@ -241,8 +239,7 @@ export function AssignPermissionsModal({
               <Button variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button onClick={handleSave} loading={loading}>
                 Save Changes
               </Button>
             </div>
